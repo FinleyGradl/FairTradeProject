@@ -103,14 +103,43 @@ pnpm db:push && pnpm db:seed
 - **Font:** DM Sans
 - **Mobile:** Bottom navigation bar
 
-## Next steps (from build plan)
+## Production Deployment & Hosting
 
-1. **Phase 3** — Auth.js (Google + magic link), persistent saved stores
-2. **Phase 4** — Add-store wizard, product CRUD, image upload
-3. **Phase 5** — Review submission, owner replies
-4. **Phase 6** — Claim approval, owner dashboard
-5. **Phase 7** — Moderation queue, "open now" polish, i18n
-6. **Phase 8** — Deploy to Vercel + Neon, E2E tests
+### Option A: Hosting on Vercel (Recommended for Next.js)
+
+1. **Database Setup**: Provision a PostgreSQL database (e.g. [Neon](https://neon.tech), [Supabase](https://supabase.com), or Vercel Postgres).
+2. **Environment Variables**:
+   ```env
+   DATABASE_URL="postgresql://user:pass@ep-host.region.aws.neon.tech/fairtrade?sslmode=require"
+   NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
+   ```
+3. **Prisma Provider**: In `prisma/schema.prisma`, update `datasource db` provider to `"postgresql"`.
+4. **Deploy**:
+   ```bash
+   npx vercel
+   ```
+5. **Database Migration & Seeding**:
+   ```bash
+   npx prisma db push
+   npx tsx prisma/seed.ts
+   ```
+
+### Option B: Container Deployment (Docker / Railway / Fly.io / GCP Cloud Run)
+
+Build and run using the included multi-stage `Dockerfile`:
+
+```bash
+# Build production Docker image
+docker build -t fairfind:latest .
+
+# Run container
+docker run -p 3000:3000 -e DATABASE_URL="file:./dev.db" fairfind:latest
+```
+
+### Health Check Endpoint
+
+Monitor deployment status and database connectivity via `/api/health`:
+- `GET /api/health` -> Returns `200 OK` with status `ok` and `database: connected`.
 
 ## License
 

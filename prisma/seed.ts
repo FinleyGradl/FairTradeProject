@@ -2,11 +2,11 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const DEMO_USER = {
-  email: "demo@fairfind.local",
-  name: "Demo User",
-  role: "user" as const,
-};
+const DEMO_USERS = [
+  { email: "demo@fairfind.local", name: "Demo User", role: "user" as const },
+  { email: "anna@fairfind.local", name: "Anna Schmidt", role: "user" as const },
+  { email: "lucas@fairfind.local", name: "Lucas Weber", role: "user" as const },
+];
 
 const DEFAULT_HOURS = [
   { dayOfWeek: 0, openTime: "09:00", closeTime: "18:00", isClosed: false },
@@ -334,7 +334,10 @@ async function main() {
   await prisma.store.deleteMany();
   await prisma.user.deleteMany();
 
-  const user = await prisma.user.create({ data: DEMO_USER });
+  const createdUsers = await Promise.all(
+    DEMO_USERS.map((u) => prisma.user.create({ data: u }))
+  );
+  const primaryUser = createdUsers[0];
 
   for (const storeData of STORES) {
     const { products, reviews, fairBadges, categories, ...storeFields } = storeData;
@@ -344,7 +347,7 @@ async function main() {
         ...storeFields,
         fairBadges: JSON.stringify(fairBadges),
         categories: JSON.stringify(categories),
-        createdById: user.id,
+        createdById: primaryUser.id,
         status: "active",
         hours: {
           create: DEFAULT_HOURS,
@@ -355,13 +358,15 @@ async function main() {
       },
     });
 
-    for (const review of reviews) {
+    for (let i = 0; i < reviews.length; i++) {
+      const review = reviews[i] as { rating: number; title?: string; body: string };
+      const reviewUser = createdUsers[i % createdUsers.length];
       await prisma.review.create({
         data: {
           storeId: store.id,
-          userId: user.id,
+          userId: reviewUser.id,
           rating: review.rating,
-          title: review.title,
+          title: review.title ?? null,
           body: review.body,
         },
       });

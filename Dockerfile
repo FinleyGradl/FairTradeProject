@@ -18,33 +18,45 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client & Build Next.js app
-ENV NEXT_TELEMETRY_DISABLED 1
-RUN npx prisma generate
-RUN npm run build
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Production image, copy all the files and run next
+# Prisma generate only needs the schema — not a live DB connection.
+# We supply a dummy URL so the Prisma CLI doesn't complain.
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+RUN npx prisma generate
+
+# next build also runs `prisma generate` via the build script.
+# Override to skip that and just run next build directly so we don't
+# hit the DB twice — and more importantly, never open a real connection.
+RUN npx next build
+
+# Production image — copy standalone output
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
-# Automatically leverage output traces to reduce image size
+# Leverage Next.js standalone output for a minimal image
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Include Prisma schema + engine so db push / migrations work at runtime
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
+# DATABASE_URL must be supplied at runtime via docker-compose or -e flag
 CMD ["node", "server.js"]

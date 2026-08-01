@@ -5,6 +5,10 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { StoreCard } from "@/components/store/StoreCard";
 import { getFeaturedStores } from "@/lib/stores";
 
+// Force server-side rendering at request time so the DB is never
+// contacted during `docker build` (only reachable at runtime).
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const featured = await getFeaturedStores(6);
 

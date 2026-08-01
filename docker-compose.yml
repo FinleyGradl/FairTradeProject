@@ -9,6 +9,25 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fairtrade -d fairtrade"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://fairtrade:fairtrade@db:5432/fairtrade"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:

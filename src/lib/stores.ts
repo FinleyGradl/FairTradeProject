@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray } from "@/lib/utils";
-import type { Prisma, Store, Product, Review, StoreHours } from "@prisma/client";
+import type { Prisma, Store, Product, Review, StoreHours } from "../../prisma/generated/prisma/client";
 
 export type StoreWithRelations = Store & {
   hours: StoreHours[];
@@ -236,19 +236,7 @@ export async function getFeaturedStores(limit = 6) {
   return stores.map((s) => serializeStore(enrichStore(s)));
 }
 
-export const FAIR_BADGE_LABELS: Record<string, string> = {
-  fairtrade: "Fairtrade",
-  wfto: "WFTO",
-  bcorp: "B Corp",
-  organic: "Organic",
-};
-
-export const CATEGORIES = [
-  "Grocery",
-  "Coffee & Tea",
-  "Clothing",
-  "Gifts",
-  "Zero Waste",
-  "Chocolate",
-  "Home & Living",
-];
+// Re-exported for any server-side code that still imports these from here.
+// Client components must import from "@/lib/constants" directly instead,
+// since this file pulls in the Prisma/pg client and cannot be bundled client-side.
+export { FAIR_BADGE_LABELS, CATEGORIES } from "./constants";

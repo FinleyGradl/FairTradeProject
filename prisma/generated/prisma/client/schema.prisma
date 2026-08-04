@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../prisma/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  user
+  owner
+  moderator
+  admin
+}
+
+enum StoreStatus {
+  pending
+  active
+  rejected
+  closed
+}
+
+enum ReviewStatus {
+  published
+  hidden
+  flagged
+}
+
+enum ClaimStatus {
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  role      UserRole @default(user)
+  createdAt DateTime @default(now())
+
+  storesCreated  Store[]        @relation("StoreCreator")
+  storesOwned    Store[]        @relation("StoreOwner")
+  reviews        Review[]
+  savedStores    SavedStore[]
+  savedProducts  SavedProduct[]
+  claims         StoreClaim[]
+  claimsReviewed StoreClaim[]   @relation("ClaimReviewer")
+}
+
+model Store {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String
+  addressLine String
+  city        String
+  postalCode  String
+  country     String      @default("DE")
+  latitude    Float
+  longitude   Float
+  phone       String?
+  website     String?
+  email       String?
+  ownerUserId String?
+  status      StoreStatus @default(active)
+  fairBadges  String      @default("[]")
+  categories  String      @default("[]")
+  coverImage  String?
+  createdById String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  owner     User?        @relation("StoreOwner", fields: [ownerUserId], references: [id])
+  createdBy User         @relation("StoreCreator", fields: [createdById], references: [id])
+  hours     StoreHours[]
+  products  Product[]
+  reviews   Review[]
+  savedBy   SavedStore[]
+  claims    StoreClaim[]
+  photos    StorePhoto[]
+}
+
+model StoreHours {
+  id        String  @id @default(cuid())
+  storeId   String
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isClosed  Boolean @default(false)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, dayOfWeek])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  slug        String
+  description String?
+  price       Float?
+  currency    String   @default("EUR")
+  category    String?
+  imageUrl    String?
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  store   Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  savedBy SavedProduct[]
+
+  @@unique([storeId, slug])
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  storeId      String
+  userId       String
+  rating       Int
+  title        String?
+  body         String
+  ownerReply   String?
+  ownerReplyAt DateTime?
+  status       ReviewStatus @default(published)
+  createdAt    DateTime     @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, userId])
+}
+
+model SavedStore {
+  userId    String
+  storeId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, storeId])
+}
+
+model SavedProduct {
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId])
+}
+
+model StoreClaim {
+  id         String      @id @default(cuid())
+  storeId    String
+  userId     String
+  proofText  String
+  proofDocs  String?
+  status     ClaimStatus @default(pending)
+  reviewedBy String?
+  createdAt  DateTime    @default(now())
+
+  store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ClaimReviewer", fields: [reviewedBy], references: [id])
+}
+
+model StorePhoto {
+  id        String  @id @default(cuid())
+  storeId   String
+  url       String
+  caption   String?
+  sortOrder Int     @default(0)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}

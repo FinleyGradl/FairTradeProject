@@ -1,6 +1,6 @@
 "use client";
 
-import { CATEGORIES, FAIR_BADGE_LABELS } from "@/lib/stores";
+import { CATEGORIES, FAIR_BADGE_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 

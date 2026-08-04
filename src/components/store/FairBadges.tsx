@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { FAIR_BADGE_LABELS } from "@/lib/stores";
+import { FAIR_BADGE_LABELS } from "@/lib/constants";
 
 interface FairBadgesProps {
   badges: string[];

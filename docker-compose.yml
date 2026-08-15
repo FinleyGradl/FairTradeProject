@@ -27,9 +27,9 @@ services:
     expose:
       - 3000
     environment:
-      DATABASE_URL: "postgresql://fairtrade:fairtrade@172.25.0.237:5432/fairtrade"
-      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
-      NODE_ENV: production
+      NODE_ENV: productio
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy

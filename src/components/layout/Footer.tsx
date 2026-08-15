@@ -28,6 +28,14 @@ export function Footer() {
                 <li><Link href="/about#fair-trade" className="hover:text-sage">What is fair trade?</Link></li>
               </ul>
             </div>
+            <div>
+              <p className="font-medium text-earth">Rechtliches</p>
+              <ul className="mt-2 space-y-1 text-earth/70">
+                <li><Link href="/impressum" className="hover:text-sage">Impressum</Link></li>
+                <li><Link href="/datenschutz" className="hover:text-sage">Datenschutz</Link></li>
+                <li><Link href="/nutzungsbedingungen" className="hover:text-sage">Nutzungsbedingungen</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
         <p className="mt-8 text-center text-xs text-earth/50">

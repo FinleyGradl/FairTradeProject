@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer, MobileNav } from "@/components/layout/Footer";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -31,10 +32,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} font-sans antialiased`}>
-        <Header />
-        <main className="min-h-[calc(100vh-8rem)] pb-20 md:pb-0">{children}</main>
-        <Footer />
-        <MobileNav />
+        <AuthProvider>
+          <Header />
+          <main className="min-h-[calc(100vh-8rem)] pb-20 md:pb-0">{children}</main>
+          <Footer />
+          <MobileNav />
+        </AuthProvider>
       </body>
     </html>
   );

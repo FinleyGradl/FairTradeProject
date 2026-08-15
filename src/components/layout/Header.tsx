@@ -2,6 +2,7 @@ import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/layout/UserMenu";
 
 export function Header() {
   return (
@@ -32,6 +33,7 @@ export function Header() {
               Add store
             </Button>
           </Link>
+          <UserMenu />
         </nav>
       </div>
     </header>

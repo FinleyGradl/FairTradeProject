@@ -9,6 +9,7 @@ import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { ProfileNameForm } from "@/components/profile/ProfileNameForm";
 import { ChangeEmailForm } from "@/components/profile/ChangeEmailForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
+import { DeleteAccountSection } from "@/components/profile/DeleteAccountSection";
 
 export const metadata: Metadata = { title: "Mein Konto" };
 
@@ -81,6 +82,10 @@ export default async function AccountSettingsPage() {
           <ChangePasswordForm hasPassword={Boolean(user.password)} />
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <DeleteAccountSection userEmail={user.email} hasPassword={Boolean(user.password)} />
+      </div>
     </div>
   );
 }

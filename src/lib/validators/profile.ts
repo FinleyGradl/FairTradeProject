@@ -15,6 +15,12 @@ export const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 
+export const deleteAccountSchema = z.object({
+  confirmEmail: z.string().email("Ungültige E-Mail-Adresse"),
+  password: z.string().optional(),
+});
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

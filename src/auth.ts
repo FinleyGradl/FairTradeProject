@@ -64,12 +64,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id as string;
         token.role = (user as { role?: string }).role ?? "user";
         token.avatarUrl = (user as { avatarUrl?: string | null }).avatarUrl ?? null;
       }
+
+      // Client called `update()` (e.g. after an avatar upload/removal) —
+      // merge the new value into the token so it's actually persisted in
+      // the JWT, instead of only living in the current response's session.
+      if (trigger === "update" && session?.avatarUrl !== undefined) {
+        token.avatarUrl = session.avatarUrl as string | null;
+      }
+
       return token;
     },
     async session({ session, token }) {

@@ -36,18 +36,20 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Next.js public directory
 COPY --from=builder /app/public ./public
 
-# Leverage Next.js standalone output for a minimal image
+# Standalone Next.js application
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Include Prisma schema + generated client (custom output path) + engine
-# so db push / migrations and the app itself work at runtime.
+# Prisma
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
@@ -56,17 +58,9 @@ COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
 COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 
-# Runs as root on purpose — simplest way to avoid permission issues with
-# the mounted "uploads" volume (owned by root when first created by
-# Docker). Fine for this project's current scale; revisit with a proper
-# non-root + entrypoint chown setup later if that ever matters.
+# Upload directory
+RUN mkdir -p /app/public/uploads/avatars
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# DATABASE_URL must be supplied at runtime via docker-compose or -e flag.
-# migrate deploy applies any pending migrations from prisma/migrations —
-# safe to run on every start, it's a no-op once everything's applied.
 CMD ["sh", "-c", "mkdir -p /app/public/uploads/avatars && node server.js"]

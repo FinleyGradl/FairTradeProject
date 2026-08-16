@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Camera, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,7 @@ interface AvatarUploaderProps {
 
 export function AvatarUploader({ currentAvatarUrl, fallbackInitial }: AvatarUploaderProps) {
   const router = useRouter();
+  const { update } = useSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(currentAvatarUrl);
   const [loading, setLoading] = useState(false);
@@ -45,6 +47,10 @@ export function AvatarUploader({ currentAvatarUrl, fallbackInitial }: AvatarUplo
     }
 
     setPreview(data.avatarUrl);
+    // Keep the JWT/session in sync — otherwise the navbar avatar (and
+    // anywhere else reading useSession()) keeps pointing at the old,
+    // now-deleted file until the next full login.
+    await update({ avatarUrl: data.avatarUrl });
     router.refresh();
   }
 
@@ -60,6 +66,7 @@ export function AvatarUploader({ currentAvatarUrl, fallbackInitial }: AvatarUplo
     }
 
     setPreview(null);
+    await update({ avatarUrl: null });
     router.refresh();
   }
 

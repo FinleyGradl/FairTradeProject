@@ -38,12 +38,10 @@ export function filterByRadius<T extends { latitude: number; longitude: number }
     .sort((a, b) => a.distanceM - b.distanceM);
 }
 
-/** Berlin city center default */
-export const DEFAULT_CENTER = { lat: 52.52, lng: 13.405 };
-
-export const BERLIN_BOUNDS = {
-  minLat: 52.33,
-  maxLat: 52.68,
-  minLng: 13.09,
-  maxLng: 13.76,
-};
+/**
+ * Fallback map center used before we know the visitor's real location
+ * (denied/unsupported geolocation). This is a directory of stores across
+ * all of Germany, so it defaults to the country's rough geographic center
+ * (near Niederdorla, Thuringia) rather than any one city.
+ */
+export const DEFAULT_CENTER = { lat: 51.1657, lng: 10.4515 };

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { StoreCard, type StoreCardData } from "@/components/store/StoreCard";
 import { StoreMap, LocationPrompt } from "@/components/map/StoreMap";
 import { FilterPanel } from "@/components/search/FilterPanel";
+import { LocationSearch } from "@/components/search/LocationSearch";
 import { EmptyState } from "@/components/EmptyState";
 import { DEFAULT_CENTER } from "@/lib/geo";
 import { Loader2, List, Map } from "lucide-react";
@@ -14,7 +15,8 @@ export default function ExplorePage() {
   const [stores, setStores] = useState<StoreCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState<{ lat: number; lng: number }>(DEFAULT_CENTER);
-  const [radius, setRadius] = useState(15);
+  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  const [radius, setRadius] = useState(100);
   const [category, setCategory] = useState<string>();
   const [badge, setBadge] = useState<string>();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
@@ -48,10 +50,22 @@ export default function ExplorePage() {
           <h1 className="text-2xl font-bold text-earth">Explore</h1>
           <p className="text-sm text-earth/70">
             {stores.length} fair-trade stores within {radius} km
+            {locationLabel ? ` of ${locationLabel}` : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <LocationPrompt onLocation={setLocation} />
+        <div className="flex flex-wrap items-center gap-2">
+          <LocationSearch
+            onLocation={(coords, label) => {
+              setLocation(coords);
+              setLocationLabel(label.split(",")[0]);
+            }}
+          />
+          <LocationPrompt
+            onLocation={(coords) => {
+              setLocation(coords);
+              setLocationLabel(null);
+            }}
+          />
           <div className="flex rounded-lg border border-sage/20">
             <Button
               variant={view === "list" || view === "split" ? "default" : "ghost"}

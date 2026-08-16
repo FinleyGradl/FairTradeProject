@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { castAttestation } from "@/lib/stores";
-import { storeAttestationSchema } from "@/lib/validators/store";
+import { upsertReview } from "@/lib/stores";
+import { reviewSchema } from "@/lib/validators/store";
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +14,7 @@ export async function POST(
 
   const { slug } = await params;
   const body = await request.json().catch(() => null);
-  const parsed = storeAttestationSchema.safeParse(body);
+  const parsed = reviewSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Ungültige Eingabe.", issues: parsed.error.flatten().fieldErrors },
@@ -22,21 +22,16 @@ export async function POST(
     );
   }
 
-  const result = await castAttestation(
-    slug,
-    session.user.id,
-    parsed.data.vote,
-    parsed.data.reason
-  );
+  const result = await upsertReview(slug, session.user.id, parsed.data);
 
   if ("error" in result) {
     const messages = {
       NOT_FOUND: "Laden nicht gefunden.",
-      OWN_STORE: "Du kannst deinen eigenen Laden nicht bestätigen oder melden.",
+      OWN_STORE: "Du kannst deinen eigenen Laden nicht bewerten.",
     } as const;
     const status = result.error === "NOT_FOUND" ? 404 : 409;
     return NextResponse.json({ error: messages[result.error] }, { status });
   }
 
-  return NextResponse.json({ success: true, store: result.store }, { status: 200 });
+  return NextResponse.json({ success: true, review: result.review }, { status: 201 });
 }

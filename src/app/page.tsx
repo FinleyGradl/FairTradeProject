@@ -3,14 +3,23 @@ import { MapPin, Search, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/search/SearchBar";
 import { StoreCard } from "@/components/store/StoreCard";
-import { getFeaturedStores } from "@/lib/stores";
+import { getFeaturedStores, getActiveStoreCount } from "@/lib/stores";
 
 // Force server-side rendering at request time so the DB is never
 // contacted during `docker build` (only reachable at runtime).
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const featured = await getFeaturedStores(6);
+  const [featured, storeCount] = await Promise.all([
+    getFeaturedStores(6),
+    getActiveStoreCount(),
+  ]);
+  // Round down to a friendly "N+" figure instead of a jumpy exact count.
+  const storeCountLabel = storeCount >= 100
+    ? `${Math.floor(storeCount / 100) * 100}+`
+    : storeCount >= 10
+      ? `${Math.floor(storeCount / 10) * 10}+`
+      : `${storeCount}`;
 
   return (
     <>
@@ -51,8 +60,8 @@ export default async function HomePage() {
       <section className="border-b border-sage/10 bg-white py-8">
         <div className="mx-auto grid max-w-4xl grid-cols-3 gap-4 px-4 text-center">
           <div>
-            <p className="text-3xl font-bold text-sage">10+</p>
-            <p className="text-sm text-earth/70">Stores in Berlin</p>
+            <p className="text-3xl font-bold text-sage">{storeCountLabel}</p>
+            <p className="text-sm text-earth/70">Stores across Germany</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-sage">4</p>
@@ -70,7 +79,7 @@ export default async function HomePage() {
         <div className="mb-8 flex items-end justify-between">
           <div>
             <h2 className="text-2xl font-bold text-earth">Featured stores</h2>
-            <p className="mt-1 text-earth/70">Hand-picked fair-trade shops in Berlin</p>
+            <p className="mt-1 text-earth/70">Hand-picked fair-trade shops across Germany</p>
           </div>
           <Link href="/explore" className="text-sm font-medium text-sage hover:underline">
             View all →

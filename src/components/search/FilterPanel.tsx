@@ -32,7 +32,7 @@ export function FilterPanel({
         <input
           type="range"
           min={1}
-          max={50}
+          max={200}
           value={radius}
           onChange={(e) => onRadiusChange(Number(e.target.value))}
           className="w-full accent-sage"

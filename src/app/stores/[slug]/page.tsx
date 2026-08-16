@@ -12,10 +12,11 @@ import { SaveButton, ShareButton } from "@/components/store/SaveShareButtons";
 import { ProductCard } from "@/components/store/ProductCard";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
+import { ReviewForm } from "@/components/store/ReviewForm";
+import { DistanceFromYou } from "@/components/store/DistanceFromYou";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getOpenStatusLabel, isOpenNow } from "@/lib/hours";
-import { formatDistance, haversineDistanceM, DEFAULT_CENTER } from "@/lib/geo";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -43,16 +44,11 @@ export default async function StoreDetailPage({ params }: PageProps) {
   if (!store) notFound();
 
   const canEdit = canEditStore(store, session?.user);
+  const isSignedIn = Boolean(session?.user);
   const isOwnStore = Boolean(
     session?.user && (store.ownerUserId === session.user.id || store.createdById === session.user.id)
   );
 
-  const distanceM = haversineDistanceM(
-    DEFAULT_CENTER.lat,
-    DEFAULT_CENTER.lng,
-    store.latitude,
-    store.longitude
-  );
   const open = isOpenNow(store.hours);
   const statusLabel = getOpenStatusLabel(store.hours);
 
@@ -118,9 +114,11 @@ export default async function StoreDetailPage({ params }: PageProps) {
                   className="[&_span]:text-white"
                 />
               )}
-              <span className="text-sm text-white/80">
-                {formatDistance(distanceM)} from Berlin center
-              </span>
+              <DistanceFromYou
+                latitude={store.latitude}
+                longitude={store.longitude}
+                className="text-sm text-white/80"
+              />
               <Badge variant={open ? "success" : "secondary"}>{statusLabel}</Badge>
             </div>
           </div>
@@ -171,11 +169,14 @@ export default async function StoreDetailPage({ params }: PageProps) {
               </section>
             )}
 
-            {store.reviews.length > 0 && (
-              <section>
-                <h2 className="mb-4 text-xl font-semibold text-earth">
-                  Reviews ({store.reviewCount})
+            <section>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xl font-semibold text-earth">
+                  Reviews {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
                 </h2>
+                {!isOwnStore && <ReviewForm storeSlug={store.slug} isSignedIn={isSignedIn} />}
+              </div>
+              {store.reviews.length > 0 ? (
                 <div className="space-y-4">
                   {store.reviews.map((review) => (
                     <div
@@ -200,8 +201,12 @@ export default async function StoreDetailPage({ params }: PageProps) {
                     </div>
                   ))}
                 </div>
-              </section>
-            )}
+              ) : (
+                <p className="text-sm text-earth/60">
+                  Noch keine Bewertungen. Sei die/der Erste!
+                </p>
+              )}
+            </section>
           </div>
 
           <aside className="space-y-6">

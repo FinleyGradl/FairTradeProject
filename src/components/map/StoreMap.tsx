@@ -59,7 +59,7 @@ export function LocationPrompt({ onLocation, className }: LocationPromptProps) {
         setLoading(false);
       },
       () => {
-        setError("Could not get your location. Using Berlin as default.");
+        setError("Could not get your location. Showing all of Germany instead.");
         onLocation(DEFAULT_CENTER);
         setLoading(false);
       },

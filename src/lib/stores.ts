@@ -258,6 +258,10 @@ export async function getFeaturedStores(limit = 6) {
   return stores.map((s) => serializeStore(enrichStore(s)));
 }
 
+export async function getActiveStoreCount() {
+  return prisma.store.count({ where: { status: "active" } });
+}
+
 // --- Create / claim / edit -------------------------------------------------
 
 async function uniqueSlug(name: string, excludeId?: string): Promise<string> {
@@ -465,6 +469,41 @@ export async function createStoreClaim(
   });
 
   return { claim };
+}
+
+/**
+ * One review per person per store (see Review's @@unique([storeId, userId])
+ * in schema.prisma) — submitting again edits the existing review instead of
+ * creating a duplicate.
+ */
+export async function upsertReview(
+  storeSlug: string,
+  userId: string,
+  data: { rating: number; title?: string; body: string }
+): Promise<{ error: "NOT_FOUND" | "OWN_STORE" } | { review: Review }> {
+  const store = await prisma.store.findUnique({ where: { slug: storeSlug } });
+  if (!store) return { error: "NOT_FOUND" };
+  if (store.createdById === userId || store.ownerUserId === userId) {
+    return { error: "OWN_STORE" };
+  }
+
+  const review = await prisma.review.upsert({
+    where: { storeId_userId: { storeId: store.id, userId } },
+    create: {
+      storeId: store.id,
+      userId,
+      rating: data.rating,
+      title: data.title || null,
+      body: data.body,
+    },
+    update: {
+      rating: data.rating,
+      title: data.title || null,
+      body: data.body,
+    },
+  });
+
+  return { review };
 }
 
 export async function getUserStoreOverview(userId: string) {

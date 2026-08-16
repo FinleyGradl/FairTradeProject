@@ -73,7 +73,7 @@ export const reviewSchema = z.object({
 export const storesQuerySchema = z.object({
   lat: z.coerce.number().optional(),
   lng: z.coerce.number().optional(),
-  radius: z.coerce.number().min(1).max(100).default(15),
+  radius: z.coerce.number().min(1).max(300).default(15),
   category: z.string().optional(),
   badge: z.string().optional(),
   q: z.string().optional(),

@@ -27,18 +27,24 @@ services:
     expose:
       - 3000
     environment:
-      NODE_ENV: productio
+      NODE_ENV: production
     env_file:
       - .env
+    environment:
+      DATABASE_URL: "postgresql://fairtrade:fairtrade@172.25.0.237:5432/fairtrade"
+      NODE_ENV: production
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - uploads:/app/public/uploads
     networks:
       nginxproxy:
         ipv4_address: 172.25.0.236
 
 volumes:
   pgdata:
+  uploads:
 
 
 networks:

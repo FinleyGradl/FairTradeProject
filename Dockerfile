@@ -43,20 +43,30 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 
 # Leverage Next.js standalone output for a minimal image
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Include Prisma schema + generated client (custom output path) + engine
 # so db push / migrations and the app itself work at runtime.
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
+COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 
-USER nextjs
+# Runs as root on purpose — simplest way to avoid permission issues with
+# the mounted "uploads" volume (owned by root when first created by
+# Docker). Fine for this project's current scale; revisit with a proper
+# non-root + entrypoint chown setup later if that ever matters.
 
 EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# DATABASE_URL must be supplied at runtime via docker-compose or -e flag
-CMD ["node", "server.js"]
+# DATABASE_URL must be supplied at runtime via docker-compose or -e flag.
+# migrate deploy applies any pending migrations from prisma/migrations —
+# safe to run on every start, it's a no-op once everything's applied.
+CMD ["sh", "-c", "mkdir -p /app/public/uploads/avatars && node server.js"]

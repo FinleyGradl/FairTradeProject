@@ -45,6 +45,17 @@ export function verifyEmailTemplate(verifyUrl: string) {
   return { html, text };
 }
 
+export function changeEmailTemplate(verifyUrl: string) {
+  const html = wrapper(
+    "Neue E-Mail-Adresse bestätigen",
+    `<p style="line-height:1.6;">Du hast angefragt, die E-Mail-Adresse deines FairFind-Kontos zu ändern. Bestätige die neue Adresse mit einem Klick:</p>
+     ${buttonHtml(verifyUrl, "Neue E-Mail bestätigen")}
+     <p style="font-size:12px;color:#5C4033a0;margin-top:24px;">Der Link ist 24 Stunden gültig. Falls du das nicht warst, kannst du diese E-Mail ignorieren — deine E-Mail-Adresse bleibt unverändert.</p>`
+  );
+  const text = `Bestätige deine neue E-Mail-Adresse: ${verifyUrl} (24h gültig)`;
+  return { html, text };
+}
+
 export function resetPasswordTemplate(resetUrl: string) {
   const html = wrapper(
     "Passwort zurücksetzen",

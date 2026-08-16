@@ -32,6 +32,15 @@ export async function consumeEmailVerificationToken(token: string) {
     return null;
   }
 
+  const user = await prisma.user.findUnique({ where: { id: record.userId } });
+  if (!user) return null;
+
+  // If this token was issued for an email *change* (pendingEmail is set),
+  // completing it swaps the address instead of just flagging it verified.
+  const userUpdateData = user.pendingEmail
+    ? { email: user.pendingEmail, pendingEmail: null, emailVerified: new Date() }
+    : { emailVerified: new Date() };
+
   await prisma.$transaction([
     prisma.emailVerificationToken.update({
       where: { id: record.id },
@@ -39,7 +48,7 @@ export async function consumeEmailVerificationToken(token: string) {
     }),
     prisma.user.update({
       where: { id: record.userId },
-      data: { emailVerified: new Date() },
+      data: userUpdateData,
     }),
   ]);
 

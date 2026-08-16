@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
@@ -62,6 +62,13 @@ export function UserMenu() {
         <div className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-sage/10 bg-white p-1 shadow-lg">
           <p className="truncate px-3 py-2 text-xs text-earth/60">{session.user.email}</p>
           <Link
+            href={`/profile/${session.user.id}`}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+          >
+            <UserIcon className="h-4 w-4" /> Mein Profil
+          </Link>
+          <Link
             href="/me/saved"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
@@ -73,7 +80,7 @@ export function UserMenu() {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
           >
-            <UserIcon className="h-4 w-4" /> Konto
+            <Settings className="h-4 w-4" /> Konto
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

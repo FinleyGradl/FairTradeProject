@@ -20,8 +20,12 @@ export function isAllowedAvatarSize(bytes: number): boolean {
 
 /**
  * Saves an uploaded avatar image to the local uploads volume and returns
- * the public URL to store on the user record (served directly from
- * /public by Next.js — no separate route handler needed).
+ * the URL to store on the user record.
+ *
+ * Served via /api/uploads/avatars/[filename] rather than directly from
+ * /public: with `output: "standalone"`, Next.js only serves files that
+ * existed in /public at build time, so files written here at runtime
+ * would 404 if linked to directly. See that route for details.
  */
 export async function saveAvatarFile(userId: string, file: File): Promise<string> {
   await mkdir(AVATAR_DIR, { recursive: true });
@@ -33,15 +37,20 @@ export async function saveAvatarFile(userId: string, file: File): Promise<string
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filePath, buffer);
 
-  return `/uploads/avatars/${filename}`;
+  return `/api/uploads/avatars/${filename}`;
 }
 
 /**
  * Deletes a previously uploaded avatar file, if the given URL points to
  * our local uploads volume (leaves external/Google avatar URLs alone).
+ * Accepts both the current API-route URL and the legacy direct /public
+ * URL, so old avatarUrl values already in the database still clean up.
  */
 export async function deleteAvatarFileIfLocal(avatarUrl: string | null): Promise<void> {
-  if (!avatarUrl || !avatarUrl.startsWith("/uploads/avatars/")) return;
+  if (!avatarUrl) return;
+  const isCurrent = avatarUrl.startsWith("/api/uploads/avatars/");
+  const isLegacy = avatarUrl.startsWith("/uploads/avatars/");
+  if (!isCurrent && !isLegacy) return;
 
   const filename = path.basename(avatarUrl);
   const filePath = path.join(AVATAR_DIR, filename);

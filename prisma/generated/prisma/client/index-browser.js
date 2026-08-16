@@ -123,9 +123,59 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  emailVerified: 'emailVerified',
+  pendingEmail: 'pendingEmail',
+  password: 'password',
   name: 'name',
   avatarUrl: 'avatarUrl',
   role: 'role',
+  trustScore: 'trustScore',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AccountScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  type: 'type',
+  provider: 'provider',
+  providerAccountId: 'providerAccountId',
+  refresh_token: 'refresh_token',
+  access_token: 'access_token',
+  expires_at: 'expires_at',
+  token_type: 'token_type',
+  scope: 'scope',
+  id_token: 'id_token',
+  session_state: 'session_state'
+};
+
+exports.Prisma.SessionScalarFieldEnum = {
+  id: 'id',
+  sessionToken: 'sessionToken',
+  userId: 'userId',
+  expires: 'expires'
+};
+
+exports.Prisma.VerificationTokenScalarFieldEnum = {
+  identifier: 'identifier',
+  token: 'token',
+  expires: 'expires'
+};
+
+exports.Prisma.EmailVerificationTokenScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
   createdAt: 'createdAt'
 };
 
@@ -149,6 +199,19 @@ exports.Prisma.StoreScalarFieldEnum = {
   categories: 'categories',
   coverImage: 'coverImage',
   createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  verificationLevel: 'verificationLevel',
+  confirmCount: 'confirmCount',
+  disputeCount: 'disputeCount'
+};
+
+exports.Prisma.StoreAttestationScalarFieldEnum = {
+  id: 'id',
+  storeId: 'storeId',
+  userId: 'userId',
+  vote: 'vote',
+  reason: 'reason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -248,6 +311,17 @@ exports.StoreStatus = exports.$Enums.StoreStatus = {
   closed: 'closed'
 };
 
+exports.VerificationLevel = exports.$Enums.VerificationLevel = {
+  unverified: 'unverified',
+  community: 'community',
+  admin: 'admin'
+};
+
+exports.AttestationVote = exports.$Enums.AttestationVote = {
+  confirm: 'confirm',
+  dispute: 'dispute'
+};
+
 exports.ReviewStatus = exports.$Enums.ReviewStatus = {
   published: 'published',
   hidden: 'hidden',
@@ -262,7 +336,13 @@ exports.ClaimStatus = exports.$Enums.ClaimStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Account: 'Account',
+  Session: 'Session',
+  VerificationToken: 'VerificationToken',
+  EmailVerificationToken: 'EmailVerificationToken',
+  PasswordResetToken: 'PasswordResetToken',
   Store: 'Store',
+  StoreAttestation: 'StoreAttestation',
   StoreHours: 'StoreHours',
   Product: 'Product',
   Review: 'Review',

@@ -1,8 +1,16 @@
 import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray, slugify } from "@/lib/utils";
+import { TRUST_SCORE_DELTAS, ATTESTATION_THRESHOLDS } from "@/lib/trust";
 import type { StoreCreateInput, StoreUpdateInput } from "@/lib/validators/store";
-import type { Prisma, Store, Product, Review, StoreHours } from "../../prisma/generated/prisma/client";
+import type {
+  Prisma,
+  Store,
+  Product,
+  Review,
+  StoreHours,
+  AttestationVote,
+} from "../../prisma/generated/prisma/client";
 
 export type StoreWithRelations = Store & {
   hours: StoreHours[];
@@ -55,6 +63,9 @@ export function serializeStore(store: StoreListItem) {
     status: store.status,
     ownerUserId: store.ownerUserId,
     createdById: store.createdById,
+    verificationLevel: store.verificationLevel,
+    confirmCount: store.confirmCount,
+    disputeCount: store.disputeCount,
     fairBadges: parseJsonArray(store.fairBadges),
     categories: parseJsonArray(store.categories),
     coverImage: store.coverImage,
@@ -129,7 +140,7 @@ export async function getStores(params: {
   };
 }
 
-export async function getStoreBySlug(slug: string) {
+export async function getStoreBySlug(slug: string, viewerId?: string) {
   const store = await prisma.store.findUnique({
     where: { slug },
     include: {
@@ -147,9 +158,17 @@ export async function getStoreBySlug(slug: string) {
 
   if (!store) return null;
 
+  const myVote = viewerId
+    ? await prisma.storeAttestation.findUnique({
+        where: { storeId_userId: { storeId: store.id, userId: viewerId } },
+        select: { vote: true },
+      })
+    : null;
+
   const listItem = enrichStore(store);
   return {
     ...serializeStore(listItem),
+    myVote: myVote?.vote ?? null,
     products: store.products.map((p) => ({
       id: p.id,
       name: p.name,
@@ -295,10 +314,14 @@ export async function createStore(userId: string, input: StoreCreateInput) {
       coverImage: normalizeOptional(input.coverImage),
       fairBadges: JSON.stringify(input.fairBadges ?? []),
       categories: JSON.stringify(input.categories ?? []),
-      // New submissions go through moderation before showing up in the
-      // public directory — mirrors the "Listings are reviewed before
-      // going live" copy on the add-store page.
-      status: "pending",
+      // Lenient by design: listings go live immediately instead of
+      // waiting in a moderator queue. Trust is built *after* publication
+      // through community attestations (see castAttestation below) —
+      // enough disputes automatically pulls a listing back out of the
+      // public directory into the moderation queue, so review effort is
+      // spent on the small number of listings people actually flag
+      // rather than on every single submission up front.
+      status: "active",
       createdById: userId,
       // ownerUserId stays null: adding a listing (e.g. cataloguing an
       // Eine-Welt-Laden you found) is not the same as being the shop's
@@ -329,7 +352,11 @@ export function canEditStore(
   return store.createdById === user.id;
 }
 
-export async function updateStore(slug: string, input: StoreUpdateInput) {
+export async function updateStore(
+  slug: string,
+  input: StoreUpdateInput,
+  options: { resetVerification: boolean }
+) {
   const existing = await prisma.store.findUnique({ where: { slug } });
   if (!existing) return null;
 
@@ -356,8 +383,19 @@ export async function updateStore(slug: string, input: StoreUpdateInput) {
         coverImage: normalizeOptional(input.coverImage),
         fairBadges: JSON.stringify(input.fairBadges ?? []),
         categories: JSON.stringify(input.categories ?? []),
+        // Non-privileged edits invalidate prior community trust: the
+        // content changed, so old confirmations don't necessarily apply
+        // to what's live now. Admin/moderator edits are exempt since
+        // those are already a trusted source.
+        ...(options.resetVerification
+          ? { verificationLevel: "unverified" as const, confirmCount: 0, disputeCount: 0 }
+          : {}),
       },
     });
+
+    if (options.resetVerification) {
+      await tx.storeAttestation.deleteMany({ where: { storeId: existing.id } });
+    }
 
     if (input.hours) {
       await tx.storeHours.deleteMany({ where: { storeId: existing.id } });
@@ -443,6 +481,180 @@ export async function getUserStoreOverview(userId: string) {
   ]);
 
   return { stores: createdOrOwned, claims };
+}
+
+// --- Community attestations -------------------------------------------------
+
+export function canModerate(user: { role?: string } | null | undefined): boolean {
+  return user?.role === "admin" || user?.role === "moderator";
+}
+
+async function adjustTrustScore(userId: string | null | undefined, delta: number) {
+  if (!userId || delta === 0) return;
+  await prisma.user.update({
+    where: { id: userId },
+    data: { trustScore: { increment: delta } },
+  });
+}
+
+export async function castAttestation(
+  storeSlug: string,
+  userId: string,
+  vote: AttestationVote,
+  reason?: string
+): Promise<{ error: "NOT_FOUND" | "OWN_STORE" } | { store: Store }> {
+  const store = await prisma.store.findUnique({ where: { slug: storeSlug } });
+  if (!store) return { error: "NOT_FOUND" };
+  // The submitter/owner vouching for their own listing wouldn't mean much
+  // as an "independent" confirmation, so they're excluded from voting on
+  // it — they can still fix problems directly by editing the listing.
+  if (store.createdById === userId || store.ownerUserId === userId) {
+    return { error: "OWN_STORE" };
+  }
+
+  await prisma.storeAttestation.upsert({
+    where: { storeId_userId: { storeId: store.id, userId } },
+    create: { storeId: store.id, userId, vote, reason: reason || null },
+    update: { vote, reason: reason || null },
+  });
+
+  const [confirmCount, disputeCount] = await Promise.all([
+    prisma.storeAttestation.count({ where: { storeId: store.id, vote: "confirm" } }),
+    prisma.storeAttestation.count({ where: { storeId: store.id, vote: "dispute" } }),
+  ]);
+
+  const net = confirmCount - disputeCount;
+  const responsibleUserId = store.ownerUserId ?? store.createdById;
+
+  let nextStatus = store.status;
+  let nextVerification = store.verificationLevel;
+
+  if (
+    store.verificationLevel === "unverified" &&
+    net >= ATTESTATION_THRESHOLDS.communityVerify
+  ) {
+    nextVerification = "community";
+    await adjustTrustScore(responsibleUserId, TRUST_SCORE_DELTAS.storeCommunityVerified);
+  }
+
+  if (store.status === "active" && -net >= ATTESTATION_THRESHOLDS.flagForReview) {
+    // Enough independent disputes: pull the listing from the public
+    // directory and hand it to a human moderator rather than deciding
+    // automatically — disputes can be wrong too, so this stage always
+    // needs a person to look at the "reason" text before rejecting.
+    nextStatus = "pending";
+    await adjustTrustScore(responsibleUserId, TRUST_SCORE_DELTAS.storeFlagged);
+  }
+
+  const updated = await prisma.store.update({
+    where: { id: store.id },
+    data: { confirmCount, disputeCount, status: nextStatus, verificationLevel: nextVerification },
+  });
+
+  return { store: updated };
+}
+
+// --- Moderation queue --------------------------------------------------------
+
+export async function listFlaggedStores() {
+  return prisma.store.findMany({
+    where: { status: "pending" },
+    include: {
+      attestations: {
+        where: { vote: "dispute" },
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      createdBy: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function reviewFlaggedStore(
+  storeId: string,
+  action: "approve" | "reject",
+  adminUserId: string
+) {
+  const store = await prisma.store.findUnique({ where: { id: storeId } });
+  if (!store) return null;
+
+  const responsibleUserId = store.ownerUserId ?? store.createdById;
+
+  if (action === "approve") {
+    const updated = await prisma.store.update({
+      where: { id: storeId },
+      data: { status: "active", verificationLevel: "admin" },
+    });
+    await adjustTrustScore(responsibleUserId, TRUST_SCORE_DELTAS.storeAdminVerified);
+    return updated;
+  }
+
+  const updated = await prisma.store.update({
+    where: { id: storeId },
+    data: { status: "rejected" },
+  });
+  await adjustTrustScore(responsibleUserId, TRUST_SCORE_DELTAS.storeRejected);
+  return updated;
+}
+
+export async function verifyStoreByAdmin(slug: string) {
+  const store = await prisma.store.findUnique({ where: { slug } });
+  if (!store) return null;
+  const updated = await prisma.store.update({
+    where: { slug },
+    data: { verificationLevel: "admin", status: "active" },
+  });
+  await adjustTrustScore(
+    store.ownerUserId ?? store.createdById,
+    TRUST_SCORE_DELTAS.storeAdminVerified
+  );
+  return updated;
+}
+
+export async function listPendingClaims() {
+  return prisma.storeClaim.findMany({
+    where: { status: "pending" },
+    include: {
+      store: { select: { slug: true, name: true, ownerUserId: true } },
+      user: { select: { id: true, name: true, email: true, trustScore: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+export async function reviewClaim(
+  claimId: string,
+  action: "approve" | "reject",
+  adminUserId: string
+) {
+  const claim = await prisma.storeClaim.findUnique({ where: { id: claimId } });
+  if (!claim) return null;
+
+  if (action === "approve") {
+    const [, updatedClaim] = await prisma.$transaction([
+      prisma.store.update({ where: { id: claim.storeId }, data: { ownerUserId: claim.userId } }),
+      prisma.storeClaim.update({
+        where: { id: claimId },
+        data: { status: "approved", reviewedBy: adminUserId },
+      }),
+      // Any other still-open claims on the same store no longer apply
+      // once someone else has been confirmed as the owner.
+      prisma.storeClaim.updateMany({
+        where: { storeId: claim.storeId, id: { not: claimId }, status: "pending" },
+        data: { status: "rejected", reviewedBy: adminUserId },
+      }),
+    ]);
+    await adjustTrustScore(claim.userId, TRUST_SCORE_DELTAS.claimApproved);
+    return updatedClaim;
+  }
+
+  const updatedClaim = await prisma.storeClaim.update({
+    where: { id: claimId },
+    data: { status: "rejected", reviewedBy: adminUserId },
+  });
+  await adjustTrustScore(claim.userId, TRUST_SCORE_DELTAS.claimRejected);
+  return updatedClaim;
 }
 
 // Re-exported for any server-side code that still imports these from here.

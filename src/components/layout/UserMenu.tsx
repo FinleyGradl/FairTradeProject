@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart, Settings, Store } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
@@ -89,6 +89,15 @@ export function UserMenu() {
           >
             <Settings className="h-4 w-4" /> Konto
           </Link>
+          {(session.user.role === "admin" || session.user.role === "moderator") && (
+            <Link
+              href="/admin/moderation"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+            >
+              <ShieldCheck className="h-4 w-4" /> Moderation
+            </Link>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-earth hover:bg-sage-50"

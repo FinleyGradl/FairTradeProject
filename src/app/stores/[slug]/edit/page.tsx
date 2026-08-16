@@ -86,7 +86,8 @@ export default async function EditStorePage({ params }: PageProps) {
       </div>
       {store.status === "pending" && (
         <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-          Dieser Laden wartet noch auf Freigabe und ist im Verzeichnis noch nicht sichtbar.
+          Dieser Laden wurde von der Community gemeldet und ist aktuell nicht öffentlich
+          sichtbar, bis ein Moderations-Team ihn geprüft hat.
         </p>
       )}
 

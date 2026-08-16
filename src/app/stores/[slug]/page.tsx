@@ -10,6 +10,8 @@ import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
 import { SaveButton, ShareButton } from "@/components/store/SaveShareButtons";
 import { ProductCard } from "@/components/store/ProductCard";
+import { VerifiedBadge } from "@/components/store/VerifiedBadge";
+import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getOpenStatusLabel, isOpenNow } from "@/lib/hours";
@@ -36,10 +38,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function StoreDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const [store, session] = await Promise.all([getStoreBySlug(slug), auth()]);
+  const session = await auth();
+  const store = await getStoreBySlug(slug, session?.user?.id);
   if (!store) notFound();
 
   const canEdit = canEditStore(store, session?.user);
+  const isOwnStore = Boolean(
+    session?.user && (store.ownerUserId === session.user.id || store.createdById === session.user.id)
+  );
 
   const distanceM = haversineDistanceM(
     DEFAULT_CENTER.lat,
@@ -99,7 +105,10 @@ export default async function StoreDetailPage({ params }: PageProps) {
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
           <div className="mx-auto max-w-4xl">
             <FairBadges badges={store.fairBadges} className="mb-2" />
-            <h1 className="text-3xl font-bold md:text-4xl">{store.name}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-bold md:text-4xl">{store.name}</h1>
+              <VerifiedBadge level={store.verificationLevel} />
+            </div>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {store.avgRating != null && (
                 <RatingStars
@@ -259,6 +268,16 @@ export default async function StoreDetailPage({ params }: PageProps) {
                 <p className="mt-1 text-sm text-earth/70">{store.owner.name}</p>
               </section>
             )}
+
+            <AttestationWidget
+              storeSlug={store.slug}
+              confirmCount={store.confirmCount}
+              disputeCount={store.disputeCount}
+              verificationLevel={store.verificationLevel}
+              myVote={store.myVote}
+              isSignedIn={Boolean(session?.user)}
+              isOwnStore={isOwnStore}
+            />
           </aside>
         </div>
       </div>

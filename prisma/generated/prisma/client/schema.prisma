@@ -33,21 +33,109 @@ enum ClaimStatus {
   rejected
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  avatarUrl String?
-  role      UserRole @default(user)
-  createdAt DateTime @default(now())
+enum VerificationLevel {
+  unverified
+  community
+  admin
+}
 
-  storesCreated  Store[]        @relation("StoreCreator")
-  storesOwned    Store[]        @relation("StoreOwner")
+enum AttestationVote {
+  confirm
+  dispute
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  pendingEmail  String?   @unique
+  password      String?
+  name          String?
+  avatarUrl     String?
+  role          UserRole  @default(user)
+  // Community-moderation reputation. Grows with approved/community-verified
+  // submissions and shrinks on rejections/upheld reports — see
+  // TRUST_SCORE_DELTAS in lib/trust.ts for the concrete point values.
+  trustScore    Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  storesCreated  Store[]            @relation("StoreCreator")
+  storesOwned    Store[]            @relation("StoreOwner")
   reviews        Review[]
   savedStores    SavedStore[]
   savedProducts  SavedProduct[]
   claims         StoreClaim[]
-  claimsReviewed StoreClaim[]   @relation("ClaimReviewer")
+  claimsReviewed StoreClaim[]       @relation("ClaimReviewer")
+  attestations   StoreAttestation[]
+
+  accounts            Account[]
+  sessions            Session[]
+  emailVerifyTokens   EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+// --- Auth.js (NextAuth) required models for the Google OAuth adapter ---
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Custom flows: email verification & forgot-password ---
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Store {
@@ -73,14 +161,38 @@ model Store {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  owner     User?        @relation("StoreOwner", fields: [ownerUserId], references: [id])
-  createdBy User         @relation("StoreCreator", fields: [createdById], references: [id])
-  hours     StoreHours[]
-  products  Product[]
-  reviews   Review[]
-  savedBy   SavedStore[]
-  claims    StoreClaim[]
-  photos    StorePhoto[]
+  // Community-verification state — see lib/attestations.ts for the
+  // threshold logic that moves a store between these.
+  verificationLevel VerificationLevel @default(unverified)
+  confirmCount      Int               @default(0)
+  disputeCount      Int               @default(0)
+
+  owner        User?              @relation("StoreOwner", fields: [ownerUserId], references: [id])
+  createdBy    User               @relation("StoreCreator", fields: [createdById], references: [id])
+  hours        StoreHours[]
+  products     Product[]
+  reviews      Review[]
+  savedBy      SavedStore[]
+  claims       StoreClaim[]
+  photos       StorePhoto[]
+  attestations StoreAttestation[]
+}
+
+model StoreAttestation {
+  id        String          @id @default(cuid())
+  storeId   String
+  userId    String
+  vote      AttestationVote
+  reason    String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One vote per person per store — casting again updates the existing row
+  // rather than creating a second one.
+  @@unique([storeId, userId])
 }
 
 model StoreHours {

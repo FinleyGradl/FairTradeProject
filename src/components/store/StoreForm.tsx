@@ -326,7 +326,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
       {success && (
         <p className="flex items-center gap-1.5 text-sm text-sage">
           <CheckCircle2 className="h-4 w-4" />
-          {mode === "create" ? "Laden eingereicht — wird zur Prüfung weitergeleitet." : "Änderungen gespeichert."}
+          {mode === "create" ? "Laden veröffentlicht — er ist jetzt im Verzeichnis sichtbar." : "Änderungen gespeichert."}
         </p>
       )}
 
@@ -335,7 +335,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : mode === "create" ? (
-            "Laden einreichen"
+            "Laden veröffentlichen"
           ) : (
             "Änderungen speichern"
           )}
@@ -344,9 +344,15 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
 
       {mode === "create" && (
         <p className="text-xs text-earth/50">
-          Neue Einträge werden vor der Veröffentlichung geprüft. Du bleibst als Ansprechperson
-          hinterlegt, bis der Laden von der tatsächlichen Inhaberin bzw. dem Inhaber
-          beansprucht wird.
+          Dein Laden ist sofort im Verzeichnis sichtbar. Andere Nutzer:innen können ihn
+          bestätigen oder melden — bei genug Meldungen wird er zur Prüfung an ein Moderations-Team
+          weitergeleitet.
+        </p>
+      )}
+      {mode === "edit" && (
+        <p className="text-xs text-earth/50">
+          Hinweis: Nach dem Speichern muss die Community diesen Laden erneut bestätigen — vorherige
+          Bestätigungen und Badges werden zurückgesetzt, da sich der Inhalt geändert hat.
         </p>
       )}
     </form>

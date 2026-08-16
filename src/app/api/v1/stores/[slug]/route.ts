@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getStoreBySlug, getStoreForEdit, updateStore, canEditStore, serializeStore } from "@/lib/stores";
+import { getStoreBySlug, getStoreForEdit, updateStore, canEditStore, canModerate, serializeStore } from "@/lib/stores";
 import { storeUpdateSchema } from "@/lib/validators/store";
 
 export async function GET(
@@ -51,7 +51,8 @@ export async function PATCH(
   }
 
   try {
-    const updated = await updateStore(slug, parsed.data);
+    const isTrustedEditor = canModerate(session.user);
+    const updated = await updateStore(slug, parsed.data, { resetVerification: !isTrustedEditor });
     if (!updated) {
       return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
     }

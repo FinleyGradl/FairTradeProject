@@ -34,6 +34,17 @@ enum ClaimStatus {
   rejected
 }
 
+enum VerificationLevel {
+  unverified
+  community
+  admin
+}
+
+enum AttestationVote {
+  confirm
+  dispute
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -43,6 +54,10 @@ model User {
   name          String?
   avatarUrl     String?
   role          UserRole  @default(user)
+  // Community-moderation reputation. Grows with approved/community-verified
+  // submissions and shrinks on rejections/upheld reports — see
+  // TRUST_SCORE_DELTAS in lib/trust.ts for the concrete point values.
+  trustScore    Int       @default(0)
   createdAt     DateTime  @default(now())
 
   storesCreated Store[]      @relation("StoreCreator")
@@ -52,6 +67,7 @@ model User {
   savedProducts SavedProduct[]
   claims        StoreClaim[]
   claimsReviewed StoreClaim[] @relation("ClaimReviewer")
+  attestations  StoreAttestation[]
 
   accounts             Account[]
   sessions             Session[]
@@ -146,6 +162,12 @@ model Store {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
+  // Community-verification state — see lib/attestations.ts for the
+  // threshold logic that moves a store between these.
+  verificationLevel VerificationLevel @default(unverified)
+  confirmCount       Int              @default(0)
+  disputeCount        Int              @default(0)
+
   owner     User?        @relation("StoreOwner", fields: [ownerUserId], references: [id])
   createdBy User         @relation("StoreCreator", fields: [createdById], references: [id])
   hours     StoreHours[]
@@ -154,6 +176,24 @@ model Store {
   savedBy   SavedStore[]
   claims    StoreClaim[]
   photos    StorePhoto[]
+  attestations StoreAttestation[]
+}
+
+model StoreAttestation {
+  id        String          @id @default(cuid())
+  storeId   String
+  userId    String
+  vote      AttestationVote
+  reason    String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One vote per person per store — casting again updates the existing row
+  // rather than creating a second one.
+  @@unique([storeId, userId])
 }
 
 model StoreHours {

@@ -52,6 +52,18 @@ export const storeClaimSchema = z.object({
   businessEmail: z.string().email("Ungültige E-Mail-Adresse").optional().or(z.literal("")),
 });
 
+export const storeAttestationSchema = z.object({
+  vote: z.enum(["confirm", "dispute"]),
+  reason: z.string().max(500).optional(),
+}).refine((data) => data.vote !== "dispute" || (data.reason && data.reason.trim().length >= 10), {
+  message: "Bitte gib einen kurzen Grund für die Meldung an (mind. 10 Zeichen).",
+  path: ["reason"],
+});
+
+export const moderationActionSchema = z.object({
+  action: z.enum(["approve", "reject"]),
+});
+
 export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   title: z.string().max(120).optional(),

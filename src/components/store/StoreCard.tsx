@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "./RatingStars";
 import { FairBadges } from "./FairBadges";
 import { DistanceBadge } from "./DistanceBadge";
+import { VerifiedBadge } from "./VerifiedBadge";
 import { getOpenStatusLabel, isOpenNow, type StoreHourRow } from "@/lib/hours";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ export interface StoreCardData {
   reviewCount: number;
   distanceM?: number;
   hours?: StoreHourRow[];
+  verificationLevel?: "unverified" | "community" | "admin";
 }
 
 interface StoreCardProps {
@@ -65,6 +67,9 @@ export function StoreCard({ store, className }: StoreCardProps) {
             <h3 className="font-semibold text-earth line-clamp-1">{store.name}</h3>
             <DistanceBadge distanceM={store.distanceM} city={store.city} />
           </div>
+          {store.verificationLevel && store.verificationLevel !== "unverified" && (
+            <VerifiedBadge level={store.verificationLevel} className="mb-2" />
+          )}
           {store.avgRating != null && (
             <RatingStars
               rating={store.avgRating}

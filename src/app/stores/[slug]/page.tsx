@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { MapPin, Phone, Globe, Mail, ExternalLink } from "lucide-react";
-import { getStoreBySlug } from "@/lib/stores";
+import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil } from "lucide-react";
+import { auth } from "@/auth";
+import { getStoreBySlug, canEditStore } from "@/lib/stores";
 import { RatingStars } from "@/components/store/RatingStars";
 import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
@@ -35,8 +36,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function StoreDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const store = await getStoreBySlug(slug);
+  const [store, session] = await Promise.all([getStoreBySlug(slug), auth()]);
   if (!store) notFound();
+
+  const canEdit = canEditStore(store, session?.user);
 
   const distanceM = haversineDistanceM(
     DEFAULT_CENTER.lat,
@@ -119,11 +122,19 @@ export default async function StoreDetailPage({ params }: PageProps) {
         <div className="mb-6 flex gap-2">
           <SaveButton storeId={store.id} />
           <ShareButton title={store.name} />
-          <Link href={`/claim/${store.slug}`} className="ml-auto">
-            <Button variant="outline" size="sm">
-              Claim this store
-            </Button>
-          </Link>
+          {canEdit ? (
+            <Link href={`/stores/${store.slug}/edit`} className="ml-auto">
+              <Button variant="outline" size="sm" className="gap-1">
+                <Pencil className="h-3.5 w-3.5" /> Bearbeiten
+              </Button>
+            </Link>
+          ) : !store.ownerUserId ? (
+            <Link href={`/claim/${store.slug}`} className="ml-auto">
+              <Button variant="outline" size="sm">
+                Claim this store
+              </Button>
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">

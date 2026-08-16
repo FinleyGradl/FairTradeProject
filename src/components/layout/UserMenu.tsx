@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart, Settings } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
@@ -74,6 +74,13 @@ export function UserMenu() {
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
           >
             <Heart className="h-4 w-4" /> Gespeichert
+          </Link>
+          <Link
+            href="/me/stores"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+          >
+            <Store className="h-4 w-4" /> Meine Läden
           </Link>
           <Link
             href="/me/settings"

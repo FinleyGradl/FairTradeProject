@@ -2,7 +2,19 @@ import { z } from "zod";
 
 export const fairBadgeEnum = z.enum(["fairtrade", "wfto", "bcorp", "organic"]);
 
-export const storeCreateSchema = z.object({
+export const storeHourInputSchema = z
+  .object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM erwartet"),
+    closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM erwartet"),
+    isClosed: z.boolean().default(false),
+  })
+  .refine((h) => h.isClosed || h.closeTime > h.openTime, {
+    message: "Schließzeit muss nach der Öffnungszeit liegen",
+    path: ["closeTime"],
+  });
+
+export const storeBaseSchema = z.object({
   name: z.string().min(2).max(120),
   description: z.string().min(10).max(2000),
   addressLine: z.string().min(3).max(200),
@@ -11,11 +23,33 @@ export const storeCreateSchema = z.object({
   country: z.string().length(2).default("DE"),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  phone: z.string().optional(),
+  phone: z.string().max(40).optional().or(z.literal("")),
   website: z.string().url().optional().or(z.literal("")),
   email: z.string().email().optional().or(z.literal("")),
-  fairBadges: z.array(fairBadgeEnum).optional(),
-  categories: z.array(z.string()).optional(),
+  coverImage: z.string().url().optional().or(z.literal("")),
+  fairBadges: z.array(fairBadgeEnum).max(4).optional(),
+  categories: z.array(z.string()).max(6).optional(),
+  hours: z.array(storeHourInputSchema).max(7).optional(),
+});
+
+export const storeCreateSchema = storeBaseSchema;
+export const storeUpdateSchema = storeBaseSchema.partial().extend({
+  // Editing a store always resends the full set of fields we allow to
+  // change; nothing here is a true partial-patch of a single key, but
+  // keeping this a `.partial()` means callers can't accidentally wipe a
+  // field by omitting it from a smaller client payload in the future.
+  name: storeBaseSchema.shape.name,
+  description: storeBaseSchema.shape.description,
+  addressLine: storeBaseSchema.shape.addressLine,
+  city: storeBaseSchema.shape.city,
+  postalCode: storeBaseSchema.shape.postalCode,
+  latitude: storeBaseSchema.shape.latitude,
+  longitude: storeBaseSchema.shape.longitude,
+});
+
+export const storeClaimSchema = z.object({
+  proofText: z.string().min(20, "Bitte beschreibe genauer, wie du den Laden verifizieren kannst.").max(2000),
+  businessEmail: z.string().email("Ungültige E-Mail-Adresse").optional().or(z.literal("")),
 });
 
 export const reviewSchema = z.object({
@@ -36,5 +70,7 @@ export const storesQuerySchema = z.object({
 });
 
 export type StoreCreateInput = z.infer<typeof storeCreateSchema>;
+export type StoreUpdateInput = z.infer<typeof storeUpdateSchema>;
+export type StoreClaimInput = z.infer<typeof storeClaimSchema>;
 export type ReviewInput = z.infer<typeof reviewSchema>;
 export type StoresQuery = z.infer<typeof storesQuerySchema>;

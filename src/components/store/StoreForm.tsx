@@ -6,6 +6,7 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/store/LocationPicker";
+import { CoverImageUploader } from "@/components/store/CoverImageUploader";
 import { CATEGORIES, FAIR_BADGE_LABELS } from "@/lib/constants";
 import { getDayName } from "@/lib/hours";
 import { DEFAULT_CENTER } from "@/lib/geo";
@@ -208,17 +209,27 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-earth">Titelbild (URL)</label>
-          <Input
-            value={values.coverImage}
-            onChange={(e) => update("coverImage", e.target.value)}
-            placeholder="https://…"
-            type="url"
-          />
-          <p className="mt-1 text-xs text-earth/50">
-            Optional — direkter Bild-Upload ist noch nicht verfügbar, ein Link zu einem
-            gehosteten Foto funktioniert aber schon.
-          </p>
+          <label className="mb-1 block text-sm font-medium text-earth">Titelbild</label>
+          {mode === "edit" && storeSlug ? (
+            <CoverImageUploader
+              storeSlug={storeSlug}
+              currentCoverImage={values.coverImage || null}
+              onUploaded={(coverImage) => update("coverImage", coverImage ?? "")}
+            />
+          ) : (
+            <>
+              <Input
+                value={values.coverImage}
+                onChange={(e) => update("coverImage", e.target.value)}
+                placeholder="https://…"
+                type="url"
+              />
+              <p className="mt-1 text-xs text-earth/50">
+                Optional — ein Link zu einem gehosteten Foto. Ein direkter Bild-Upload ist
+                verfügbar, sobald der Laden angelegt ist (unter „Bearbeiten“).
+              </p>
+            </>
+          )}
         </div>
       </section>
 

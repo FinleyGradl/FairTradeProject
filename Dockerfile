@@ -58,9 +58,9 @@ COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
 COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 
-# Upload directory
-RUN mkdir -p /app/public/uploads/avatars
+# Upload directories
+RUN mkdir -p /app/public/uploads/avatars /app/public/uploads/stores
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "mkdir -p /app/public/uploads/avatars && node server.js"]
+CMD ["sh", "-c", "mkdir -p /app/public/uploads/avatars /app/public/uploads/stores && node server.js"]

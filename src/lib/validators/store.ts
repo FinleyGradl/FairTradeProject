@@ -26,7 +26,16 @@ export const storeBaseSchema = z.object({
   phone: z.string().max(40).optional().or(z.literal("")),
   website: z.string().url().optional().or(z.literal("")),
   email: z.string().email().optional().or(z.literal("")),
-  coverImage: z.string().url().optional().or(z.literal("")),
+  // Either a full external URL (someone pastes a link to a hosted photo)
+  // or one of our own uploaded-file paths from POST /cover, which is a
+  // relative path rather than an absolute URL — see lib/uploads.ts.
+  coverImage: z
+    .string()
+    .refine((v) => v.startsWith("/api/uploads/stores/") || z.string().url().safeParse(v).success, {
+      message: "Ungültige Bild-URL.",
+    })
+    .optional()
+    .or(z.literal("")),
   fairBadges: z.array(fairBadgeEnum).max(4).optional(),
   categories: z.array(z.string()).max(6).optional(),
   hours: z.array(storeHourInputSchema).max(7).optional(),

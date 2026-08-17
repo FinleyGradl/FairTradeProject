@@ -95,9 +95,9 @@ export async function getStores(params: {
 
   if (q) {
     where.OR = [
-      { name: { contains: q } },
-      { description: { contains: q } },
-      { city: { contains: q } },
+      { name: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+      { categories: { contains: q, mode: "insensitive" } },
     ];
   }
 
@@ -207,8 +207,9 @@ export async function searchProducts(params: {
   const where: Prisma.ProductWhereInput = {};
   if (q) {
     where.OR = [
-      { name: { contains: q } },
-      { description: { contains: q } },
+      { name: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+      { category: { contains: q, mode: "insensitive" } },
     ];
   }
   if (category) where.category = { contains: category };

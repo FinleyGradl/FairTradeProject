@@ -1,4 +1,4 @@
-// path: src/lib/stores.ts
+// src/lib/stores.ts
 import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray, slugify } from "@/lib/utils";
@@ -678,7 +678,13 @@ export async function upsertReview(
 ): Promise<{ error: "NOT_FOUND" | "OWN_STORE" } | { review: Review }> {
   const store = await prisma.store.findUnique({ where: { slug: storeSlug } });
   if (!store) return { error: "NOT_FOUND" };
-  if (store.createdById === userId || store.ownerUserId === userId) {
+  // Only the current owner (or the creator, while the store is still
+  // unclaimed) is "responsible" for the listing. Once someone else has
+  // claimed it, the original creator is just a regular user again and is
+  // free to review it.
+  const isResponsible =
+    store.ownerUserId === userId || (store.createdById === userId && store.ownerUserId === null);
+  if (isResponsible) {
     return { error: "OWN_STORE" };
   }
 
@@ -835,7 +841,11 @@ export async function castAttestation(
   // The submitter/owner vouching for their own listing wouldn't mean much
   // as an "independent" confirmation, so they're excluded from voting on
   // it — they can still fix problems directly by editing the listing.
-  if (store.createdById === userId || store.ownerUserId === userId) {
+  // Once someone else has claimed the store, the original creator is no
+  // longer "responsible" for it and can vote like anyone else.
+  const isResponsible =
+    store.ownerUserId === userId || (store.createdById === userId && store.ownerUserId === null);
+  if (isResponsible) {
     return { error: "OWN_STORE" };
   }
 

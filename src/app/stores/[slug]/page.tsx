@@ -1,4 +1,4 @@
-// path: src/app/stores/[slug]/page.tsx
+// src/app/stores/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -72,8 +72,13 @@ export default async function StoreDetailPage({ params }: PageProps) {
   const canViewInsights = await canManageSponsorship(store, session?.user);
   const initialSaved = session?.user ? await isStoreSaved(store.id, session.user.id) : false;
   const isSignedIn = Boolean(session?.user);
+  // Only the current owner (or the creator, while the store is still
+  // unclaimed) counts as "own store" here — once someone else has claimed
+  // it, the original creator can review/attest like anyone else.
   const isOwnStore = Boolean(
-    session?.user && (store.ownerUserId === session.user.id || store.createdById === session.user.id)
+    session?.user &&
+      (store.ownerUserId === session.user.id ||
+        (store.createdById === session.user.id && store.ownerUserId === null))
   );
 
   const open = isOpenNow(store.hours);

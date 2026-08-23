@@ -45,6 +45,19 @@ enum AttestationVote {
   dispute
 }
 
+enum SponsorshipTier {
+  basic
+  plus
+  top
+}
+
+enum SponsorshipStatus {
+  incomplete // first (mandate) payment created at Mollie, not confirmed yet
+  active
+  past_due // renewal payment failed, Mollie will retry
+  canceled
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -68,6 +81,7 @@ model User {
   claims        StoreClaim[]
   claimsReviewed StoreClaim[] @relation("ClaimReviewer")
   attestations  StoreAttestation[]
+  sponsorships  SponsorshipSubscription[]
 
   accounts             Account[]
   sessions             Session[]
@@ -177,6 +191,76 @@ model Store {
   claims    StoreClaim[]
   photos    StorePhoto[]
   attestations StoreAttestation[]
+  sponsorships SponsorshipSubscription[]
+  pageViews    PageView[]
+  searchImpressions SearchImpression[]
+}
+
+// --- Sponsoring (paid preferred placement) ----------------------------------
+
+model SponsorshipSubscription {
+  id          String            @id @default(cuid())
+  storeId     String
+  ownerUserId String
+  tier        SponsorshipTier
+  status      SponsorshipStatus @default(incomplete)
+
+  // Mollie references. The "first" payment establishes a mandate; once it's
+  // paid we create a recurring Mollie subscription and store its id here.
+  // See lib/mollie.ts + app/api/webhooks/mollie/route.ts.
+  mollieCustomerId     String?
+  mollieSubscriptionId String?
+  molliePaymentId      String?
+
+  // Optional dev/promo code redeemed at checkout (see lib/promo-codes.ts).
+  // A 100%-off code skips Mollie entirely; partial discounts reduce the
+  // amount sent to Mollie. Kept for audit purposes even after redemption.
+  promoCode       String?
+  discountPercent Int     @default(0)
+
+  currentPeriodEnd DateTime?
+  canceledAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  owner User  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([status])
+  @@index([mollieSubscriptionId])
+}
+
+// --- Analytics / Insights ----------------------------------------------------
+// Deliberately minimal & privacy-conscious: no raw IP addresses are stored,
+// no cross-day tracking identifiers. See lib/analytics.ts for how
+// `visitorHash` is derived (daily-rotating salted hash) and lib/geo-ip.ts for
+// the best-effort, header-first country lookup.
+
+model PageView {
+  id           String   @id @default(cuid())
+  storeId      String
+  path         String
+  referrerUrl  String?
+  referrerHost String?
+  country      String?
+  visitorHash  String
+  createdAt    DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
+}
+
+model SearchImpression {
+  id        String   @id @default(cuid())
+  storeId   String
+  query     String?
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
 }
 
 model StoreAttestation {

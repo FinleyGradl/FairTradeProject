@@ -1,3 +1,4 @@
+// path: src/components/store/StoreCard.tsx
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { RatingStars } from "./RatingStars";
 import { FairBadges } from "./FairBadges";
 import { DistanceBadge } from "./DistanceBadge";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { SponsoredBadge } from "./SponsoredBadge";
 import { getOpenStatusLabel, isOpenNow, type StoreHourRow } from "@/lib/hours";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ export interface StoreCardData {
   distanceM?: number;
   hours?: StoreHourRow[];
   verificationLevel?: "unverified" | "community" | "admin";
+  isSponsored?: boolean;
 }
 
 interface StoreCardProps {
@@ -60,6 +63,9 @@ export function StoreCard({ store, className }: StoreCardProps) {
             >
               {statusLabel}
             </Badge>
+          )}
+          {store.isSponsored && (
+            <SponsoredBadge className="absolute right-3 top-3" />
           )}
         </div>
         <CardContent className="p-4">

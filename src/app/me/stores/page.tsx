@@ -1,12 +1,19 @@
+// path: src/app/me/stores/page.tsx
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Store as StoreIcon, Pencil, Clock } from "lucide-react";
+import { Store as StoreIcon, Pencil, Clock, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
 import { getUserStoreOverview } from "@/lib/stores";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
+
+const SPONSORSHIP_STATUS_LABEL: Record<string, string> = {
+  incomplete: "Zahlung ausstehend",
+  active: "Gesponsert",
+  past_due: "Zahlung fehlgeschlagen",
+};
 
 export const metadata: Metadata = { title: "Meine Läden" };
 
@@ -72,16 +79,35 @@ export default async function MyStoresPage() {
                   {store.ownerUserId === session.user.id && (
                     <Badge variant="outline">Inhaber:in</Badge>
                   )}
+                  {store.sponsorship && (
+                    <Badge variant={store.sponsorship.status === "active" ? "success" : "secondary"}>
+                      {SPONSORSHIP_STATUS_LABEL[store.sponsorship.status] ?? store.sponsorship.status}
+                    </Badge>
+                  )}
                 </div>
                 <p className="truncate text-sm text-earth/60">
                   {store.addressLine}, {store.city}
                 </p>
               </div>
-              <Link href={`/stores/${store.slug}/edit`}>
-                <Button variant="outline" size="sm" className="gap-1">
-                  <Pencil className="h-3.5 w-3.5" /> Bearbeiten
-                </Button>
-              </Link>
+              <div className="flex shrink-0 gap-2">
+                <Link href={`/me/stores/${store.slug}/insights`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <BarChart3 className="h-3.5 w-3.5" /> Insights
+                  </Button>
+                </Link>
+                {store.ownerUserId === session.user.id && (
+                  <Link href={`/me/stores/${store.slug}/sponsoring`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Megaphone className="h-3.5 w-3.5" /> Sponsoring
+                    </Button>
+                  </Link>
+                )}
+                <Link href={`/stores/${store.slug}/edit`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <Pencil className="h-3.5 w-3.5" /> Bearbeiten
+                  </Button>
+                </Link>
+              </div>
             </div>
           ))}
         </div>

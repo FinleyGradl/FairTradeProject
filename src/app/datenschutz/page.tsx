@@ -1,3 +1,4 @@
+// path: src/app/datenschutz/page.tsx
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Datenschutzerklärung" };
@@ -93,17 +94,59 @@ export default function DatenschutzPage() {
       </section>
 
       <section className="mt-6 space-y-2">
-        <h2 className="font-semibold">7. Cookies &amp; Analyse-Tools</h2>
+        <h2 className="font-semibold">7. Sponsoring &amp; Zahlungsabwicklung (Mollie)</h2>
         <p>
-          [HIER EINTRAGEN, falls Analytics/Tracking-Cookies eingesetzt werden, z. B. Plausible
-          oder Google Analytics — inkl. Rechtsgrundlage/Consent-Banner. Falls (noch) keine
-          Analyse-Tools verwendet werden, diesen Absatz durch einen entsprechenden Hinweis
-          ersetzen: &bdquo;Wir setzen aktuell keine Analyse- oder Tracking-Cookies ein.&ldquo;]
+          Store-Inhaber:innen können ein kostenpflichtiges, monatlich kündbares Sponsoring-Abo
+          abschließen, um ihren Laden in Suche, Kategorien und ggf. auf der Startseite bevorzugt
+          anzeigen zu lassen (deutlich als &bdquo;Gesponsert&ldquo; gekennzeichnet). Zur
+          Zahlungsabwicklung setzen wir den Zahlungsdienstleister Mollie B.V., Keizersgracht 313,
+          1016 EE Amsterdam, Niederlande, ein. Dabei werden Name, E-Mail-Adresse und die zur
+          Zahlungsabwicklung erforderlichen Zahlungsdaten an Mollie übermittelt; Mollie
+          verarbeitet diese Daten als eigenständig Verantwortlicher gemäß der
+          Datenschutzerklärung von Mollie (https://www.mollie.com/de/privacy). Rechtsgrundlage
+          ist die Vertragserfüllung des Sponsoring-Abos (Art. 6 Abs. 1 lit. b DSGVO). Zahlungsdaten
+          selbst (z. B. Kartennummern) verarbeiten wir nicht auf unseren eigenen Servern — diese
+          verbleiben bei Mollie.
         </p>
       </section>
 
       <section className="mt-6 space-y-2">
-        <h2 className="font-semibold">8. Deine Rechte</h2>
+        <h2 className="font-semibold">8. Insights &amp; Reichweitenmessung</h2>
+        <p>
+          Für Aufrufe von Store-Detailseiten erfassen wir eigene, serverseitige Statistiken, die
+          wir Store-Inhaber:innen in einer Insights-Übersicht (Aufrufe im Zeitverlauf, Herkunft,
+          grober Standort, Suchanfragen) bereitstellen — vergleichbar mit einfachen Kennzahlen aus
+          Google Analytics oder der Google Search Console, jedoch ohne Drittanbieter-Tracking. Wir
+          erfassen dabei:
+        </p>
+        <ul className="list-disc space-y-1 pl-6">
+          <li>die aufgerufene Seite und die Referrer-URL (falls vorhanden)</li>
+          <li>
+            einen groben, meist zweistelligen Länder-Code, wenn dieser von unserem Hoster/Proxy
+            mitgeliefert wird oder — falls nicht — über einen externen Geolokalisierungsdienst
+            (ipapi.co) ermittelbar ist; in letzterem Fall wird deine IP-Adresse einmalig zu diesem
+            Zweck an ipapi.co übertragen
+          </li>
+          <li>
+            einen täglich neu berechneten, gesalzenen Hash-Wert aus anonymisierter IP-Adresse und
+            Browser-Kennung zur groben Schätzung eindeutiger Besucher:innen — dieser Wert lässt
+            sich nicht auf deine tatsächliche IP-Adresse zurückrechnen und ändert sich täglich, ist
+            also nicht zur Nachverfolgung über mehrere Tage hinweg geeignet
+          </li>
+        </ul>
+        <p>
+          Wir speichern zu keinem Zeitpunkt vollständige IP-Adressen und setzen dafür keine
+          Cookies. Ergänzend erfassen wir, wie oft ein Store in Such- und Kategorie-Ergebnissen
+          erscheint (&bdquo;Impressionen&ldquo;), um Store-Inhaber:innen ähnliche Kennzahlen wie in
+          der Google Search Console anzeigen zu können. Rechtsgrundlage ist unser berechtigtes
+          Interesse sowie das der Store-Inhaber:innen an nachvollziehbaren Reichweitenzahlen (Art.
+          6 Abs. 1 lit. f DSGVO). Einzelne Seitenaufrufe werden nach 12 Monaten automatisiert
+          gelöscht bzw. aggregiert.
+        </p>
+      </section>
+
+      <section className="mt-6 space-y-2">
+        <h2 className="font-semibold">9. Deine Rechte</h2>
         <p>Du hast jederzeit das Recht auf:</p>
         <ul className="list-disc space-y-1 pl-6">
           <li>Auskunft über deine gespeicherten Daten (Art. 15 DSGVO)</li>

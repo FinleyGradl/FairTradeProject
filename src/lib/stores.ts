@@ -2,6 +2,9 @@ import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray, slugify } from "@/lib/utils";
 import { TRUST_SCORE_DELTAS, ATTESTATION_THRESHOLDS } from "@/lib/trust";
+import { computeRankingScore } from "@/lib/sponsorship";
+import { recordSearchImpressions } from "@/lib/analytics";
+import { SPONSORSHIP_TIERS, SPONSORSHIP_TIER_ORDER, type SponsorshipTierId } from "@/lib/constants";
 import type { StoreCreateInput, StoreUpdateInput } from "@/lib/validators/store";
 import type {
   Prisma,
@@ -11,6 +14,16 @@ import type {
   StoreHours,
   AttestationVote,
 } from "../../prisma/generated/prisma/client";
+
+/** storeId -> active sponsorship tier, for a batch of stores. */
+async function getActiveSponsorTiers(storeIds: string[]): Promise<Map<string, SponsorshipTierId>> {
+  if (storeIds.length === 0) return new Map();
+  const active = await prisma.sponsorshipSubscription.findMany({
+    where: { storeId: { in: storeIds }, status: "active" },
+    select: { storeId: true, tier: true },
+  });
+  return new Map(active.map((s) => [s.storeId, s.tier as SponsorshipTierId]));
+}
 
 export type StoreWithRelations = Store & {
   hours: StoreHours[];
@@ -24,6 +37,7 @@ export type StoreListItem = Store & {
   avgRating: number | null;
   reviewCount: number;
   distanceM?: number;
+  sponsorTier?: SponsorshipTierId | null;
 };
 
 function computeAvgRating(reviews: Review[]): number | null {
@@ -35,13 +49,15 @@ function computeAvgRating(reviews: Review[]): number | null {
 
 function enrichStore(
   store: Store & { hours: StoreHours[]; reviews: Review[] },
-  distanceM?: number
+  distanceM?: number,
+  sponsorTier?: SponsorshipTierId | null
 ): StoreListItem {
   return {
     ...store,
     avgRating: computeAvgRating(store.reviews),
     reviewCount: store.reviews.filter((r) => r.status === "published").length,
     distanceM,
+    sponsorTier: sponsorTier ?? null,
   };
 }
 
@@ -74,6 +90,8 @@ export function serializeStore(store: StoreListItem) {
     distanceM: store.distanceM,
     hours: store.hours,
     isOpen: store.hours.length > 0,
+    isSponsored: Boolean(store.sponsorTier),
+    sponsorTier: store.sponsorTier ?? null,
   };
 }
 
@@ -110,7 +128,8 @@ export async function getStores(params: {
     orderBy: { name: "asc" },
   });
 
-  let enriched: StoreListItem[] = stores.map((s) => enrichStore(s));
+  const sponsorTiers = await getActiveSponsorTiers(stores.map((s) => s.id));
+  let enriched: StoreListItem[] = stores.map((s) => enrichStore(s, undefined, sponsorTiers.get(s.id)));
 
   if (category) {
     enriched = enriched.filter((s) =>
@@ -130,9 +149,41 @@ export async function getStores(params: {
     enriched = filterByRadius(enriched, lat, lng, radius);
   }
 
+  // Ranking: quality score (rating, review volume, verification, freshness)
+  // plus a sponsoring boost, minus a gentle distance penalty. See
+  // computeRankingScore() in lib/sponsorship.ts for the exact weights —
+  // sponsoring nudges ranking within an already-filtered result set, it
+  // never bypasses the query/category/radius filters above.
+  enriched.sort((a, b) => {
+    const scoreA = computeRankingScore({
+      avgRating: a.avgRating,
+      reviewCount: a.reviewCount,
+      verificationLevel: a.verificationLevel,
+      createdAt: a.createdAt,
+      distanceM: a.distanceM,
+      sponsorBoostWeight: a.sponsorTier ? SPONSORSHIP_TIERS[a.sponsorTier].boostWeight : 0,
+    });
+    const scoreB = computeRankingScore({
+      avgRating: b.avgRating,
+      reviewCount: b.reviewCount,
+      verificationLevel: b.verificationLevel,
+      createdAt: b.createdAt,
+      distanceM: b.distanceM,
+      sponsorBoostWeight: b.sponsorTier ? SPONSORSHIP_TIERS[b.sponsorTier].boostWeight : 0,
+    });
+    return scoreB - scoreA;
+  });
+
   const total = enriched.length;
   const offset = (page - 1) * limit;
   const paginated = enriched.slice(offset, offset + limit);
+
+  // Like Search Console "impressions": count every store shown on a result
+  // page while a search/filter query was active. Fire-and-forget — never
+  // block or fail the actual response over analytics.
+  if (q) {
+    void recordSearchImpressions(paginated.map((s) => s.id), q);
+  }
 
   return {
     stores: paginated.map(serializeStore),
@@ -158,14 +209,17 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
 
   if (!store) return null;
 
-  const myVote = viewerId
-    ? await prisma.storeAttestation.findUnique({
-        where: { storeId_userId: { storeId: store.id, userId: viewerId } },
-        select: { vote: true },
-      })
-    : null;
+  const [myVote, sponsorTiers] = await Promise.all([
+    viewerId
+      ? prisma.storeAttestation.findUnique({
+          where: { storeId_userId: { storeId: store.id, userId: viewerId } },
+          select: { vote: true },
+        })
+      : null,
+    getActiveSponsorTiers([store.id]),
+  ]);
 
-  const listItem = enrichStore(store);
+  const listItem = enrichStore(store, undefined, sponsorTiers.get(store.id));
   return {
     ...serializeStore(listItem),
     myVote: myVote?.vote ?? null,
@@ -245,17 +299,35 @@ export async function searchProducts(params: {
 }
 
 export async function getFeaturedStores(limit = 6) {
-  const stores = await prisma.store.findMany({
+  // Fetch a slightly larger pool so sponsored (plus/top tier) stores have
+  // reviews/badges to be blended in among, rather than only ever showing
+  // sponsored stores when there happen to be `limit`-or-fewer active stores.
+  const pool = await prisma.store.findMany({
     where: { status: "active" },
     include: {
       hours: true,
       reviews: { where: { status: "published" } },
     },
-    take: limit,
+    take: Math.max(limit * 4, 24),
     orderBy: { createdAt: "desc" },
   });
 
-  return stores.map((s) => serializeStore(enrichStore(s)));
+  const sponsorTiers = await getActiveSponsorTiers(pool.map((s) => s.id));
+  const enriched = pool.map((s) => enrichStore(s, undefined, sponsorTiers.get(s.id)));
+
+  enriched.sort((a, b) => {
+    const weightA = a.sponsorTier ? SPONSORSHIP_TIERS[a.sponsorTier].boostWeight : 0;
+    const weightB = b.sponsorTier ? SPONSORSHIP_TIERS[b.sponsorTier].boostWeight : 0;
+    // Only the two higher tiers ("plus"/"top") buy featured placement on the
+    // homepage — see SPONSORSHIP_TIERS. Basic only boosts search/category
+    // ranking (handled in getStores above).
+    const featuredWeightA = weightA >= SPONSORSHIP_TIERS.plus.boostWeight ? weightA : 0;
+    const featuredWeightB = weightB >= SPONSORSHIP_TIERS.plus.boostWeight ? weightB : 0;
+    if (featuredWeightA !== featuredWeightB) return featuredWeightB - featuredWeightA;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  return enriched.slice(0, limit).map((s) => serializeStore(s));
 }
 
 export async function getActiveStoreCount() {
@@ -519,7 +591,21 @@ export async function getUserStoreOverview(userId: string) {
     }),
   ]);
 
-  return { stores: createdOrOwned, claims };
+  const sponsorships = await prisma.sponsorshipSubscription.findMany({
+    where: {
+      storeId: { in: createdOrOwned.map((s) => s.id) },
+      status: { in: ["incomplete", "active", "past_due"] },
+    },
+    select: { storeId: true, tier: true, status: true },
+  });
+  const sponsorshipByStore = new Map(sponsorships.map((s) => [s.storeId, s]));
+
+  const stores = createdOrOwned.map((store) => ({
+    ...store,
+    sponsorship: sponsorshipByStore.get(store.id) ?? null,
+  }));
+
+  return { stores, claims };
 }
 
 // --- Community attestations -------------------------------------------------

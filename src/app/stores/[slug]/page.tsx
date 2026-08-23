@@ -1,8 +1,9 @@
+// path: src/app/stores/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil } from "lucide-react";
+import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
 import { getStoreBySlug, canEditStore } from "@/lib/stores";
 import { RatingStars } from "@/components/store/RatingStars";
@@ -14,6 +15,8 @@ import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { ReviewForm } from "@/components/store/ReviewForm";
 import { DistanceFromYou } from "@/components/store/DistanceFromYou";
+import { SponsoredBadge } from "@/components/store/SponsoredBadge";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getOpenStatusLabel, isOpenNow } from "@/lib/hours";
@@ -84,6 +87,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <PageViewTracker storeId={store.id} path={`/stores/${store.slug}`} />
 
       {/* Hero */}
       <div className="relative h-64 bg-sage-100 md:h-80">
@@ -104,6 +108,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-3xl font-bold md:text-4xl">{store.name}</h1>
               <VerifiedBadge level={store.verificationLevel} />
+              {store.isSponsored && <SponsoredBadge />}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {store.avgRating != null && (
@@ -130,11 +135,27 @@ export default async function StoreDetailPage({ params }: PageProps) {
           <SaveButton storeId={store.id} />
           <ShareButton title={store.name} />
           {canEdit ? (
-            <Link href={`/stores/${store.slug}/edit`} className="ml-auto">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Pencil className="h-3.5 w-3.5" /> Bearbeiten
-              </Button>
-            </Link>
+            <div className="ml-auto flex gap-2">
+              {store.ownerUserId === session?.user?.id && (
+                <>
+                  <Link href={`/me/stores/${store.slug}/insights`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <BarChart3 className="h-3.5 w-3.5" /> Insights
+                    </Button>
+                  </Link>
+                  <Link href={`/me/stores/${store.slug}/sponsoring`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Megaphone className="h-3.5 w-3.5" /> Sponsoring
+                    </Button>
+                  </Link>
+                </>
+              )}
+              <Link href={`/stores/${store.slug}/edit`}>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Bearbeiten
+                </Button>
+              </Link>
+            </div>
           ) : !store.ownerUserId ? (
             <Link href={`/claim/${store.slug}`} className="ml-auto">
               <Button variant="outline" size="sm">

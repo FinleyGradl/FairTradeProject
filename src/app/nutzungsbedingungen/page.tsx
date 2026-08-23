@@ -1,3 +1,4 @@
+// path: src/app/nutzungsbedingungen/page.tsx
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Nutzungsbedingungen" };
@@ -74,7 +75,42 @@ export default function NutzungsbedingungenPage() {
       </section>
 
       <section className="mt-6 space-y-2">
-        <h2 className="font-semibold">6. Haftungsausschluss</h2>
+        <h2 className="font-semibold">6. Sponsoring (bezahlte Hervorhebung)</h2>
+        <p>
+          Bestätigte Inhaber:innen eines Store-Eintrags können ein kostenpflichtiges,
+          monatliches Sponsoring-Abo abschließen. Dies bewirkt eine bevorzugte Platzierung in
+          Suchergebnissen, Kategorie-Listen und ggf. auf der Startseite gemäß dem in der
+          Plattform hinterlegten Ranking-Algorithmus. Es gilt dabei:
+        </p>
+        <ul className="list-disc space-y-1 pl-6">
+          <li>
+            Gesponserte Einträge werden für alle Nutzer:innen deutlich und dauerhaft als
+            &bdquo;Gesponsert&ldquo; gekennzeichnet.
+          </li>
+          <li>
+            Sponsoring verschafft eine zusätzliche Platzierungsbewertung (&bdquo;Boost&ldquo;),
+            garantiert aber keine bestimmte Position und ersetzt nicht die Bewertung von
+            Qualitätsfaktoren wie Rezensionen, Verifizierungsstatus oder Entfernung.
+          </li>
+          <li>
+            Die Zahlungsabwicklung erfolgt über unseren Zahlungsdienstleister Mollie (siehe
+            Datenschutzerklärung); mit Bestätigung der Zahlung wird ein monatlich
+            wiederkehrendes Abonnement eingerichtet.
+          </li>
+          <li>
+            Das Abo ist jederzeit zum Ende der laufenden Abrechnungsperiode über die
+            Sponsoring-Verwaltung im eigenen Konto kündbar. Eine anteilige Erstattung bereits
+            gezahlter Beträge erfolgt nicht.
+          </li>
+          <li>
+            Wir behalten uns vor, ein Sponsoring bei Verstößen gegen diese Nutzungsbedingungen
+            (z. B. irreführende Store-Inhalte) ohne Erstattung zu beenden.
+          </li>
+        </ul>
+      </section>
+
+      <section className="mt-6 space-y-2">
+        <h2 className="font-semibold">7. Haftungsausschluss</h2>
         <p>
           Wir haften nicht für die Richtigkeit, Vollständigkeit oder Aktualität von Store- und
           Produktinformationen sowie nutzergenerierten Bewertungen. Die Nutzung der Plattform

@@ -27,6 +27,24 @@ export async function canManageSponsorship(
 }
 
 /**
+ * Insights are gated behind an active subscription — every paid tier
+ * (including Basis) includes them, see includesInsights in
+ * lib/constants.ts. Admins/moderators can always look, for oversight.
+ */
+export async function canAccessInsights(
+  store: Pick<Store, "id" | "ownerUserId" | "createdById">,
+  user: { id?: string; role?: string } | null | undefined
+): Promise<boolean> {
+  if (!user?.id) return false;
+  if (user.role === "admin" || user.role === "moderator") return true;
+  if (store.ownerUserId !== user.id) return false;
+
+  const sub = await getActiveSponsorship(store.id);
+  if (!sub || sub.status !== "active") return false;
+  return SPONSORSHIP_TIERS[sub.tier as SponsorshipTierId].includesInsights;
+}
+
+/**
  * Starts (or restarts) a sponsorship: creates/reuses a Mollie customer for
  * the user and kicks off a "first" payment to establish a mandate. The
  * SponsorshipSubscription row is created in `incomplete` status; the webhook
@@ -141,6 +159,9 @@ export async function cancelSponsorship(storeId: string) {
 // can't buy your way into results that don't match what someone searched
 // for. Sponsored stores are always visually labeled ("Gesponsert"), per the
 // transparency requirement for paid placement (§ 5a UWG / Medienstaatsvertrag).
+// Note: the Basis tier has boostWeight 0 — it unlocks Insights only, no
+// ranking boost and no "Gesponsert" badge (see includesSponsoredBadge in
+// lib/constants.ts).
 
 export interface RankingInput {
   avgRating: number | null;
@@ -157,7 +178,7 @@ const VERIFICATION_BONUS: Record<RankingInput["verificationLevel"], number> = {
   admin: 25,
 };
 
-const SPONSOR_BOOST_PER_WEIGHT = 40; // basic=+40, plus=+80, top=+120
+const SPONSOR_BOOST_PER_WEIGHT = 40; // basic=+0 (no boost), plus=+80, top=+120
 const NEW_LISTING_BONUS_DAYS = 60;
 const NEW_LISTING_MAX_BONUS = 5;
 const DISTANCE_PENALTY_PER_KM = 2;

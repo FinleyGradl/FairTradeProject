@@ -96,7 +96,7 @@ export function serializeStore(store: StoreListItem) {
     distanceM: store.distanceM,
     hours: store.hours,
     isOpen: store.hours.length > 0,
-    isSponsored: Boolean(store.sponsorTier),
+    isSponsored: Boolean(store.sponsorTier && SPONSORSHIP_TIERS[store.sponsorTier].includesSponsoredBadge),
     sponsorTier: store.sponsorTier ?? null,
   };
 }
@@ -743,7 +743,14 @@ export async function getSavedStores(userId: string) {
 export async function getUserStoreOverview(userId: string) {
   const [createdOrOwned, claims] = await Promise.all([
     prisma.store.findMany({
-      where: { OR: [{ createdById: userId }, { ownerUserId: userId }] },
+      // Confirmed owner always sees it. The original submitter only sees
+      // it while it's still unclaimed — once someone else's claim gets
+      // approved and ownerUserId is set to them, it drops off the
+      // creator's dashboard (they've lost every permission on it anyway,
+      // see canEditStore).
+      where: {
+        OR: [{ ownerUserId: userId }, { AND: [{ createdById: userId }, { ownerUserId: null }] }],
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.storeClaim.findMany({

@@ -2,11 +2,12 @@
 import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { canEditStore } from "@/lib/stores";
+import { canManageSponsorship, canAccessInsights } from "@/lib/sponsorship";
 import { InsightsCharts } from "@/components/insights/InsightsCharts";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Insights" };
 
@@ -24,8 +25,33 @@ export default async function StoreInsightsPage({ params }: PageProps) {
   const store = await prisma.store.findUnique({ where: { slug } });
   if (!store) notFound();
 
-  if (!canEditStore(store, session.user)) {
+  // Insights (and sponsoring) are for the *confirmed* owner only — unlike
+  // basic editing, which the original submitter can still do up until
+  // someone else's claim on the store is approved. A pending, unclaimed
+  // listing has no owner to subscribe on its behalf.
+  if (!(await canManageSponsorship(store, session.user))) {
     redirect(`/stores/${slug}`);
+  }
+
+  if (!(await canAccessInsights(store, session.user))) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <Lock className="mx-auto h-10 w-10 text-amber-500" />
+        <h1 className="mt-4 text-xl font-bold text-earth">Insights sind Teil des Sponsorings</h1>
+        <p className="mt-2 text-earth/70">
+          Aufrufe, Herkunft und Suchanfragen zu {store.name} siehst du ab dem Plan &bdquo;Basis&ldquo;
+          — schon ohne Sponsoring-Badge oder Bevorzugung in den Ergebnissen.
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <Link href={`/me/stores/${slug}/sponsoring`}>
+            <Button>Plan ansehen</Button>
+          </Link>
+          <Link href={`/stores/${slug}`}>
+            <Button variant="outline">Zurück zum Laden</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

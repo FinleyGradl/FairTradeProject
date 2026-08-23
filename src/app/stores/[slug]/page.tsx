@@ -181,7 +181,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             isLoggedIn={Boolean(session?.user)}
           />
           <ShareButton title={store.name} />
-          {canEdit ? (
+          {canEdit && (
             <div className="ml-auto flex gap-2">
               {store.ownerUserId === session?.user?.id && (
                 <>
@@ -197,19 +197,30 @@ export default async function StoreDetailPage({ params }: PageProps) {
                   </Link>
                 </>
               )}
+              {/* Editable but unclaimed (e.g. its own creator, or an
+                  admin/moderator) — still offer claiming so this actually
+                  gets a confirmed owner and unlocks Insights/Sponsoring. */}
+              {!store.ownerUserId && (
+                <Link href={`/claim/${store.slug}`}>
+                  <Button variant="outline" size="sm">
+                    Laden beanspruchen
+                  </Button>
+                </Link>
+              )}
               <Link href={`/stores/${store.slug}/edit`}>
                 <Button variant="outline" size="sm" className="gap-1">
                   <Pencil className="h-3.5 w-3.5" /> Bearbeiten
                 </Button>
               </Link>
             </div>
-          ) : !store.ownerUserId ? (
+          )}
+          {!canEdit && !store.ownerUserId && (
             <Link href={`/claim/${store.slug}`} className="ml-auto">
               <Button variant="outline" size="sm">
-                Claim this store
+                Laden beanspruchen
               </Button>
             </Link>
-          ) : null}
+          )}
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">

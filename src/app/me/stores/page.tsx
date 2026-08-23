@@ -1,11 +1,13 @@
 // path: src/app/me/stores/page.tsx
+// path: src/app/me/stores/page.tsx
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Store as StoreIcon, Pencil, Clock, BarChart3, Megaphone, ArrowRightLeft } from "lucide-react";
+import { Store as StoreIcon, Pencil, Clock, BarChart3, Megaphone, ArrowRightLeft, Lock } from "lucide-react";
 import { auth } from "@/auth";
 import { getUserStoreOverview } from "@/lib/stores";
 import { getIncomingTransfers } from "@/lib/ownership-transfer";
+import { SPONSORSHIP_TIERS, type SponsorshipTierId } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
@@ -13,7 +15,7 @@ import { IncomingTransfersList } from "@/components/store/IncomingTransfersList"
 
 const SPONSORSHIP_STATUS_LABEL: Record<string, string> = {
   incomplete: "Zahlung ausstehend",
-  active: "Gesponsert",
+  active: "Aktiv",
   past_due: "Zahlung fehlgeschlagen",
 };
 
@@ -103,7 +105,11 @@ export default async function MyStoresPage() {
                   )}
                   {store.sponsorship && (
                     <Badge variant={store.sponsorship.status === "active" ? "success" : "secondary"}>
-                      {SPONSORSHIP_STATUS_LABEL[store.sponsorship.status] ?? store.sponsorship.status}
+                      {store.sponsorship.status === "active"
+                        ? SPONSORSHIP_TIERS[store.sponsorship.tier as SponsorshipTierId].includesSponsoredBadge
+                          ? "Gesponsert"
+                          : "Insights aktiv"
+                        : SPONSORSHIP_STATUS_LABEL[store.sponsorship.status] ?? store.sponsorship.status}
                     </Badge>
                   )}
                   {store.pendingTransfer && (
@@ -118,11 +124,19 @@ export default async function MyStoresPage() {
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
-                <Link href={`/me/stores/${store.slug}/insights`}>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <BarChart3 className="h-3.5 w-3.5" /> Insights
-                  </Button>
-                </Link>
+                {store.ownerUserId === session.user.id && (
+                  <Link href={`/me/stores/${store.slug}/insights`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      {store.sponsorship?.status === "active" &&
+                      SPONSORSHIP_TIERS[store.sponsorship.tier as SponsorshipTierId].includesInsights ? (
+                        <BarChart3 className="h-3.5 w-3.5" />
+                      ) : (
+                        <Lock className="h-3.5 w-3.5" />
+                      )}
+                      Insights
+                    </Button>
+                  </Link>
+                )}
                 {store.ownerUserId === session.user.id && (
                   <Link href={`/me/stores/${store.slug}/sponsoring`}>
                     <Button variant="outline" size="sm" className="gap-1">

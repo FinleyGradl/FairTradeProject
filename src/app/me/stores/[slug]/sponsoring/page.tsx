@@ -37,10 +37,11 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
       </Link>
       <h1 className="text-2xl font-bold text-earth">Sponsoring für {store.name}</h1>
       <p className="mt-1 text-sm text-earth/70">
-        Sponsoring erhöht deine Platzierung in Suche, Kategorien und (ab Plan &bdquo;Plus&ldquo;)
-        auf der Startseite. Gesponserte Läden werden für alle Besucher:innen transparent als
-        &bdquo;Gesponsert&ldquo; gekennzeichnet. Die Zahlung läuft monatlich über Mollie und ist
-        jederzeit kündbar.
+        Jeder Plan gibt dir Zugriff auf die Insights-Übersicht (Aufrufe, Herkunft,
+        Suchanfragen). Ab Plan &bdquo;Plus&ldquo; kommen zusätzlich das &bdquo;Gesponsert&ldquo;-Badge
+        und eine bessere Platzierung in Suche, Kategorien und auf der Startseite dazu. Gesponserte
+        Läden werden für alle Besucher:innen transparent gekennzeichnet. Die Zahlung läuft
+        monatlich über Mollie und ist jederzeit kündbar.
       </p>
 
       <div className="mt-8">

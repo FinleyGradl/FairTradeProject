@@ -2,12 +2,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Store as StoreIcon, Pencil, Clock, BarChart3, Megaphone } from "lucide-react";
+import { Store as StoreIcon, Pencil, Clock, BarChart3, Megaphone, ArrowRightLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { getUserStoreOverview } from "@/lib/stores";
+import { getIncomingTransfers } from "@/lib/ownership-transfer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
+import { IncomingTransfersList } from "@/components/store/IncomingTransfersList";
 
 const SPONSORSHIP_STATUS_LABEL: Record<string, string> = {
   incomplete: "Zahlung ausstehend",
@@ -37,6 +39,7 @@ export default async function MyStoresPage() {
   }
 
   const { stores, claims } = await getUserStoreOverview(session.user.id);
+  const incomingTransfers = await getIncomingTransfers(session.user.id);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -50,6 +53,25 @@ export default async function MyStoresPage() {
         Läden, die du eingereicht hast oder als Inhaber:in verwaltest, sowie deine offenen
         Beanspruchungen.
       </p>
+
+      {incomingTransfers.length > 0 && (
+        <>
+          <h2 className="mt-8 flex items-center gap-2 text-lg font-semibold text-earth">
+            <ArrowRightLeft className="h-5 w-5 text-sage" /> Übertragungsanfragen an dich
+          </h2>
+          <div className="mt-4">
+            <IncomingTransfersList
+              transfers={incomingTransfers.map((t) => ({
+                token: t.token,
+                store: { slug: t.store.slug, name: t.store.name, city: t.store.city },
+                fromName: t.fromUser.name ?? t.fromUser.email,
+                message: t.message,
+                expiresAt: t.expiresAt.toISOString(),
+              }))}
+            />
+          </div>
+        </>
+      )}
 
       {stores.length === 0 ? (
         <div className="mt-8">
@@ -82,6 +104,12 @@ export default async function MyStoresPage() {
                   {store.sponsorship && (
                     <Badge variant={store.sponsorship.status === "active" ? "success" : "secondary"}>
                       {SPONSORSHIP_STATUS_LABEL[store.sponsorship.status] ?? store.sponsorship.status}
+                    </Badge>
+                  )}
+                  {store.pendingTransfer && (
+                    <Badge variant="outline" className="border-amber-400 text-amber-700">
+                      Übertragung ausstehend an{" "}
+                      {store.pendingTransfer.toUser.name ?? store.pendingTransfer.toUser.email}
                     </Badge>
                   )}
                 </div>

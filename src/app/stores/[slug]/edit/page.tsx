@@ -1,3 +1,4 @@
+// path: src/app/stores/[slug]/edit/page.tsx
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -5,6 +6,7 @@ import { ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { getStoreForEdit, canEditStore } from "@/lib/stores";
 import { StoreForm, type StoreFormValues } from "@/components/store/StoreForm";
+import { TransferStoreCard } from "@/components/store/TransferStoreCard";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
@@ -94,6 +96,12 @@ export default async function EditStorePage({ params }: PageProps) {
       <div className="mt-8">
         <StoreForm mode="edit" initialValues={initialValues} storeSlug={slug} />
       </div>
+
+      {store.ownerUserId === session.user.id && (
+        <div className="mt-8">
+          <TransferStoreCard storeSlug={slug} />
+        </div>
+      )}
     </div>
   );
 }

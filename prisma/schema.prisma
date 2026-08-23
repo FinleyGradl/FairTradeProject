@@ -59,6 +59,14 @@ enum SponsorshipStatus {
   canceled
 }
 
+enum OwnershipTransferStatus {
+  pending
+  accepted
+  declined
+  canceled // superseded by a newer invite, or canceled by the sender
+  expired
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -86,6 +94,8 @@ model User {
   promoCodesCreated PromoCode[]
   photosUploaded    StorePhoto[]   @relation("PhotoUploader")
   photoReports      PhotoReport[]
+  transfersSent     OwnershipTransfer[] @relation("TransferSender")
+  transfersReceived OwnershipTransfer[] @relation("TransferRecipient")
 
   accounts             Account[]
   sessions             Session[]
@@ -198,6 +208,7 @@ model Store {
   sponsorships SponsorshipSubscription[]
   pageViews    PageView[]
   searchImpressions SearchImpression[]
+  ownershipTransfers OwnershipTransfer[]
 }
 
 // --- Sponsoring (paid preferred placement) ----------------------------------
@@ -252,6 +263,33 @@ model SponsorshipSubscription {
   @@index([storeId])
   @@index([status])
   @@index([mollieSubscriptionId])
+}
+
+// --- Ownership transfer (succession) ----------------------------------------
+// A two-step handover: the current owner invites an already-registered user
+// by email; nothing changes until that person actively accepts (see
+// lib/ownership-transfer.ts). At most one "pending" invite exists per store
+// at a time — starting a new one supersedes the previous. Any active
+// sponsorship is canceled as part of accepting a transfer (a new owner
+// starts their own, if they want one).
+model OwnershipTransfer {
+  id          String                   @id @default(cuid())
+  storeId     String
+  fromUserId  String
+  toUserId    String
+  token       String                   @unique
+  message     String?
+  status      OwnershipTransferStatus  @default(pending)
+  expiresAt   DateTime
+  respondedAt DateTime?
+  createdAt   DateTime                 @default(now())
+
+  store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  fromUser User  @relation("TransferSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User  @relation("TransferRecipient", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status])
+  @@index([toUserId, status])
 }
 
 // --- Analytics / Insights ----------------------------------------------------

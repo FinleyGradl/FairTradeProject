@@ -337,10 +337,12 @@ export async function reportStorePhoto(
 
 /**
  * Gallery photos that have hit PHOTO_REPORT_THRESHOLD distinct reports —
- * surfaced to admins/moderators (sorted by report count, most-reported
- * first), who can then decide to remove the photo or dismiss the reports.
+ * surfaced to admins/moderators, who can then remove them.
  */
 export async function listReportedPhotos() {
+  // Prisma can't filter relations by count threshold directly, so we
+  // prefilter to "has at least one report" and apply the real threshold
+  // in JS below.
   const photos = await prisma.storePhoto.findMany({
     where: { reports: { some: {} } },
     include: {
@@ -760,9 +762,16 @@ export async function getUserStoreOverview(userId: string) {
   });
   const sponsorshipByStore = new Map(sponsorships.map((s) => [s.storeId, s]));
 
+  const pendingTransfers = await prisma.ownershipTransfer.findMany({
+    where: { storeId: { in: createdOrOwned.map((s) => s.id) }, status: "pending" },
+    select: { storeId: true, toUser: { select: { name: true, email: true } } },
+  });
+  const pendingTransferByStore = new Map(pendingTransfers.map((t) => [t.storeId, t]));
+
   const stores = createdOrOwned.map((store) => ({
     ...store,
     sponsorship: sponsorshipByStore.get(store.id) ?? null,
+    pendingTransfer: pendingTransferByStore.get(store.id) ?? null,
   }));
 
   return { stores, claims };

@@ -1,3 +1,4 @@
+// path: prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
   output   = "../prisma/generated/prisma/client"
@@ -82,6 +83,7 @@ model User {
   claimsReviewed StoreClaim[] @relation("ClaimReviewer")
   attestations  StoreAttestation[]
   sponsorships  SponsorshipSubscription[]
+  promoCodesCreated PromoCode[]
 
   accounts             Account[]
   sessions             Session[]
@@ -197,6 +199,25 @@ model Store {
 }
 
 // --- Sponsoring (paid preferred placement) ----------------------------------
+
+// Admin-managed discount/promo codes for sponsorship checkout. Complements
+// (but doesn't replace) the hardcoded dev-only code in lib/promo-codes.ts.
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  discountPercent Int
+  label           String?
+  active          Boolean   @default(true)
+  maxRedemptions  Int?
+  redemptionCount Int       @default(0)
+  expiresAt       DateTime?
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+
+  createdBy User? @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([code])
+}
 
 model SponsorshipSubscription {
   id          String            @id @default(cuid())

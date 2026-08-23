@@ -98,6 +98,11 @@ export default function NutzungsbedingungenPage() {
             wiederkehrendes Abonnement eingerichtet.
           </li>
           <li>
+            Vereinzelt geben wir zeitlich oder mengenmäßig begrenzte Rabattcodes aus (z. B. für
+            Aktionen); Details und Gültigkeit des jeweiligen Codes werden bei Ausgabe
+            kommuniziert.
+          </li>
+          <li>
             Das Abo ist jederzeit zum Ende der laufenden Abrechnungsperiode über die
             Sponsoring-Verwaltung im eigenen Konto kündbar. Eine anteilige Erstattung bereits
             gezahlter Beträge erfolgt nicht.

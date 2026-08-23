@@ -113,13 +113,13 @@ export function SponsoringPlans({
       {!hasActiveLike && (
         <div className="mb-4 max-w-xs">
           <label htmlFor="promo-code" className="mb-1 block text-xs text-earth/60">
-            Rabatt-/Testcode (optional)
+            Rabattcode (optional)
           </label>
           <Input
             id="promo-code"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            placeholder="z. B. DIW3DJV4"
+            placeholder="z. B. SOMMER25"
           />
         </div>
       )}

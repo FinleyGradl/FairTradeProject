@@ -1,7 +1,8 @@
+// path: src/lib/sponsorship.ts
 import { prisma } from "@/lib/db";
 import * as mollie from "@/lib/mollie";
 import { SPONSORSHIP_TIERS, type SponsorshipTierId } from "@/lib/constants";
-import { resolvePromoCode } from "@/lib/promo-codes";
+import { resolvePromoCode, recordPromoRedemption } from "@/lib/promo-codes";
 import type { Store, SponsorshipStatus } from "../../prisma/generated/prisma/client";
 
 const ACTIVE_LIKE_STATUSES: SponsorshipStatus[] = ["incomplete", "active", "past_due"];
@@ -46,7 +47,7 @@ export async function startSponsorship(params: {
   }
 
   const tierDef = SPONSORSHIP_TIERS[params.tier];
-  const promo = resolvePromoCode(params.promoCode);
+  const promo = await resolvePromoCode(params.promoCode);
   const discountPercent = promo?.discountPercent ?? 0;
   const discountedAmount = Math.max(0, tierDef.priceEuros * (1 - discountPercent / 100));
 
@@ -72,6 +73,7 @@ export async function startSponsorship(params: {
         currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       },
     });
+    await recordPromoRedemption(promo.code);
     return { checkoutUrl: null, subscriptionId: record.id, redeemedPromo: true };
   }
 
@@ -179,4 +181,95 @@ export function computeRankingScore(input: RankingInput): number {
   return (
     ratingScore + reviewVolumeBonus + verificationBonus + noviceBonus + sponsorBoost - distancePenalty
   );
+}
+
+// --- Admin: sponsoring overview ----------------------------------------------
+// Who's sponsoring what, plus a rough revenue overview. Deliberately simple
+// (no proration/tax handling) — real invoicing detail lives in Mollie itself,
+// this is an at-a-glance operator dashboard, not accounting.
+
+export interface AdminSponsorshipRow {
+  id: string;
+  storeName: string;
+  storeSlug: string;
+  ownerName: string | null;
+  ownerEmail: string;
+  tier: SponsorshipTierId;
+  status: SponsorshipStatus;
+  promoCode: string | null;
+  discountPercent: number;
+  monthlyAmountEuros: number;
+  createdAt: Date;
+  currentPeriodEnd: Date | null;
+  canceledAt: Date | null;
+}
+
+export interface AdminSponsorshipOverview {
+  rows: AdminSponsorshipRow[];
+  stats: {
+    activeCount: number;
+    pastDueCount: number;
+    incompleteCount: number;
+    canceledCount: number;
+    activeByTier: Record<SponsorshipTierId, number>;
+    estimatedMonthlyRevenueEuros: number;
+  };
+}
+
+export async function getAdminSponsorshipOverview(): Promise<AdminSponsorshipOverview> {
+  const subs = await prisma.sponsorshipSubscription.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      store: { select: { name: true, slug: true } },
+      owner: { select: { name: true, email: true } },
+    },
+  });
+
+  const rows: AdminSponsorshipRow[] = subs.map((s) => {
+    const tierDef = SPONSORSHIP_TIERS[s.tier as SponsorshipTierId];
+    return {
+      id: s.id,
+      storeName: s.store.name,
+      storeSlug: s.store.slug,
+      ownerName: s.owner.name,
+      ownerEmail: s.owner.email,
+      tier: s.tier as SponsorshipTierId,
+      status: s.status,
+      promoCode: s.promoCode,
+      discountPercent: s.discountPercent,
+      monthlyAmountEuros: tierDef.priceEuros * (1 - s.discountPercent / 100),
+      createdAt: s.createdAt,
+      currentPeriodEnd: s.currentPeriodEnd,
+      canceledAt: s.canceledAt,
+    };
+  });
+
+  const activeByTier: Record<SponsorshipTierId, number> = { basic: 0, plus: 0, top: 0 };
+  let estimatedMonthlyRevenueEuros = 0;
+  let activeCount = 0;
+  let pastDueCount = 0;
+  let incompleteCount = 0;
+  let canceledCount = 0;
+
+  for (const row of rows) {
+    if (row.status === "active") {
+      activeCount++;
+      activeByTier[row.tier]++;
+      estimatedMonthlyRevenueEuros += row.monthlyAmountEuros;
+    } else if (row.status === "past_due") pastDueCount++;
+    else if (row.status === "incomplete") incompleteCount++;
+    else if (row.status === "canceled") canceledCount++;
+  }
+
+  return {
+    rows,
+    stats: {
+      activeCount,
+      pastDueCount,
+      incompleteCount,
+      canceledCount,
+      activeByTier,
+      estimatedMonthlyRevenueEuros,
+    },
+  };
 }

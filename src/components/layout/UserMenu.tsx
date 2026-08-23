@@ -1,9 +1,10 @@
+// path: src/components/layout/UserMenu.tsx
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu() {
@@ -97,6 +98,24 @@ export function UserMenu() {
             >
               <ShieldCheck className="h-4 w-4" /> Moderation
             </Link>
+          )}
+          {session.user.role === "admin" && (
+            <>
+              <Link
+                href="/admin/sponsoring"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+              >
+                <Megaphone className="h-4 w-4" /> Sponsoring-Übersicht
+              </Link>
+              <Link
+                href="/admin/promo-codes"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+              >
+                <Ticket className="h-4 w-4" /> Promo-Codes
+              </Link>
+            </>
           )}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

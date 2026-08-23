@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import * as mollie from "@/lib/mollie";
 import { SPONSORSHIP_TIERS, type SponsorshipTierId } from "@/lib/constants";
+import { recordPromoRedemption } from "@/lib/promo-codes";
 
 // Mollie calls this URL server-to-server whenever a payment's status
 // changes. It sends `id=<payment id>` as application/x-www-form-urlencoded
@@ -49,10 +50,13 @@ export async function POST(request: NextRequest) {
       if (payment.sequenceType === "first" && record.status === "incomplete") {
         // Mandate established — now create the actual recurring subscription.
         const tierDef = SPONSORSHIP_TIERS[record.tier as SponsorshipTierId];
+        const amountEuros = tierDef.priceEuros * (1 - record.discountPercent / 100);
         const subscription = await mollie.createSubscription({
           customerId: record.mollieCustomerId!,
-          amountEuros: tierDef.priceEuros,
-          description: `FairFind Sponsoring – ${tierDef.label} (monatlich)`,
+          amountEuros,
+          description: record.promoCode
+            ? `FairFind Sponsoring – ${tierDef.label} (monatlich, Code ${record.promoCode} -${record.discountPercent}%)`
+            : `FairFind Sponsoring – ${tierDef.label} (monatlich)`,
           subscriptionRecordId: record.id,
         });
 
@@ -66,6 +70,10 @@ export async function POST(request: NextRequest) {
               : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           },
         });
+
+        if (record.promoCode) {
+          await recordPromoRedemption(record.promoCode);
+        }
       } else if (payment.sequenceType === "recurring") {
         await prisma.sponsorshipSubscription.update({
           where: { id: record.id },

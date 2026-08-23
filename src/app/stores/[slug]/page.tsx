@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
-import { getStoreBySlug, canEditStore } from "@/lib/stores";
+import { getStoreBySlug, canEditStore, isStoreSaved } from "@/lib/stores";
 import { RatingStars } from "@/components/store/RatingStars";
 import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
@@ -47,6 +47,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
   if (!store) notFound();
 
   const canEdit = canEditStore(store, session?.user);
+  const initialSaved = session?.user ? await isStoreSaved(store.id, session.user.id) : false;
   const isSignedIn = Boolean(session?.user);
   const isOwnStore = Boolean(
     session?.user && (store.ownerUserId === session.user.id || store.createdById === session.user.id)
@@ -132,7 +133,11 @@ export default async function StoreDetailPage({ params }: PageProps) {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6 flex gap-2">
-          <SaveButton storeId={store.id} />
+          <SaveButton
+            storeSlug={store.slug}
+            initialSaved={initialSaved}
+            isLoggedIn={Boolean(session?.user)}
+          />
           <ShareButton title={store.name} />
           {canEdit ? (
             <div className="ml-auto flex gap-2">

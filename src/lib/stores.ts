@@ -1,3 +1,4 @@
+// path: src/lib/stores.ts
 import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray, slugify } from "@/lib/utils";
@@ -576,6 +577,45 @@ export async function upsertReview(
   });
 
   return { review };
+}
+
+export async function isStoreSaved(storeId: string, userId: string): Promise<boolean> {
+  const row = await prisma.savedStore.findUnique({
+    where: { userId_storeId: { userId, storeId } },
+  });
+  return Boolean(row);
+}
+
+export async function saveStore(storeId: string, userId: string) {
+  await prisma.savedStore.upsert({
+    where: { userId_storeId: { userId, storeId } },
+    update: {},
+    create: { userId, storeId },
+  });
+}
+
+export async function unsaveStore(storeId: string, userId: string) {
+  await prisma.savedStore.deleteMany({ where: { userId, storeId } });
+}
+
+export async function getSavedStores(userId: string) {
+  const saved = await prisma.savedStore.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      store: {
+        include: {
+          hours: true,
+          reviews: { where: { status: "published" } },
+        },
+      },
+    },
+  });
+
+  const sponsorTiers = await getActiveSponsorTiers(saved.map((s) => s.storeId));
+  return saved.map((s) =>
+    serializeStore(enrichStore(s.store, undefined, sponsorTiers.get(s.storeId)))
+  );
 }
 
 export async function getUserStoreOverview(userId: string) {

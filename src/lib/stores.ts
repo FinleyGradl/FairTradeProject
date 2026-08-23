@@ -337,12 +337,10 @@ export async function reportStorePhoto(
 
 /**
  * Gallery photos that have hit PHOTO_REPORT_THRESHOLD distinct reports —
- * surfaced to admins/moderators, who can then remove them.
+ * surfaced to admins/moderators (sorted by report count, most-reported
+ * first), who can then decide to remove the photo or dismiss the reports.
  */
 export async function listReportedPhotos() {
-  // Prisma can't filter relations by count threshold directly, so we
-  // prefilter to "has at least one report" and apply the real threshold
-  // in JS below.
   const photos = await prisma.storePhoto.findMany({
     where: { reports: { some: {} } },
     include: {
@@ -354,9 +352,22 @@ export async function listReportedPhotos() {
       },
       _count: { select: { reports: true } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { reports: { _count: "desc" } },
   });
   return photos.filter((p) => p._count.reports >= PHOTO_REPORT_THRESHOLD);
+}
+
+/**
+ * Clears all reports on a photo without deleting the photo itself — used
+ * by moderators to dismiss reports they've judged unfounded. The photo
+ * disappears from the moderation queue but stays live in the gallery, and
+ * can accumulate fresh reports again later.
+ */
+export async function dismissPhotoReports(photoId: string): Promise<boolean> {
+  const photo = await prisma.storePhoto.findUnique({ where: { id: photoId }, select: { id: true } });
+  if (!photo) return false;
+  await prisma.photoReport.deleteMany({ where: { photoId } });
+  return true;
 }
 
 export async function searchProducts(params: {
@@ -761,6 +772,32 @@ export async function getUserStoreOverview(userId: string) {
 
 export function canModerate(user: { role?: string } | null | undefined): boolean {
   return user?.role === "admin" || user?.role === "moderator";
+}
+
+/**
+ * Total open moderation items (flagged stores + photos past the report
+ * threshold + pending claims) — drives the red badge in the nav. Computed
+ * server-side so it's correct on first render, no client fetch involved.
+ */
+export async function getPendingModerationCount(): Promise<number> {
+  const [flaggedStores, pendingClaims, photosWithReportCounts] = await Promise.all([
+    prisma.store.count({ where: { status: "pending" } }),
+    prisma.storeClaim.count({ where: { status: "pending" } }),
+    // Prisma can't filter a relation by count threshold directly, so we
+    // pull just the report counts for photos that have at least one report
+    // and apply the same >= PHOTO_REPORT_THRESHOLD filter listReportedPhotos()
+    // uses as the visible source of truth.
+    prisma.storePhoto.findMany({
+      where: { reports: { some: {} } },
+      select: { _count: { select: { reports: true } } },
+    }),
+  ]);
+
+  const reportedPhotosOverThreshold = photosWithReportCounts.filter(
+    (p) => p._count.reports >= PHOTO_REPORT_THRESHOLD
+  ).length;
+
+  return flaggedStores + reportedPhotosOverThreshold + pendingClaims;
 }
 
 async function adjustTrustScore(userId: string | null | undefined, delta: number) {

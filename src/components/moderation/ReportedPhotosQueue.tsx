@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Flag, Loader2, Trash2 } from "lucide-react";
+import { Flag, Loader2, Trash2, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,6 +26,18 @@ export function ReportedPhotosQueue({ photos }: { photos: ReportedPhoto[] }) {
   async function remove(photo: ReportedPhoto) {
     setBusyId(photo.id);
     const res = await fetch(`/api/v1/stores/${photo.store.slug}/photos/${photo.id}`, {
+      method: "DELETE",
+    });
+    setBusyId(null);
+    if (res.ok) {
+      setItems((prev) => prev.filter((p) => p.id !== photo.id));
+      router.refresh();
+    }
+  }
+
+  async function dismiss(photo: ReportedPhoto) {
+    setBusyId(photo.id);
+    const res = await fetch(`/api/v1/photos/${photo.id}/report`, {
       method: "DELETE",
     });
     setBusyId(null);
@@ -82,7 +94,7 @@ export function ReportedPhotosQueue({ photos }: { photos: ReportedPhoto[] }) {
                 </ul>
               )}
 
-              <div className="mt-3">
+              <div className="mt-3 flex gap-2">
                 <Button
                   size="sm"
                   variant="destructiveOutline"
@@ -96,6 +108,20 @@ export function ReportedPhotosQueue({ photos }: { photos: ReportedPhoto[] }) {
                     <Trash2 className="h-3.5 w-3.5" />
                   )}
                   Foto entfernen
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={() => dismiss(photo)}
+                  disabled={busyId === photo.id}
+                >
+                  {busyId === photo.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <EyeOff className="h-3.5 w-3.5" />
+                  )}
+                  Meldungen ignorieren
                 </Button>
               </div>
             </div>

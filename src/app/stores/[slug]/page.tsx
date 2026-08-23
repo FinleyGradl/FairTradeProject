@@ -30,13 +30,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const store = await getStoreBySlug(slug);
   if (!store) return { title: "Store not found" };
+
+  const description =
+    store.description?.slice(0, 160) ||
+    `${store.name} — fair-trade store in ${store.city}. Find opening hours, products, and reviews on FairFind.`;
+  const ogImages = store.coverImage
+    ? [{ url: store.coverImage, width: 1200, height: 630, alt: store.name }]
+    : undefined; // falls back to the site-wide /opengraph-image
+
   return {
     title: store.name,
-    description: store.description,
+    description,
+    alternates: { canonical: `/stores/${slug}` },
     openGraph: {
       title: store.name,
-      description: store.description,
-      images: store.coverImage ? [store.coverImage] : [],
+      description,
+      url: `/stores/${slug}`,
+      type: "website",
+      images: ogImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: store.name,
+      description,
+      images: store.coverImage ? [store.coverImage] : undefined,
     },
   };
 }
@@ -57,11 +74,26 @@ export default async function StoreDetailPage({ params }: PageProps) {
   const open = isOpenNow(store.hours);
   const statusLabel = getOpenStatusLabel(store.hours);
 
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": "Store",
+    "@id": `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/stores/${store.slug}`,
+    url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/stores/${store.slug}`,
     name: store.name,
     description: store.description,
+    ...(store.coverImage && { image: store.coverImage }),
+    ...(store.phone && { telephone: store.phone }),
+    ...(store.website && { sameAs: store.website }),
     address: {
       "@type": "PostalAddress",
       streetAddress: store.addressLine,
@@ -74,6 +106,16 @@ export default async function StoreDetailPage({ params }: PageProps) {
       latitude: store.latitude,
       longitude: store.longitude,
     },
+    ...(store.hours?.length && {
+      openingHoursSpecification: store.hours
+        .filter((h) => !h.isClosed)
+        .map((h) => ({
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: `https://schema.org/${dayNames[h.dayOfWeek]}`,
+          opens: h.openTime,
+          closes: h.closeTime,
+        })),
+    }),
     ...(store.avgRating && {
       aggregateRating: {
         "@type": "AggregateRating",

@@ -5,7 +5,12 @@ import { parseJsonArray, slugify } from "@/lib/utils";
 import { TRUST_SCORE_DELTAS, ATTESTATION_THRESHOLDS } from "@/lib/trust";
 import { computeRankingScore } from "@/lib/sponsorship";
 import { recordSearchImpressions } from "@/lib/analytics";
-import { SPONSORSHIP_TIERS, SPONSORSHIP_TIER_ORDER, type SponsorshipTierId } from "@/lib/constants";
+import {
+  SPONSORSHIP_TIERS,
+  SPONSORSHIP_TIER_ORDER,
+  PHOTO_REPORT_THRESHOLD,
+  type SponsorshipTierId,
+} from "@/lib/constants";
 import type { StoreCreateInput, StoreUpdateInput } from "@/lib/validators/store";
 import type {
   Prisma,
@@ -203,14 +208,20 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
         orderBy: { createdAt: "desc" },
         include: { user: { select: { name: true, avatarUrl: true } } },
       },
-      photos: { orderBy: { sortOrder: "asc" } },
+      photos: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          uploadedBy: { select: { id: true, name: true } },
+          _count: { select: { reports: true } },
+        },
+      },
       owner: { select: { id: true, name: true } },
     },
   });
 
   if (!store) return null;
 
-  const [myVote, sponsorTiers] = await Promise.all([
+  const [myVote, sponsorTiers, myPhotoReports] = await Promise.all([
     viewerId
       ? prisma.storeAttestation.findUnique({
           where: { storeId_userId: { storeId: store.id, userId: viewerId } },
@@ -218,7 +229,14 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
         })
       : null,
     getActiveSponsorTiers([store.id]),
+    viewerId && store.photos.length > 0
+      ? prisma.photoReport.findMany({
+          where: { userId: viewerId, photoId: { in: store.photos.map((p) => p.id) } },
+          select: { photoId: true },
+        })
+      : Promise.resolve([]),
   ]);
+  const myReportedPhotoIds = new Set(myPhotoReports.map((r) => r.photoId));
 
   const listItem = enrichStore(store, undefined, sponsorTiers.get(store.id));
   return {
@@ -245,9 +263,100 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
       createdAt: r.createdAt,
       user: r.user,
     })),
-    photos: store.photos,
+    photos: store.photos.map((p) => ({
+      id: p.id,
+      url: p.url,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      uploadedBy: p.uploadedBy,
+      reportCount: p._count.reports,
+      reportedByMe: myReportedPhotoIds.has(p.id),
+    })),
     owner: store.owner,
   };
+}
+
+// --- Store photo gallery -----------------------------------------------------
+// Any signed-in user can contribute photos; see the API routes under
+// /api/v1/stores/[slug]/photos and /api/v1/photos/[photoId]/report.
+
+/**
+ * Who may delete a given gallery photo: the person who uploaded it, anyone
+ * who could edit the store itself (owner/creator/admin/moderator — see
+ * canEditStore), or a moderator/admin via the reported-photos queue.
+ */
+export function canDeletePhoto(
+  photo: { uploadedByUserId: string | null },
+  store: Pick<Store, "ownerUserId" | "createdById">,
+  user: { id: string; role?: string } | null | undefined
+): boolean {
+  if (!user) return false;
+  if (photo.uploadedByUserId === user.id) return true;
+  return canEditStore(store, user);
+}
+
+export async function addStorePhoto(
+  storeId: string,
+  userId: string,
+  url: string,
+  caption?: string | null
+) {
+  return prisma.storePhoto.create({
+    data: { storeId, url, caption: caption || null, uploadedByUserId: userId },
+  });
+}
+
+export async function deleteStorePhoto(photoId: string) {
+  return prisma.storePhoto.delete({ where: { id: photoId } }).catch(() => null);
+}
+
+/**
+ * Records (or no-ops on) a report from `userId` against `photoId`.
+ * Returns the resulting distinct-reporter count, or null if the photo
+ * doesn't exist.
+ */
+export async function reportStorePhoto(
+  photoId: string,
+  userId: string,
+  reason?: string | null
+): Promise<{ reportCount: number; alreadyReported: boolean } | null> {
+  const photo = await prisma.storePhoto.findUnique({ where: { id: photoId }, select: { id: true } });
+  if (!photo) return null;
+
+  const existing = await prisma.photoReport.findUnique({
+    where: { photoId_userId: { photoId, userId } },
+  });
+
+  if (!existing) {
+    await prisma.photoReport.create({ data: { photoId, userId, reason: reason || null } });
+  }
+
+  const reportCount = await prisma.photoReport.count({ where: { photoId } });
+  return { reportCount, alreadyReported: Boolean(existing) };
+}
+
+/**
+ * Gallery photos that have hit PHOTO_REPORT_THRESHOLD distinct reports —
+ * surfaced to admins/moderators, who can then remove them.
+ */
+export async function listReportedPhotos() {
+  // Prisma can't filter relations by count threshold directly, so we
+  // prefilter to "has at least one report" and apply the real threshold
+  // in JS below.
+  const photos = await prisma.storePhoto.findMany({
+    where: { reports: { some: {} } },
+    include: {
+      store: { select: { id: true, slug: true, name: true } },
+      uploadedBy: { select: { id: true, name: true, email: true } },
+      reports: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: { select: { reports: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return photos.filter((p) => p._count.reports >= PHOTO_REPORT_THRESHOLD);
 }
 
 export async function searchProducts(params: {

@@ -84,6 +84,8 @@ model User {
   attestations  StoreAttestation[]
   sponsorships  SponsorshipSubscription[]
   promoCodesCreated PromoCode[]
+  photosUploaded    StorePhoto[]   @relation("PhotoUploader")
+  photoReports      PhotoReport[]
 
   accounts             Account[]
   sessions             Session[]
@@ -389,11 +391,36 @@ model StoreClaim {
 }
 
 model StorePhoto {
-  id        String @id @default(cuid())
-  storeId   String
-  url       String
-  caption   String?
-  sortOrder Int    @default(0)
+  id               String   @id @default(cuid())
+  storeId          String
+  url              String
+  caption          String?
+  sortOrder        Int      @default(0)
+  uploadedByUserId String?
+  createdAt        DateTime @default(now())
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store      Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  uploadedBy User?         @relation("PhotoUploader", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  reports    PhotoReport[]
+
+  @@index([storeId])
+}
+
+// Community reporting for user-uploaded gallery photos. One report per
+// person per photo (re-reporting just no-ops) — see PHOTO_REPORT_THRESHOLD
+// in lib/constants.ts for the count that surfaces a photo in the admin
+// moderation queue. Reaching the threshold does NOT auto-remove the photo;
+// it only makes it visible to admins/moderators, who can then delete it.
+model PhotoReport {
+  id        String   @id @default(cuid())
+  photoId   String
+  userId    String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  photo StorePhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([photoId, userId])
+  @@index([photoId])
 }

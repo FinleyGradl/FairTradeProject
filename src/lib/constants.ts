@@ -1,3 +1,11 @@
+// path: src/lib/constants.ts
+// --- Store photo gallery -------------------------------------------------
+// Number of distinct users who need to report a gallery photo before it
+// shows up in the admin moderation queue (see listReportedPhotos() in
+// lib/stores.ts). Reaching this does not remove the photo automatically —
+// it just gives admins/moderators the option to.
+export const PHOTO_REPORT_THRESHOLD = 5;
+
 export const FAIR_BADGE_LABELS: Record<string, string> = {
   fairtrade: "Fairtrade",
   wfto: "WFTO",

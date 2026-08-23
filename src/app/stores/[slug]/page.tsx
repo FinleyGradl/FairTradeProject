@@ -11,6 +11,7 @@ import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
 import { SaveButton, ShareButton } from "@/components/store/SaveShareButtons";
 import { ProductCard } from "@/components/store/ProductCard";
+import { StoreHeroGallery } from "@/components/store/StoreHeroGallery";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { ReviewForm } from "@/components/store/ReviewForm";
@@ -92,18 +93,17 @@ export default async function StoreDetailPage({ params }: PageProps) {
 
       {/* Hero */}
       <div className="relative h-64 bg-sage-100 md:h-80">
-        {store.coverImage && (
-          <Image
-            src={store.coverImage}
-            alt={store.name}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+        <StoreHeroGallery
+          storeSlug={store.slug}
+          storeName={store.name}
+          coverImage={store.coverImage}
+          photos={store.photos}
+          isSignedIn={isSignedIn}
+          currentUserId={session?.user?.id ?? null}
+          canManageStore={canEdit}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-6 text-white">
           <div className="mx-auto max-w-4xl">
             <FairBadges badges={store.fairBadges} className="mb-2" />
             <div className="flex flex-wrap items-center gap-2">

@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 // path: prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
@@ -94,6 +95,7 @@ model User {
   promoCodesCreated PromoCode[]
   photosUploaded    StorePhoto[]   @relation("PhotoUploader")
   photoReports      PhotoReport[]
+  reviewReports     ReviewReport[]
   transfersSent     OwnershipTransfer[] @relation("TransferSender")
   transfersReceived OwnershipTransfer[] @relation("TransferRecipient")
 
@@ -385,10 +387,31 @@ model Review {
   status       ReviewStatus @default(published)
   createdAt    DateTime     @default(now())
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store   Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports ReviewReport[]
 
   @@unique([storeId, userId])
+}
+
+// Community reporting for reviews. One report per person per review
+// (re-reporting just no-ops) — see REVIEW_REPORT_THRESHOLD in
+// lib/constants.ts for the count that surfaces a review in the admin
+// moderation queue. Reaching the threshold does NOT hide the review
+// automatically; it only makes it visible to admins/moderators, who can
+// then hide it (status -> "hidden") or dismiss the reports.
+model ReviewReport {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
 }
 
 model SavedStore {

@@ -16,6 +16,7 @@ import { StoreHeroGallery } from "@/components/store/StoreHeroGallery";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { ReviewForm } from "@/components/store/ReviewForm";
+import { ReviewsList } from "@/components/store/ReviewsList";
 import { DistanceFromYou } from "@/components/store/DistanceFromYou";
 import { SponsoredBadge } from "@/components/store/SponsoredBadge";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
@@ -266,30 +267,20 @@ export default async function StoreDetailPage({ params }: PageProps) {
                 {!isOwnStore && <ReviewForm storeSlug={store.slug} isSignedIn={isSignedIn} />}
               </div>
               {store.reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {store.reviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="rounded-lg border border-sage/10 bg-white p-4"
-                    >
-                      <RatingStars rating={review.rating} size="sm" />
-                      {review.title && (
-                        <p className="mt-1 font-medium text-earth">{review.title}</p>
-                      )}
-                      <p className="mt-1 text-sm text-earth/80">{review.body}</p>
-                      <p className="mt-2 text-xs text-earth/50">
-                        {review.user.name ?? "Anonymous"} ·{" "}
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </p>
-                      {review.ownerReply && (
-                        <div className="mt-3 rounded bg-sage-50 p-3 text-sm">
-                          <p className="font-medium text-sage">Owner reply</p>
-                          <p className="text-earth/80">{review.ownerReply}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <ReviewsList
+                  reviews={store.reviews.map((r) => ({
+                    id: r.id,
+                    rating: r.rating,
+                    title: r.title,
+                    body: r.body,
+                    createdAt: r.createdAt,
+                    ownerReply: r.ownerReply,
+                    user: { id: r.user.id, name: r.user.name },
+                    reportedByMe: r.reportedByMe,
+                  }))}
+                  isSignedIn={isSignedIn}
+                  currentUserId={session?.user?.id}
+                />
               ) : (
                 <p className="text-sm text-earth/60">
                   Noch keine Bewertungen. Sei die/der Erste!
@@ -359,7 +350,12 @@ export default async function StoreDetailPage({ params }: PageProps) {
             {store.owner && (
               <section className="rounded-xl border border-sage/10 bg-white p-4">
                 <h3 className="font-semibold text-earth">Managed by</h3>
-                <p className="mt-1 text-sm text-earth/70">{store.owner.name}</p>
+                <Link
+                  href={`/profile/${store.owner.id}`}
+                  className="mt-1 block text-sm text-sage hover:underline"
+                >
+                  {store.owner.name}
+                </Link>
               </section>
             )}
 

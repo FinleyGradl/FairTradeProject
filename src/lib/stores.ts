@@ -9,6 +9,7 @@ import {
   SPONSORSHIP_TIERS,
   SPONSORSHIP_TIER_ORDER,
   PHOTO_REPORT_THRESHOLD,
+  REVIEW_REPORT_THRESHOLD,
   type SponsorshipTierId,
 } from "@/lib/constants";
 import type { StoreCreateInput, StoreUpdateInput } from "@/lib/validators/store";
@@ -31,6 +32,22 @@ async function getActiveSponsorTiers(storeIds: string[]): Promise<Map<string, Sp
   return new Map(active.map((s) => [s.storeId, s.tier as SponsorshipTierId]));
 }
 
+/**
+ * storeId -> URL of the first (earliest-uploaded) community gallery photo,
+ * for a batch of stores. Used as a fallback cover image wherever a store
+ * hasn't set one explicitly — see serializeStore().
+ */
+async function getFirstPhotoUrls(storeIds: string[]): Promise<Map<string, string>> {
+  if (storeIds.length === 0) return new Map();
+  const firstPhotos = await prisma.storePhoto.findMany({
+    where: { storeId: { in: storeIds } },
+    orderBy: { createdAt: "asc" },
+    distinct: ["storeId"],
+    select: { storeId: true, url: true },
+  });
+  return new Map(firstPhotos.map((p) => [p.storeId, p.url]));
+}
+
 export type StoreWithRelations = Store & {
   hours: StoreHours[];
   products: Product[];
@@ -44,6 +61,8 @@ export type StoreListItem = Store & {
   reviewCount: number;
   distanceM?: number;
   sponsorTier?: SponsorshipTierId | null;
+  /** Earliest community-uploaded photo, used when no coverImage is set. */
+  firstPhotoUrl?: string | null;
 };
 
 function computeAvgRating(reviews: Review[]): number | null {
@@ -56,7 +75,8 @@ function computeAvgRating(reviews: Review[]): number | null {
 function enrichStore(
   store: Store & { hours: StoreHours[]; reviews: Review[] },
   distanceM?: number,
-  sponsorTier?: SponsorshipTierId | null
+  sponsorTier?: SponsorshipTierId | null,
+  firstPhotoUrl?: string | null
 ): StoreListItem {
   return {
     ...store,
@@ -64,6 +84,7 @@ function enrichStore(
     reviewCount: store.reviews.filter((r) => r.status === "published").length,
     distanceM,
     sponsorTier: sponsorTier ?? null,
+    firstPhotoUrl: firstPhotoUrl ?? null,
   };
 }
 
@@ -90,7 +111,7 @@ export function serializeStore(store: StoreListItem) {
     disputeCount: store.disputeCount,
     fairBadges: parseJsonArray(store.fairBadges),
     categories: parseJsonArray(store.categories),
-    coverImage: store.coverImage,
+    coverImage: store.coverImage ?? store.firstPhotoUrl ?? null,
     avgRating: store.avgRating,
     reviewCount: store.reviewCount,
     distanceM: store.distanceM,
@@ -135,7 +156,10 @@ export async function getStores(params: {
   });
 
   const sponsorTiers = await getActiveSponsorTiers(stores.map((s) => s.id));
-  let enriched: StoreListItem[] = stores.map((s) => enrichStore(s, undefined, sponsorTiers.get(s.id)));
+  const firstPhotoUrls = await getFirstPhotoUrls(stores.map((s) => s.id));
+  let enriched: StoreListItem[] = stores.map((s) =>
+    enrichStore(s, undefined, sponsorTiers.get(s.id), firstPhotoUrls.get(s.id))
+  );
 
   if (category) {
     enriched = enriched.filter((s) =>
@@ -206,7 +230,10 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
       reviews: {
         where: { status: "published" },
         orderBy: { createdAt: "desc" },
-        include: { user: { select: { name: true, avatarUrl: true } } },
+        include: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+          _count: { select: { reports: true } },
+        },
       },
       photos: {
         orderBy: { createdAt: "desc" },
@@ -221,7 +248,7 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
 
   if (!store) return null;
 
-  const [myVote, sponsorTiers, myPhotoReports] = await Promise.all([
+  const [myVote, sponsorTiers, myPhotoReports, myReviewReports] = await Promise.all([
     viewerId
       ? prisma.storeAttestation.findUnique({
           where: { storeId_userId: { storeId: store.id, userId: viewerId } },
@@ -235,10 +262,21 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
           select: { photoId: true },
         })
       : Promise.resolve([]),
+    viewerId && store.reviews.length > 0
+      ? prisma.reviewReport.findMany({
+          where: { userId: viewerId, reviewId: { in: store.reviews.map((r) => r.id) } },
+          select: { reviewId: true },
+        })
+      : Promise.resolve([]),
   ]);
   const myReportedPhotoIds = new Set(myPhotoReports.map((r) => r.photoId));
+  const myReportedReviewIds = new Set(myReviewReports.map((r) => r.reviewId));
 
-  const listItem = enrichStore(store, undefined, sponsorTiers.get(store.id));
+  // photos are loaded newest-first for the gallery; the first uploaded one
+  // (i.e. oldest) is the fallback cover when the store has none set.
+  const firstPhotoUrl = store.photos.length > 0 ? store.photos[store.photos.length - 1].url : null;
+
+  const listItem = enrichStore(store, undefined, sponsorTiers.get(store.id), firstPhotoUrl);
   return {
     ...serializeStore(listItem),
     myVote: myVote?.vote ?? null,
@@ -262,6 +300,8 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
       ownerReplyAt: r.ownerReplyAt,
       createdAt: r.createdAt,
       user: r.user,
+      reportCount: r._count.reports,
+      reportedByMe: myReportedReviewIds.has(r.id),
     })),
     photos: store.photos.map((p) => ({
       id: p.id,
@@ -372,6 +412,82 @@ export async function dismissPhotoReports(photoId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * Records (or no-ops on) a report from `userId` against `reviewId`. A user
+ * can't report their own review. Returns the resulting distinct-reporter
+ * count, or null if the review doesn't exist.
+ */
+export async function reportReview(
+  reviewId: string,
+  userId: string,
+  reason?: string | null
+): Promise<{ reportCount: number; alreadyReported: boolean } | { error: "NOT_FOUND" | "OWN_REVIEW" }> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true, userId: true } });
+  if (!review) return { error: "NOT_FOUND" };
+  if (review.userId === userId) return { error: "OWN_REVIEW" };
+
+  const existing = await prisma.reviewReport.findUnique({
+    where: { reviewId_userId: { reviewId, userId } },
+  });
+
+  if (!existing) {
+    await prisma.reviewReport.create({ data: { reviewId, userId, reason: reason || null } });
+  }
+
+  const reportCount = await prisma.reviewReport.count({ where: { reviewId } });
+  return { reportCount, alreadyReported: Boolean(existing) };
+}
+
+/**
+ * Reviews that have hit REVIEW_REPORT_THRESHOLD distinct reports — surfaced
+ * to admins/moderators, who can then hide them or dismiss the reports.
+ */
+export async function listReportedReviews() {
+  // Prisma can't filter relations by count threshold directly, so we
+  // prefilter to "has at least one report" and apply the real threshold
+  // in JS below.
+  const reviews = await prisma.review.findMany({
+    where: { reports: { some: {} } },
+    include: {
+      store: { select: { id: true, slug: true, name: true } },
+      user: { select: { id: true, name: true, email: true } },
+      reports: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: { select: { reports: true } },
+    },
+    orderBy: { reports: { _count: "desc" } },
+  });
+  return reviews.filter((r) => r._count.reports >= REVIEW_REPORT_THRESHOLD);
+}
+
+/**
+ * Clears all reports on a review without hiding the review itself — used
+ * by moderators to dismiss reports they've judged unfounded. The review
+ * disappears from the moderation queue but stays visible, and can
+ * accumulate fresh reports again later.
+ */
+export async function dismissReviewReports(reviewId: string): Promise<boolean> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
+  if (!review) return false;
+  await prisma.reviewReport.deleteMany({ where: { reviewId } });
+  return true;
+}
+
+/**
+ * Moderator action: hides a reported review (status -> "hidden") instead of
+ * deleting it outright, so it drops out of every public/`published`-filtered
+ * query (store page, avg rating, profile) but the record — and its reports —
+ * stay around for reference.
+ */
+export async function hideReview(reviewId: string): Promise<boolean> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
+  if (!review) return false;
+  await prisma.review.update({ where: { id: reviewId }, data: { status: "hidden" } });
+  return true;
+}
+
 export async function searchProducts(params: {
   q?: string;
   category?: string;
@@ -436,7 +552,10 @@ export async function getFeaturedStores(limit = 6) {
   });
 
   const sponsorTiers = await getActiveSponsorTiers(pool.map((s) => s.id));
-  const enriched = pool.map((s) => enrichStore(s, undefined, sponsorTiers.get(s.id)));
+  const firstPhotoUrls = await getFirstPhotoUrls(pool.map((s) => s.id));
+  const enriched = pool.map((s) =>
+    enrichStore(s, undefined, sponsorTiers.get(s.id), firstPhotoUrls.get(s.id))
+  );
 
   enriched.sort((a, b) => {
     const weightA = a.sponsorTier ? SPONSORSHIP_TIERS[a.sponsorTier].boostWeight : 0;
@@ -741,8 +860,11 @@ export async function getSavedStores(userId: string) {
   });
 
   const sponsorTiers = await getActiveSponsorTiers(saved.map((s) => s.storeId));
+  const firstPhotoUrls = await getFirstPhotoUrls(saved.map((s) => s.storeId));
   return saved.map((s) =>
-    serializeStore(enrichStore(s.store, undefined, sponsorTiers.get(s.storeId)))
+    serializeStore(
+      enrichStore(s.store, undefined, sponsorTiers.get(s.storeId), firstPhotoUrls.get(s.storeId))
+    )
   );
 }
 
@@ -798,28 +920,38 @@ export function canModerate(user: { role?: string } | null | undefined): boolean
 
 /**
  * Total open moderation items (flagged stores + photos past the report
- * threshold + pending claims) — drives the red badge in the nav. Computed
- * server-side so it's correct on first render, no client fetch involved.
+ * threshold + reviews past the report threshold + pending claims) — drives
+ * the red badge in the nav. Computed server-side so it's correct on first
+ * render, no client fetch involved.
  */
 export async function getPendingModerationCount(): Promise<number> {
-  const [flaggedStores, pendingClaims, photosWithReportCounts] = await Promise.all([
-    prisma.store.count({ where: { status: "pending" } }),
-    prisma.storeClaim.count({ where: { status: "pending" } }),
-    // Prisma can't filter a relation by count threshold directly, so we
-    // pull just the report counts for photos that have at least one report
-    // and apply the same >= PHOTO_REPORT_THRESHOLD filter listReportedPhotos()
-    // uses as the visible source of truth.
-    prisma.storePhoto.findMany({
-      where: { reports: { some: {} } },
-      select: { _count: { select: { reports: true } } },
-    }),
-  ]);
+  const [flaggedStores, pendingClaims, photosWithReportCounts, reviewsWithReportCounts] =
+    await Promise.all([
+      prisma.store.count({ where: { status: "pending" } }),
+      prisma.storeClaim.count({ where: { status: "pending" } }),
+      // Prisma can't filter a relation by count threshold directly, so we
+      // pull just the report counts for photos that have at least one report
+      // and apply the same >= PHOTO_REPORT_THRESHOLD filter listReportedPhotos()
+      // uses as the visible source of truth.
+      prisma.storePhoto.findMany({
+        where: { reports: { some: {} } },
+        select: { _count: { select: { reports: true } } },
+      }),
+      // Same idea for reviews, against REVIEW_REPORT_THRESHOLD.
+      prisma.review.findMany({
+        where: { reports: { some: {} } },
+        select: { _count: { select: { reports: true } } },
+      }),
+    ]);
 
   const reportedPhotosOverThreshold = photosWithReportCounts.filter(
     (p) => p._count.reports >= PHOTO_REPORT_THRESHOLD
   ).length;
+  const reportedReviewsOverThreshold = reviewsWithReportCounts.filter(
+    (r) => r._count.reports >= REVIEW_REPORT_THRESHOLD
+  ).length;
 
-  return flaggedStores + reportedPhotosOverThreshold + pendingClaims;
+  return flaggedStores + reportedPhotosOverThreshold + reportedReviewsOverThreshold + pendingClaims;
 }
 
 async function adjustTrustScore(userId: string | null | undefined, delta: number) {

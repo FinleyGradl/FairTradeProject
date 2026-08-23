@@ -264,7 +264,17 @@ export default async function StoreDetailPage({ params }: PageProps) {
                 <h2 className="text-xl font-semibold text-earth">
                   Reviews {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
                 </h2>
-                {!isOwnStore && <ReviewForm storeSlug={store.slug} isSignedIn={isSignedIn} />}
+                {!isOwnStore && (
+                  <ReviewForm
+                    storeSlug={store.slug}
+                    isSignedIn={isSignedIn}
+                    existingReview={
+                      session?.user
+                        ? (store.reviews.find((r) => r.user.id === session.user!.id) ?? null)
+                        : null
+                    }
+                  />
+                )}
               </div>
               {store.reviews.length > 0 ? (
                 <ReviewsList

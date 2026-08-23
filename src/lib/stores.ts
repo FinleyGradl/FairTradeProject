@@ -820,10 +820,30 @@ export async function upsertReview(
       rating: data.rating,
       title: data.title || null,
       body: data.body,
+      // Editing is meaningfully new content, so un-hide it even if a
+      // moderator had previously hidden the old version.
+      status: "published",
     },
   });
 
   return { review };
+}
+
+/**
+ * Deletes a review — author-only. (Moderators hide reviews instead, via
+ * hideReview(), so the report trail is preserved; a straight delete here is
+ * for the author removing their own content.)
+ */
+export async function deleteReview(
+  reviewId: string,
+  userId: string
+): Promise<{ error: "NOT_FOUND" | "FORBIDDEN" } | { success: true }> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { userId: true } });
+  if (!review) return { error: "NOT_FOUND" };
+  if (review.userId !== userId) return { error: "FORBIDDEN" };
+
+  await prisma.review.delete({ where: { id: reviewId } });
+  return { success: true };
 }
 
 export async function isStoreSaved(storeId: string, userId: string): Promise<boolean> {

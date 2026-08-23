@@ -1,26 +1,40 @@
+// src/components/store/ReviewForm.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Star, Loader2 } from "lucide-react";
+import { Star, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+export interface ExistingReview {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string;
+}
 
 interface ReviewFormProps {
   storeSlug: string;
   isSignedIn: boolean;
+  /** The signed-in user's own review on this store, if they've already left one. */
+  existingReview?: ExistingReview | null;
 }
 
-export function ReviewForm({ storeSlug, isSignedIn }: ReviewFormProps) {
+export function ReviewForm({ storeSlug, isSignedIn, existingReview = null }: ReviewFormProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [title, setTitle] = useState(existingReview?.title ?? "");
+  const [body, setBody] = useState(existingReview?.body ?? "");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  const isEditing = Boolean(existingReview);
 
   function handleStart() {
     if (!isSignedIn) {
@@ -59,19 +73,61 @@ export function ReviewForm({ storeSlug, isSignedIn }: ReviewFormProps) {
     router.refresh();
   }
 
+  async function handleDelete() {
+    if (!existingReview) return;
+    if (!confirm("Deine Bewertung wirklich löschen?")) return;
+    setDeleting(true);
+    setError(null);
+    const res = await fetch(`/api/v1/reviews/${existingReview.id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setDeleting(false);
+
+    if (!res.ok) {
+      setError(data.error ?? "Löschen fehlgeschlagen.");
+      return;
+    }
+
+    setDeleted(true);
+    setOpen(false);
+    router.refresh();
+  }
+
+  if (deleted) {
+    return (
+      <p className="rounded-lg border border-sage/10 bg-sage-50 p-4 text-sm text-earth/80">
+        Deine Bewertung wurde gelöscht.
+      </p>
+    );
+  }
+
   if (success) {
     return (
       <p className="rounded-lg border border-sage/10 bg-sage-50 p-4 text-sm text-earth/80">
-        Danke für deine Bewertung! Sie ist jetzt sichtbar.
+        {isEditing ? "Deine Bewertung wurde aktualisiert." : "Danke für deine Bewertung! Sie ist jetzt sichtbar."}
       </p>
     );
   }
 
   if (!open) {
     return (
-      <Button type="button" variant="outline" size="sm" onClick={handleStart}>
-        Bewertung schreiben
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={handleStart}>
+          {isEditing ? "Bewertung bearbeiten" : "Bewertung schreiben"}
+        </Button>
+        {isEditing && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-earth/50 hover:text-red-600"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            Löschen
+          </Button>
+        )}
+      </div>
     );
   }
 
@@ -124,13 +180,32 @@ export function ReviewForm({ storeSlug, isSignedIn }: ReviewFormProps) {
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={handleSubmit} disabled={loading}>
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Bewertung absenden"}
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : isEditing ? (
+            "Bewertung aktualisieren"
+          ) : (
+            "Bewertung absenden"
+          )}
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
           Abbrechen
         </Button>
+        {isEditing && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="ml-auto gap-1 text-earth/50 hover:text-red-600"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            Löschen
+          </Button>
+        )}
       </div>
     </div>
   );

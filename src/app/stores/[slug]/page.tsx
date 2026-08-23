@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
 import { getStoreBySlug, canEditStore, isStoreSaved } from "@/lib/stores";
+import { canManageSponsorship } from "@/lib/sponsorship";
 import { RatingStars } from "@/components/store/RatingStars";
 import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
@@ -65,6 +66,10 @@ export default async function StoreDetailPage({ params }: PageProps) {
   if (!store) notFound();
 
   const canEdit = canEditStore(store, session?.user);
+  // Owner (real, confirmed) or admin/moderator — mirrors the access check
+  // the /insights page and API route enforce, so we don't show a button
+  // that then 403s. Sponsoring itself (billing) stays owner-only below.
+  const canViewInsights = await canManageSponsorship(store, session?.user);
   const initialSaved = session?.user ? await isStoreSaved(store.id, session.user.id) : false;
   const isSignedIn = Boolean(session?.user);
   const isOwnStore = Boolean(
@@ -183,19 +188,19 @@ export default async function StoreDetailPage({ params }: PageProps) {
           <ShareButton title={store.name} />
           {canEdit && (
             <div className="ml-auto flex gap-2">
+              {canViewInsights && (
+                <Link href={`/me/stores/${store.slug}/insights`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <BarChart3 className="h-3.5 w-3.5" /> Insights
+                  </Button>
+                </Link>
+              )}
               {store.ownerUserId === session?.user?.id && (
-                <>
-                  <Link href={`/me/stores/${store.slug}/insights`}>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <BarChart3 className="h-3.5 w-3.5" /> Insights
-                    </Button>
-                  </Link>
-                  <Link href={`/me/stores/${store.slug}/sponsoring`}>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Megaphone className="h-3.5 w-3.5" /> Sponsoring
-                    </Button>
-                  </Link>
-                </>
+                <Link href={`/me/stores/${store.slug}/sponsoring`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <Megaphone className="h-3.5 w-3.5" /> Sponsoring
+                  </Button>
+                </Link>
               )}
               {/* Editable but unclaimed (e.g. its own creator, or an
                   admin/moderator) — still offer claiming so this actually

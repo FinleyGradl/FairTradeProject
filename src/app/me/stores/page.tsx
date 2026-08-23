@@ -1,5 +1,4 @@
 // path: src/app/me/stores/page.tsx
-// path: src/app/me/stores/page.tsx
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -127,8 +126,11 @@ export default async function MyStoresPage() {
                 {store.ownerUserId === session.user.id && (
                   <Link href={`/me/stores/${store.slug}/insights`}>
                     <Button variant="outline" size="sm" className="gap-1">
-                      {store.sponsorship?.status === "active" &&
-                      SPONSORSHIP_TIERS[store.sponsorship.tier as SponsorshipTierId].includesInsights ? (
+                      {session.user.role === "admin" ||
+                      session.user.role === "moderator" ||
+                      (store.sponsorship?.status === "active" &&
+                        SPONSORSHIP_TIERS[store.sponsorship.tier as SponsorshipTierId]
+                          .includesInsights) ? (
                         <BarChart3 className="h-3.5 w-3.5" />
                       ) : (
                         <Lock className="h-3.5 w-3.5" />

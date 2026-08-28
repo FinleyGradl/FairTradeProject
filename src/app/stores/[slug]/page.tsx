@@ -25,14 +25,21 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const store = await getStoreBySlug(slug);
-  if (!store) return { title: "Store not found" };
+  if (!store) return { title: "Laden nicht gefunden" };
+  const description =
+    store.description ??
+    `${store.name} – Fairtrade-Laden in ${store.city}. Öffnungszeiten, Bewertungen und Kontakt auf FairFind.`;
   return {
-    title: store.name,
-    description: store.description,
+    title: `${store.name} – Fairtrade-Laden in ${store.city}`,
+    description,
+    alternates: {
+      canonical: `/stores/${slug}`,
+    },
     openGraph: {
-      title: store.name,
-      description: store.description,
+      title: `${store.name} – Fairtrade-Laden in ${store.city}`,
+      description,
       images: store.coverImage ? [store.coverImage] : [],
+      locale: "de_DE",
     },
   };
 }
@@ -57,6 +64,9 @@ export default async function StoreDetailPage({ params }: PageProps) {
     "@type": "LocalBusiness",
     name: store.name,
     description: store.description,
+    url: `https://traceable.ddns.net/stores/${store.slug}`,
+    ...(store.coverImage && { image: store.coverImage }),
+    ...(store.phone && { telephone: store.phone }),
     address: {
       "@type": "PostalAddress",
       streetAddress: store.addressLine,
@@ -90,7 +100,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
         {store.coverImage && (
           <Image
             src={store.coverImage}
-            alt={store.name}
+            alt={`Fairtrade Laden ${store.name} in ${store.city}`}
             fill
             className="object-cover"
             priority
@@ -147,13 +157,13 @@ export default async function StoreDetailPage({ params }: PageProps) {
         <div className="grid gap-8 md:grid-cols-3">
           <div className="md:col-span-2 space-y-8">
             <section>
-              <h2 className="text-xl font-semibold text-earth">About</h2>
+              <h2 className="text-xl font-semibold text-earth">Über den Laden</h2>
               <p className="mt-2 text-earth/80 leading-relaxed">{store.description}</p>
             </section>
 
             {store.products.length > 0 && (
               <section>
-                <h2 className="mb-4 text-xl font-semibold text-earth">Products</h2>
+                <h2 className="mb-4 text-xl font-semibold text-earth">Produkte</h2>
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {store.products.map((product) => (
                     <div key={product.id} id={`product-${product.slug}`}>
@@ -172,7 +182,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             <section>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xl font-semibold text-earth">
-                  Reviews {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
+                  Bewertungen {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
                 </h2>
                 {!isOwnStore && <ReviewForm storeSlug={store.slug} isSignedIn={isSignedIn} />}
               </div>
@@ -189,12 +199,12 @@ export default async function StoreDetailPage({ params }: PageProps) {
                       )}
                       <p className="mt-1 text-sm text-earth/80">{review.body}</p>
                       <p className="mt-2 text-xs text-earth/50">
-                        {review.user.name ?? "Anonymous"} ·{" "}
-                        {new Date(review.createdAt).toLocaleDateString()}
+                        {review.user.name ?? "Anonym"} ·{" "}
+                        {new Date(review.createdAt).toLocaleDateString("de-DE")}
                       </p>
                       {review.ownerReply && (
                         <div className="mt-3 rounded bg-sage-50 p-3 text-sm">
-                          <p className="font-medium text-sage">Owner reply</p>
+                          <p className="font-medium text-sage">Antwort des Inhabers</p>
                           <p className="text-earth/80">{review.ownerReply}</p>
                         </div>
                       )}
@@ -211,7 +221,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
 
           <aside className="space-y-6">
             <section className="rounded-xl border border-sage/10 bg-white p-4">
-              <h3 className="font-semibold text-earth">Contact</h3>
+              <h3 className="font-semibold text-earth">Kontakt</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li className="flex items-start gap-2 text-earth/80">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
@@ -257,19 +267,19 @@ export default async function StoreDetailPage({ params }: PageProps) {
               >
                 <Button variant="outline" size="sm" className="gap-1">
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Directions
+                  Route planen
                 </Button>
               </a>
             </section>
 
             <section className="rounded-xl border border-sage/10 bg-white p-4">
-              <h3 className="font-semibold text-earth">Opening hours</h3>
+              <h3 className="font-semibold text-earth">Öffnungszeiten</h3>
               <OpeningHoursTable hours={store.hours} className="mt-3" />
             </section>
 
             {store.owner && (
               <section className="rounded-xl border border-sage/10 bg-white p-4">
-                <h3 className="font-semibold text-earth">Managed by</h3>
+                <h3 className="font-semibold text-earth">Verwaltet von</h3>
                 <p className="mt-1 text-sm text-earth/70">{store.owner.name}</p>
               </section>
             )}

@@ -114,9 +114,9 @@ function SearchContent() {
   }, [q, category, badge, radius, center]);
 
   const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: "all", label: "All", count: stores.length + products.length },
-    { id: "stores", label: "Stores", count: stores.length },
-    { id: "products", label: "Products", count: products.length },
+    { id: "all", label: "Alle", count: stores.length + products.length },
+    { id: "stores", label: "Läden", count: stores.length },
+    { id: "products", label: "Produkte", count: products.length },
   ];
 
   const showStores = tab === "all" || tab === "stores";
@@ -160,13 +160,13 @@ function SearchContent() {
       )}>
         <div className="p-4 md:p-6 pb-24 md:pb-6 space-y-6">
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-earth hidden md:block">Search</h1>
+            <h1 className="text-2xl font-bold text-earth hidden md:block">Suche</h1>
             <SearchBar defaultValue={q} />
             <LocationSearch onLocation={(coords) => setCenter(coords)} />
           </div>
 
           <div className="rounded-xl border border-sage/20 bg-sage-50/50 p-4">
-            <h2 className="mb-3 font-semibold text-earth">Filters</h2>
+            <h2 className="mb-3 font-semibold text-earth">Filter</h2>
             <FilterPanel 
               selectedCategory={category}
               selectedBadge={badge}
@@ -199,13 +199,13 @@ function SearchContent() {
               <Loader2 className="h-8 w-8 animate-spin text-sage" />
             </div>
           ) : stores.length === 0 && products.length === 0 ? (
-            <EmptyState description="No results found. Try adjusting your filters or search in a different area." />
+            <EmptyState description="Keine Ergebnisse gefunden. Passe deine Filter an oder suche in einem anderen Gebiet." />
           ) : (
             <div className="space-y-8">
               {showStores && stores.length > 0 && (
                 <section>
                   {tab === "all" && (
-                    <h2 className="mb-4 text-lg font-semibold text-earth">Stores</h2>
+                    <h2 className="mb-4 text-lg font-semibold text-earth">Läden</h2>
                   )}
                   <div className="grid gap-4 sm:grid-cols-2">
                     {stores.map((store) => (
@@ -224,7 +224,7 @@ function SearchContent() {
               {showProducts && products.length > 0 && (
                 <section>
                   {tab === "all" && (
-                    <h2 className="mb-4 text-lg font-semibold text-earth">Products</h2>
+                    <h2 className="mb-4 text-lg font-semibold text-earth">Produkte</h2>
                   )}
                   <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
                     {products.map((product) => (
@@ -268,12 +268,12 @@ function SearchContent() {
         {showMobileMap ? (
           <>
             <ListIcon className="h-5 w-5" />
-            <span>List</span>
+            <span>Liste</span>
           </>
         ) : (
           <>
             <MapIcon className="h-5 w-5" />
-            <span>Map</span>
+            <span>Karte</span>
           </>
         )}
       </button>

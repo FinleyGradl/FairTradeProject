@@ -31,10 +31,10 @@ export default async function HomePage() {
         </div>
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-            Discover fair-trade stores near you
+            Entdecke Fairtrade Läden &amp; Weltläden in deiner Nähe
           </h1>
           <p className="mt-4 text-lg text-white/90">
-            Ethical shopping made easy. Find certified fair-trade shops, browse products, and read community reviews.
+            Nachhaltiger Konsum leicht gemacht. Finde zertifizierte Fairtrade-Geschäfte, stöbere in lokalen Produkten und lies echte Bewertungen aus der Community.
           </p>
           <div className="mt-8">
             <SearchBar className="mx-auto max-w-lg [&_input]:border-0 [&_input]:shadow-lg" />
@@ -43,13 +43,13 @@ export default async function HomePage() {
             <Link href="/explore">
               <Button size="lg" variant="secondary" className="gap-2">
                 <MapPin className="h-5 w-5" />
-                Explore map
+                Karte erkunden
               </Button>
             </Link>
             <Link href="/add-store">
               <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
                 <Store className="h-5 w-5" />
-                Add a store
+                Laden hinzufügen
               </Button>
             </Link>
           </div>
@@ -61,15 +61,15 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-4xl grid-cols-3 gap-4 px-4 text-center">
           <div>
             <p className="text-3xl font-bold text-sage">{storeCountLabel}</p>
-            <p className="text-sm text-earth/70">Stores across Germany</p>
+            <p className="text-sm text-earth/70">Läden in Deutschland</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-sage">4</p>
-            <p className="text-sm text-earth/70">Fair-trade certifications</p>
+            <p className="text-sm text-earth/70">Fairtrade-Zertifizierungen</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-sage">100%</p>
-            <p className="text-sm text-earth/70">Community driven</p>
+            <p className="text-sm text-earth/70">Community-getrieben</p>
           </div>
         </div>
       </section>
@@ -78,11 +78,11 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-12">
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-earth">Featured stores</h2>
-            <p className="mt-1 text-earth/70">Hand-picked fair-trade shops across Germany</p>
+            <h2 className="text-2xl font-bold text-earth">Empfohlene Läden</h2>
+            <p className="mt-1 text-earth/70">Handverlesene Weltläden und Fairtrade-Shops in ganz Deutschland</p>
           </div>
           <Link href="/explore" className="text-sm font-medium text-sage hover:underline">
-            View all →
+            Alle anzeigen →
           </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -96,12 +96,12 @@ export default async function HomePage() {
       <section className="bg-sage-50 px-4 py-16">
         <div className="mx-auto max-w-2xl text-center">
           <Search className="mx-auto h-10 w-10 text-sage" />
-          <h2 className="mt-4 text-2xl font-bold text-earth">Know a fair-trade store?</h2>
+          <h2 className="mt-4 text-2xl font-bold text-earth">Kennst du einen Fairtrade-Laden?</h2>
           <p className="mt-2 text-earth/70">
-            Help grow the directory by adding stores in your area. Every listing is reviewed by our community.
+            Kennst du einen Fairtrade-Laden? Hilf uns, die Plattform zu vergrößern, indem du nachhaltige Shops aus deiner Region hinzufügst.
           </p>
           <Link href="/add-store" className="mt-6 inline-block">
-            <Button size="lg">Submit a store</Button>
+            <Button size="lg">Laden eintragen</Button>
           </Link>
         </div>
       </section>

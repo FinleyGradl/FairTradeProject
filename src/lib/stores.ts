@@ -1,7 +1,17 @@
+// src/lib/stores.ts
 import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray, slugify } from "@/lib/utils";
 import { TRUST_SCORE_DELTAS, ATTESTATION_THRESHOLDS } from "@/lib/trust";
+import { computeRankingScore } from "@/lib/sponsorship";
+import { recordSearchImpressions } from "@/lib/analytics";
+import {
+  SPONSORSHIP_TIERS,
+  SPONSORSHIP_TIER_ORDER,
+  PHOTO_REPORT_THRESHOLD,
+  REVIEW_REPORT_THRESHOLD,
+  type SponsorshipTierId,
+} from "@/lib/constants";
 import type { StoreCreateInput, StoreUpdateInput } from "@/lib/validators/store";
 import type {
   Prisma,
@@ -11,6 +21,32 @@ import type {
   StoreHours,
   AttestationVote,
 } from "../../prisma/generated/prisma/client";
+
+/** storeId -> active sponsorship tier, for a batch of stores. */
+async function getActiveSponsorTiers(storeIds: string[]): Promise<Map<string, SponsorshipTierId>> {
+  if (storeIds.length === 0) return new Map();
+  const active = await prisma.sponsorshipSubscription.findMany({
+    where: { storeId: { in: storeIds }, status: "active" },
+    select: { storeId: true, tier: true },
+  });
+  return new Map(active.map((s) => [s.storeId, s.tier as SponsorshipTierId]));
+}
+
+/**
+ * storeId -> URL of the first (earliest-uploaded) community gallery photo,
+ * for a batch of stores. Used as a fallback cover image wherever a store
+ * hasn't set one explicitly — see serializeStore().
+ */
+async function getFirstPhotoUrls(storeIds: string[]): Promise<Map<string, string>> {
+  if (storeIds.length === 0) return new Map();
+  const firstPhotos = await prisma.storePhoto.findMany({
+    where: { storeId: { in: storeIds } },
+    orderBy: { createdAt: "asc" },
+    distinct: ["storeId"],
+    select: { storeId: true, url: true },
+  });
+  return new Map(firstPhotos.map((p) => [p.storeId, p.url]));
+}
 
 export type StoreWithRelations = Store & {
   hours: StoreHours[];
@@ -24,6 +60,9 @@ export type StoreListItem = Store & {
   avgRating: number | null;
   reviewCount: number;
   distanceM?: number;
+  sponsorTier?: SponsorshipTierId | null;
+  /** Earliest community-uploaded photo, used when no coverImage is set. */
+  firstPhotoUrl?: string | null;
 };
 
 function computeAvgRating(reviews: Review[]): number | null {
@@ -35,13 +74,17 @@ function computeAvgRating(reviews: Review[]): number | null {
 
 function enrichStore(
   store: Store & { hours: StoreHours[]; reviews: Review[] },
-  distanceM?: number
+  distanceM?: number,
+  sponsorTier?: SponsorshipTierId | null,
+  firstPhotoUrl?: string | null
 ): StoreListItem {
   return {
     ...store,
     avgRating: computeAvgRating(store.reviews),
     reviewCount: store.reviews.filter((r) => r.status === "published").length,
     distanceM,
+    sponsorTier: sponsorTier ?? null,
+    firstPhotoUrl: firstPhotoUrl ?? null,
   };
 }
 
@@ -68,12 +111,14 @@ export function serializeStore(store: StoreListItem) {
     disputeCount: store.disputeCount,
     fairBadges: parseJsonArray(store.fairBadges),
     categories: parseJsonArray(store.categories),
-    coverImage: store.coverImage,
+    coverImage: store.coverImage ?? store.firstPhotoUrl ?? null,
     avgRating: store.avgRating,
     reviewCount: store.reviewCount,
     distanceM: store.distanceM,
     hours: store.hours,
     isOpen: store.hours.length > 0,
+    isSponsored: Boolean(store.sponsorTier && SPONSORSHIP_TIERS[store.sponsorTier].includesSponsoredBadge),
+    sponsorTier: store.sponsorTier ?? null,
   };
 }
 
@@ -110,7 +155,11 @@ export async function getStores(params: {
     orderBy: { name: "asc" },
   });
 
-  let enriched: StoreListItem[] = stores.map((s) => enrichStore(s));
+  const sponsorTiers = await getActiveSponsorTiers(stores.map((s) => s.id));
+  const firstPhotoUrls = await getFirstPhotoUrls(stores.map((s) => s.id));
+  let enriched: StoreListItem[] = stores.map((s) =>
+    enrichStore(s, undefined, sponsorTiers.get(s.id), firstPhotoUrls.get(s.id))
+  );
 
   if (category) {
     enriched = enriched.filter((s) =>
@@ -130,9 +179,41 @@ export async function getStores(params: {
     enriched = filterByRadius(enriched, lat, lng, radius);
   }
 
+  // Ranking: quality score (rating, review volume, verification, freshness)
+  // plus a sponsoring boost, minus a gentle distance penalty. See
+  // computeRankingScore() in lib/sponsorship.ts for the exact weights —
+  // sponsoring nudges ranking within an already-filtered result set, it
+  // never bypasses the query/category/radius filters above.
+  enriched.sort((a, b) => {
+    const scoreA = computeRankingScore({
+      avgRating: a.avgRating,
+      reviewCount: a.reviewCount,
+      verificationLevel: a.verificationLevel,
+      createdAt: a.createdAt,
+      distanceM: a.distanceM,
+      sponsorBoostWeight: a.sponsorTier ? SPONSORSHIP_TIERS[a.sponsorTier].boostWeight : 0,
+    });
+    const scoreB = computeRankingScore({
+      avgRating: b.avgRating,
+      reviewCount: b.reviewCount,
+      verificationLevel: b.verificationLevel,
+      createdAt: b.createdAt,
+      distanceM: b.distanceM,
+      sponsorBoostWeight: b.sponsorTier ? SPONSORSHIP_TIERS[b.sponsorTier].boostWeight : 0,
+    });
+    return scoreB - scoreA;
+  });
+
   const total = enriched.length;
   const offset = (page - 1) * limit;
   const paginated = enriched.slice(offset, offset + limit);
+
+  // Like Search Console "impressions": count every store shown on a result
+  // page while a search/filter query was active. Fire-and-forget — never
+  // block or fail the actual response over analytics.
+  if (q) {
+    void recordSearchImpressions(paginated.map((s) => s.id), q);
+  }
 
   return {
     stores: paginated.map(serializeStore),
@@ -149,23 +230,53 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
       reviews: {
         where: { status: "published" },
         orderBy: { createdAt: "desc" },
-        include: { user: { select: { name: true, avatarUrl: true } } },
+        include: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+          _count: { select: { reports: true } },
+        },
       },
-      photos: { orderBy: { sortOrder: "asc" } },
+      photos: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          uploadedBy: { select: { id: true, name: true } },
+          _count: { select: { reports: true } },
+        },
+      },
       owner: { select: { id: true, name: true } },
     },
   });
 
   if (!store) return null;
 
-  const myVote = viewerId
-    ? await prisma.storeAttestation.findUnique({
-        where: { storeId_userId: { storeId: store.id, userId: viewerId } },
-        select: { vote: true },
-      })
-    : null;
+  const [myVote, sponsorTiers, myPhotoReports, myReviewReports] = await Promise.all([
+    viewerId
+      ? prisma.storeAttestation.findUnique({
+          where: { storeId_userId: { storeId: store.id, userId: viewerId } },
+          select: { vote: true },
+        })
+      : null,
+    getActiveSponsorTiers([store.id]),
+    viewerId && store.photos.length > 0
+      ? prisma.photoReport.findMany({
+          where: { userId: viewerId, photoId: { in: store.photos.map((p) => p.id) } },
+          select: { photoId: true },
+        })
+      : Promise.resolve([]),
+    viewerId && store.reviews.length > 0
+      ? prisma.reviewReport.findMany({
+          where: { userId: viewerId, reviewId: { in: store.reviews.map((r) => r.id) } },
+          select: { reviewId: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const myReportedPhotoIds = new Set(myPhotoReports.map((r) => r.photoId));
+  const myReportedReviewIds = new Set(myReviewReports.map((r) => r.reviewId));
 
-  const listItem = enrichStore(store);
+  // photos are loaded newest-first for the gallery; the first uploaded one
+  // (i.e. oldest) is the fallback cover when the store has none set.
+  const firstPhotoUrl = store.photos.length > 0 ? store.photos[store.photos.length - 1].url : null;
+
+  const listItem = enrichStore(store, undefined, sponsorTiers.get(store.id), firstPhotoUrl);
   return {
     ...serializeStore(listItem),
     myVote: myVote?.vote ?? null,
@@ -189,10 +300,192 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
       ownerReplyAt: r.ownerReplyAt,
       createdAt: r.createdAt,
       user: r.user,
+      reportCount: r._count.reports,
+      reportedByMe: myReportedReviewIds.has(r.id),
     })),
-    photos: store.photos,
+    photos: store.photos.map((p) => ({
+      id: p.id,
+      url: p.url,
+      caption: p.caption,
+      createdAt: p.createdAt,
+      uploadedBy: p.uploadedBy,
+      reportCount: p._count.reports,
+      reportedByMe: myReportedPhotoIds.has(p.id),
+    })),
     owner: store.owner,
   };
+}
+
+// --- Store photo gallery -----------------------------------------------------
+// Any signed-in user can contribute photos; see the API routes under
+// /api/v1/stores/[slug]/photos and /api/v1/photos/[photoId]/report.
+
+/**
+ * Who may delete a given gallery photo: the person who uploaded it, anyone
+ * who could edit the store itself (owner/creator/admin/moderator — see
+ * canEditStore), or a moderator/admin via the reported-photos queue.
+ */
+export function canDeletePhoto(
+  photo: { uploadedByUserId: string | null },
+  store: Pick<Store, "ownerUserId" | "createdById">,
+  user: { id: string; role?: string } | null | undefined
+): boolean {
+  if (!user) return false;
+  if (photo.uploadedByUserId === user.id) return true;
+  return canEditStore(store, user);
+}
+
+export async function addStorePhoto(
+  storeId: string,
+  userId: string,
+  url: string,
+  caption?: string | null
+) {
+  return prisma.storePhoto.create({
+    data: { storeId, url, caption: caption || null, uploadedByUserId: userId },
+  });
+}
+
+export async function deleteStorePhoto(photoId: string) {
+  return prisma.storePhoto.delete({ where: { id: photoId } }).catch(() => null);
+}
+
+/**
+ * Records (or no-ops on) a report from `userId` against `photoId`.
+ * Returns the resulting distinct-reporter count, or null if the photo
+ * doesn't exist.
+ */
+export async function reportStorePhoto(
+  photoId: string,
+  userId: string,
+  reason?: string | null
+): Promise<{ reportCount: number; alreadyReported: boolean } | null> {
+  const photo = await prisma.storePhoto.findUnique({ where: { id: photoId }, select: { id: true } });
+  if (!photo) return null;
+
+  const existing = await prisma.photoReport.findUnique({
+    where: { photoId_userId: { photoId, userId } },
+  });
+
+  if (!existing) {
+    await prisma.photoReport.create({ data: { photoId, userId, reason: reason || null } });
+  }
+
+  const reportCount = await prisma.photoReport.count({ where: { photoId } });
+  return { reportCount, alreadyReported: Boolean(existing) };
+}
+
+/**
+ * Gallery photos that have hit PHOTO_REPORT_THRESHOLD distinct reports —
+ * surfaced to admins/moderators, who can then remove them.
+ */
+export async function listReportedPhotos() {
+  // Prisma can't filter relations by count threshold directly, so we
+  // prefilter to "has at least one report" and apply the real threshold
+  // in JS below.
+  const photos = await prisma.storePhoto.findMany({
+    where: { reports: { some: {} } },
+    include: {
+      store: { select: { id: true, slug: true, name: true } },
+      uploadedBy: { select: { id: true, name: true, email: true } },
+      reports: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: { select: { reports: true } },
+    },
+    orderBy: { reports: { _count: "desc" } },
+  });
+  return photos.filter((p) => p._count.reports >= PHOTO_REPORT_THRESHOLD);
+}
+
+/**
+ * Clears all reports on a photo without deleting the photo itself — used
+ * by moderators to dismiss reports they've judged unfounded. The photo
+ * disappears from the moderation queue but stays live in the gallery, and
+ * can accumulate fresh reports again later.
+ */
+export async function dismissPhotoReports(photoId: string): Promise<boolean> {
+  const photo = await prisma.storePhoto.findUnique({ where: { id: photoId }, select: { id: true } });
+  if (!photo) return false;
+  await prisma.photoReport.deleteMany({ where: { photoId } });
+  return true;
+}
+
+/**
+ * Records (or no-ops on) a report from `userId` against `reviewId`. A user
+ * can't report their own review. Returns the resulting distinct-reporter
+ * count, or null if the review doesn't exist.
+ */
+export async function reportReview(
+  reviewId: string,
+  userId: string,
+  reason?: string | null
+): Promise<{ reportCount: number; alreadyReported: boolean } | { error: "NOT_FOUND" | "OWN_REVIEW" }> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true, userId: true } });
+  if (!review) return { error: "NOT_FOUND" };
+  if (review.userId === userId) return { error: "OWN_REVIEW" };
+
+  const existing = await prisma.reviewReport.findUnique({
+    where: { reviewId_userId: { reviewId, userId } },
+  });
+
+  if (!existing) {
+    await prisma.reviewReport.create({ data: { reviewId, userId, reason: reason || null } });
+  }
+
+  const reportCount = await prisma.reviewReport.count({ where: { reviewId } });
+  return { reportCount, alreadyReported: Boolean(existing) };
+}
+
+/**
+ * Reviews that have hit REVIEW_REPORT_THRESHOLD distinct reports — surfaced
+ * to admins/moderators, who can then hide them or dismiss the reports.
+ */
+export async function listReportedReviews() {
+  // Prisma can't filter relations by count threshold directly, so we
+  // prefilter to "has at least one report" and apply the real threshold
+  // in JS below.
+  const reviews = await prisma.review.findMany({
+    where: { reports: { some: {} } },
+    include: {
+      store: { select: { id: true, slug: true, name: true } },
+      user: { select: { id: true, name: true, email: true } },
+      reports: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: { select: { reports: true } },
+    },
+    orderBy: { reports: { _count: "desc" } },
+  });
+  return reviews.filter((r) => r._count.reports >= REVIEW_REPORT_THRESHOLD);
+}
+
+/**
+ * Clears all reports on a review without hiding the review itself — used
+ * by moderators to dismiss reports they've judged unfounded. The review
+ * disappears from the moderation queue but stays visible, and can
+ * accumulate fresh reports again later.
+ */
+export async function dismissReviewReports(reviewId: string): Promise<boolean> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
+  if (!review) return false;
+  await prisma.reviewReport.deleteMany({ where: { reviewId } });
+  return true;
+}
+
+/**
+ * Moderator action: hides a reported review (status -> "hidden") instead of
+ * deleting it outright, so it drops out of every public/`published`-filtered
+ * query (store page, avg rating, profile) but the record — and its reports —
+ * stay around for reference.
+ */
+export async function hideReview(reviewId: string): Promise<boolean> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
+  if (!review) return false;
+  await prisma.review.update({ where: { id: reviewId }, data: { status: "hidden" } });
+  return true;
 }
 
 export async function searchProducts(params: {
@@ -246,17 +539,38 @@ export async function searchProducts(params: {
 }
 
 export async function getFeaturedStores(limit = 6) {
-  const stores = await prisma.store.findMany({
+  // Fetch a slightly larger pool so sponsored (plus/top tier) stores have
+  // reviews/badges to be blended in among, rather than only ever showing
+  // sponsored stores when there happen to be `limit`-or-fewer active stores.
+  const pool = await prisma.store.findMany({
     where: { status: "active" },
     include: {
       hours: true,
       reviews: { where: { status: "published" } },
     },
-    take: limit,
+    take: Math.max(limit * 4, 24),
     orderBy: { createdAt: "desc" },
   });
 
-  return stores.map((s) => serializeStore(enrichStore(s)));
+  const sponsorTiers = await getActiveSponsorTiers(pool.map((s) => s.id));
+  const firstPhotoUrls = await getFirstPhotoUrls(pool.map((s) => s.id));
+  const enriched = pool.map((s) =>
+    enrichStore(s, undefined, sponsorTiers.get(s.id), firstPhotoUrls.get(s.id))
+  );
+
+  enriched.sort((a, b) => {
+    const weightA = a.sponsorTier ? SPONSORSHIP_TIERS[a.sponsorTier].boostWeight : 0;
+    const weightB = b.sponsorTier ? SPONSORSHIP_TIERS[b.sponsorTier].boostWeight : 0;
+    // Only the two higher tiers ("plus"/"top") buy featured placement on the
+    // homepage — see SPONSORSHIP_TIERS. Basic only boosts search/category
+    // ranking (handled in getStores above).
+    const featuredWeightA = weightA >= SPONSORSHIP_TIERS.plus.boostWeight ? weightA : 0;
+    const featuredWeightB = weightB >= SPONSORSHIP_TIERS.plus.boostWeight ? weightB : 0;
+    if (featuredWeightA !== featuredWeightB) return featuredWeightB - featuredWeightA;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  return enriched.slice(0, limit).map((s) => serializeStore(s));
 }
 
 export async function getActiveStoreCount() {
@@ -484,7 +798,13 @@ export async function upsertReview(
 ): Promise<{ error: "NOT_FOUND" | "OWN_STORE" } | { review: Review }> {
   const store = await prisma.store.findUnique({ where: { slug: storeSlug } });
   if (!store) return { error: "NOT_FOUND" };
-  if (store.createdById === userId || store.ownerUserId === userId) {
+  // Only the current owner (or the creator, while the store is still
+  // unclaimed) is "responsible" for the listing. Once someone else has
+  // claimed it, the original creator is just a regular user again and is
+  // free to review it.
+  const isResponsible =
+    store.ownerUserId === userId || (store.createdById === userId && store.ownerUserId === null);
+  if (isResponsible) {
     return { error: "OWN_STORE" };
   }
 
@@ -501,16 +821,85 @@ export async function upsertReview(
       rating: data.rating,
       title: data.title || null,
       body: data.body,
+      // Editing is meaningfully new content, so un-hide it even if a
+      // moderator had previously hidden the old version.
+      status: "published",
     },
   });
 
   return { review };
 }
 
+/**
+ * Deletes a review — author-only. (Moderators hide reviews instead, via
+ * hideReview(), so the report trail is preserved; a straight delete here is
+ * for the author removing their own content.)
+ */
+export async function deleteReview(
+  reviewId: string,
+  userId: string
+): Promise<{ error: "NOT_FOUND" | "FORBIDDEN" } | { success: true }> {
+  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { userId: true } });
+  if (!review) return { error: "NOT_FOUND" };
+  if (review.userId !== userId) return { error: "FORBIDDEN" };
+
+  await prisma.review.delete({ where: { id: reviewId } });
+  return { success: true };
+}
+
+export async function isStoreSaved(storeId: string, userId: string): Promise<boolean> {
+  const row = await prisma.savedStore.findUnique({
+    where: { userId_storeId: { userId, storeId } },
+  });
+  return Boolean(row);
+}
+
+export async function saveStore(storeId: string, userId: string) {
+  await prisma.savedStore.upsert({
+    where: { userId_storeId: { userId, storeId } },
+    update: {},
+    create: { userId, storeId },
+  });
+}
+
+export async function unsaveStore(storeId: string, userId: string) {
+  await prisma.savedStore.deleteMany({ where: { userId, storeId } });
+}
+
+export async function getSavedStores(userId: string) {
+  const saved = await prisma.savedStore.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      store: {
+        include: {
+          hours: true,
+          reviews: { where: { status: "published" } },
+        },
+      },
+    },
+  });
+
+  const sponsorTiers = await getActiveSponsorTiers(saved.map((s) => s.storeId));
+  const firstPhotoUrls = await getFirstPhotoUrls(saved.map((s) => s.storeId));
+  return saved.map((s) =>
+    serializeStore(
+      enrichStore(s.store, undefined, sponsorTiers.get(s.storeId), firstPhotoUrls.get(s.storeId))
+    )
+  );
+}
+
 export async function getUserStoreOverview(userId: string) {
   const [createdOrOwned, claims] = await Promise.all([
     prisma.store.findMany({
-      where: { OR: [{ createdById: userId }, { ownerUserId: userId }] },
+      // Confirmed owner always sees it. The original submitter only sees
+      // it while it's still unclaimed — once someone else's claim gets
+      // approved and ownerUserId is set to them, it drops off the
+      // creator's dashboard (they've lost every permission on it anyway,
+      // see canEditStore).
+      where: {
+        OR: [{ ownerUserId: userId }, { AND: [{ createdById: userId }, { ownerUserId: null }] }],
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.storeClaim.findMany({
@@ -520,13 +909,70 @@ export async function getUserStoreOverview(userId: string) {
     }),
   ]);
 
-  return { stores: createdOrOwned, claims };
+  const sponsorships = await prisma.sponsorshipSubscription.findMany({
+    where: {
+      storeId: { in: createdOrOwned.map((s) => s.id) },
+      status: { in: ["incomplete", "active", "past_due"] },
+    },
+    select: { storeId: true, tier: true, status: true },
+  });
+  const sponsorshipByStore = new Map(sponsorships.map((s) => [s.storeId, s]));
+
+  const pendingTransfers = await prisma.ownershipTransfer.findMany({
+    where: { storeId: { in: createdOrOwned.map((s) => s.id) }, status: "pending" },
+    select: { storeId: true, toUser: { select: { name: true, email: true } } },
+  });
+  const pendingTransferByStore = new Map(pendingTransfers.map((t) => [t.storeId, t]));
+
+  const stores = createdOrOwned.map((store) => ({
+    ...store,
+    sponsorship: sponsorshipByStore.get(store.id) ?? null,
+    pendingTransfer: pendingTransferByStore.get(store.id) ?? null,
+  }));
+
+  return { stores, claims };
 }
 
 // --- Community attestations -------------------------------------------------
 
 export function canModerate(user: { role?: string } | null | undefined): boolean {
   return user?.role === "admin" || user?.role === "moderator";
+}
+
+/**
+ * Total open moderation items (flagged stores + photos past the report
+ * threshold + reviews past the report threshold + pending claims) — drives
+ * the red badge in the nav. Computed server-side so it's correct on first
+ * render, no client fetch involved.
+ */
+export async function getPendingModerationCount(): Promise<number> {
+  const [flaggedStores, pendingClaims, photosWithReportCounts, reviewsWithReportCounts] =
+    await Promise.all([
+      prisma.store.count({ where: { status: "pending" } }),
+      prisma.storeClaim.count({ where: { status: "pending" } }),
+      // Prisma can't filter a relation by count threshold directly, so we
+      // pull just the report counts for photos that have at least one report
+      // and apply the same >= PHOTO_REPORT_THRESHOLD filter listReportedPhotos()
+      // uses as the visible source of truth.
+      prisma.storePhoto.findMany({
+        where: { reports: { some: {} } },
+        select: { _count: { select: { reports: true } } },
+      }),
+      // Same idea for reviews, against REVIEW_REPORT_THRESHOLD.
+      prisma.review.findMany({
+        where: { reports: { some: {} } },
+        select: { _count: { select: { reports: true } } },
+      }),
+    ]);
+
+  const reportedPhotosOverThreshold = photosWithReportCounts.filter(
+    (p) => p._count.reports >= PHOTO_REPORT_THRESHOLD
+  ).length;
+  const reportedReviewsOverThreshold = reviewsWithReportCounts.filter(
+    (r) => r._count.reports >= REVIEW_REPORT_THRESHOLD
+  ).length;
+
+  return flaggedStores + reportedPhotosOverThreshold + reportedReviewsOverThreshold + pendingClaims;
 }
 
 async function adjustTrustScore(userId: string | null | undefined, delta: number) {
@@ -548,7 +994,11 @@ export async function castAttestation(
   // The submitter/owner vouching for their own listing wouldn't mean much
   // as an "independent" confirmation, so they're excluded from voting on
   // it — they can still fix problems directly by editing the listing.
-  if (store.createdById === userId || store.ownerUserId === userId) {
+  // Once someone else has claimed the store, the original creator is no
+  // longer "responsible" for it and can vote like anyone else.
+  const isResponsible =
+    store.ownerUserId === userId || (store.createdById === userId && store.ownerUserId === null);
+  if (isResponsible) {
     return { error: "OWN_STORE" };
   }
 

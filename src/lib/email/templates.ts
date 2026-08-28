@@ -1,3 +1,4 @@
+// path: src/lib/email/templates.ts
 const wrapper = (title: string, bodyHtml: string) => `
 <!DOCTYPE html>
 <html>
@@ -64,5 +65,48 @@ export function resetPasswordTemplate(resetUrl: string) {
      <p style="font-size:12px;color:#5C4033a0;margin-top:24px;">Der Link ist 60 Minuten gültig. Falls du das nicht warst, kannst du diese E-Mail ignorieren — dein Passwort bleibt unverändert.</p>`
   );
   const text = `Passwort zurücksetzen: ${resetUrl} (60 Minuten gültig)`;
+  return { html, text };
+}
+
+export function transferInviteTemplate(params: {
+  storeName: string;
+  fromName: string;
+  message: string | null;
+  acceptUrl: string;
+  ttlDays: number;
+}) {
+  const { storeName, fromName, message, acceptUrl, ttlDays } = params;
+  const html = wrapper(
+    "Übertragungsanfrage für einen Laden",
+    `<p style="line-height:1.6;"><strong>${fromName}</strong> möchte dir die Inhaberschaft für <strong>„${storeName}“</strong> auf FairFind übertragen.</p>
+     ${message ? `<p style="line-height:1.6;background:#FAF7F2;border-radius:8px;padding:12px;font-style:italic;">„${message}“</p>` : ""}
+     <p style="line-height:1.6;">Nimm die Übertragung an, um ab sofort Inhaber:in dieses Eintrags zu sein — inklusive Bearbeitungsrechten, Insights und Sponsoring-Optionen.</p>
+     ${buttonHtml(acceptUrl, "Anfrage ansehen")}
+     <p style="font-size:12px;color:#5C4033a0;margin-top:24px;">Der Link ist ${ttlDays} Tage gültig. Falls du das nicht erwartet hast, kannst du diese E-Mail ignorieren — es ändert sich nichts, bis du aktiv zustimmst.</p>`
+  );
+  const text = `${fromName} möchte dir die Inhaberschaft für „${storeName}“ übertragen.${
+    message ? ` Nachricht: „${message}“` : ""
+  } Anfrage ansehen: ${acceptUrl} (${ttlDays} Tage gültig)`;
+  return { html, text };
+}
+
+export function transferAcceptedTemplate(params: { storeName: string; toName: string; storeUrl: string }) {
+  const { storeName, toName, storeUrl } = params;
+  const html = wrapper(
+    "Übertragung angenommen",
+    `<p style="line-height:1.6;"><strong>${toName}</strong> hat deine Übertragungsanfrage für <strong>„${storeName}“</strong> angenommen. Der Eintrag gehört jetzt dieser Person — du hast keine Bearbeitungsrechte mehr.</p>
+     ${buttonHtml(storeUrl, "Laden ansehen")}`
+  );
+  const text = `${toName} hat deine Übertragungsanfrage für „${storeName}“ angenommen. Laden ansehen: ${storeUrl}`;
+  return { html, text };
+}
+
+export function transferDeclinedTemplate(params: { storeName: string; toName: string }) {
+  const { storeName, toName } = params;
+  const html = wrapper(
+    "Übertragung abgelehnt",
+    `<p style="line-height:1.6;"><strong>${toName}</strong> hat deine Übertragungsanfrage für <strong>„${storeName}“</strong> abgelehnt. Du bleibst weiterhin Inhaber:in des Eintrags.</p>`
+  );
+  const text = `${toName} hat deine Übertragungsanfrage für „${storeName}“ abgelehnt. Du bleibst Inhaber:in.`;
   return { html, text };
 }

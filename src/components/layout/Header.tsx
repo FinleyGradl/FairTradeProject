@@ -3,8 +3,17 @@ import Link from "next/link";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { auth } from "@/auth";
+import { canModerate, getPendingModerationCount } from "@/lib/stores";
 
-export function Header() {
+export async function Header() {
+  const session = await auth();
+  // Only bother querying counts for admins/moderators — everyone else
+  // never sees the badge, no need to hit the DB on every page for them.
+  const pendingModerationCount = canModerate(session?.user)
+    ? await getPendingModerationCount()
+    : 0;
+
   return (
     <header className="sticky top-0 z-50 border-b border-sage/10 bg-cream/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
@@ -33,7 +42,7 @@ export function Header() {
               Laden hinzufügen
             </Button>
           </Link>
-          <UserMenu />
+          <UserMenu pendingModerationCount={pendingModerationCount} />
         </nav>
       </div>
     </header>

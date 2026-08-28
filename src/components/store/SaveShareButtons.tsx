@@ -1,32 +1,43 @@
+// path: src/components/store/SaveShareButtons.tsx
 "use client";
 
 import { Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface SaveButtonProps {
-  storeId: string;
+  storeSlug: string;
+  initialSaved: boolean;
+  isLoggedIn: boolean;
   className?: string;
 }
 
-export function SaveButton({ storeId, className }: SaveButtonProps) {
-  const [saved, setSaved] = useState(false);
+export function SaveButton({ storeSlug, initialSaved, isLoggedIn, className }: SaveButtonProps) {
+  const [saved, setSaved] = useState(initialSaved);
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => {
-    const stored = localStorage.getItem("fairfind-saved-stores");
-    if (stored) {
-      const ids: string[] = JSON.parse(stored);
-      setSaved(ids.includes(storeId));
+  const toggle = async () => {
+    if (!isLoggedIn) {
+      router.push(`/login?callbackUrl=/stores/${storeSlug}`);
+      return;
     }
-  }, [storeId]);
-
-  const toggle = () => {
-    const stored = localStorage.getItem("fairfind-saved-stores");
-    const ids: string[] = stored ? JSON.parse(stored) : [];
-    const next = saved ? ids.filter((id) => id !== storeId) : [...ids, storeId];
-    localStorage.setItem("fairfind-saved-stores", JSON.stringify(next));
-    setSaved(!saved);
+    if (pending) return;
+    setPending(true);
+    const next = !saved;
+    setSaved(next); // optimistic
+    try {
+      const res = await fetch(`/api/v1/stores/${storeSlug}/save`, {
+        method: next ? "POST" : "DELETE",
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setSaved(!next); // revert on failure
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -34,7 +45,8 @@ export function SaveButton({ storeId, className }: SaveButtonProps) {
       variant="outline"
       size="icon"
       onClick={toggle}
-      aria-label={saved ? "Remove from saved" : "Save store"}
+      aria-label={saved ? "Von der Merkliste entfernen" : "Zur Merkliste hinzufügen"}
+      title={saved ? "Von der Merkliste entfernen" : "Zur Merkliste hinzufügen"}
       className={cn(saved && "border-red-300 text-red-500", className)}
     >
       <Heart className={cn("h-4 w-4", saved && "fill-current")} />

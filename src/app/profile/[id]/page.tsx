@@ -1,3 +1,4 @@
+// src/app/profile/[id]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -39,6 +40,9 @@ export default async function PublicProfilePage({ params }: Props) {
         },
       },
       storesCreated: {
+        // Only unclaimed stores — once someone else claims a store the
+        // creator is no longer associated with it on their public profile.
+        where: { ownerUserId: null },
         select: { id: true, slug: true, name: true, city: true, status: true },
         orderBy: { createdAt: "desc" },
       },

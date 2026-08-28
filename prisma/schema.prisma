@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+// path: prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
   output   = "../prisma/generated/prisma/client"
@@ -45,6 +47,27 @@ enum AttestationVote {
   dispute
 }
 
+enum SponsorshipTier {
+  basic
+  plus
+  top
+}
+
+enum SponsorshipStatus {
+  incomplete // first (mandate) payment created at Mollie, not confirmed yet
+  active
+  past_due // renewal payment failed, Mollie will retry
+  canceled
+}
+
+enum OwnershipTransferStatus {
+  pending
+  accepted
+  declined
+  canceled // superseded by a newer invite, or canceled by the sender
+  expired
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -68,6 +91,13 @@ model User {
   claims        StoreClaim[]
   claimsReviewed StoreClaim[] @relation("ClaimReviewer")
   attestations  StoreAttestation[]
+  sponsorships  SponsorshipSubscription[]
+  promoCodesCreated PromoCode[]
+  photosUploaded    StorePhoto[]   @relation("PhotoUploader")
+  photoReports      PhotoReport[]
+  reviewReports     ReviewReport[]
+  transfersSent     OwnershipTransfer[] @relation("TransferSender")
+  transfersReceived OwnershipTransfer[] @relation("TransferRecipient")
 
   accounts             Account[]
   sessions             Session[]
@@ -177,6 +207,123 @@ model Store {
   claims    StoreClaim[]
   photos    StorePhoto[]
   attestations StoreAttestation[]
+  sponsorships SponsorshipSubscription[]
+  pageViews    PageView[]
+  searchImpressions SearchImpression[]
+  ownershipTransfers OwnershipTransfer[]
+}
+
+// --- Sponsoring (paid preferred placement) ----------------------------------
+
+// Admin-managed discount/promo codes for sponsorship checkout. Complements
+// (but doesn't replace) the hardcoded dev-only code in lib/promo-codes.ts.
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  discountPercent Int
+  label           String?
+  active          Boolean   @default(true)
+  maxRedemptions  Int?
+  redemptionCount Int       @default(0)
+  expiresAt       DateTime?
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+
+  createdBy User? @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([code])
+}
+
+model SponsorshipSubscription {
+  id          String            @id @default(cuid())
+  storeId     String
+  ownerUserId String
+  tier        SponsorshipTier
+  status      SponsorshipStatus @default(incomplete)
+
+  // Mollie references. The "first" payment establishes a mandate; once it's
+  // paid we create a recurring Mollie subscription and store its id here.
+  // See lib/mollie.ts + app/api/webhooks/mollie/route.ts.
+  mollieCustomerId     String?
+  mollieSubscriptionId String?
+  molliePaymentId      String?
+
+  // Optional dev/promo code redeemed at checkout (see lib/promo-codes.ts).
+  // A 100%-off code skips Mollie entirely; partial discounts reduce the
+  // amount sent to Mollie. Kept for audit purposes even after redemption.
+  promoCode       String?
+  discountPercent Int     @default(0)
+
+  currentPeriodEnd DateTime?
+  canceledAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  owner User  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([status])
+  @@index([mollieSubscriptionId])
+}
+
+// --- Ownership transfer (succession) ----------------------------------------
+// A two-step handover: the current owner invites an already-registered user
+// by email; nothing changes until that person actively accepts (see
+// lib/ownership-transfer.ts). At most one "pending" invite exists per store
+// at a time — starting a new one supersedes the previous. Any active
+// sponsorship is canceled as part of accepting a transfer (a new owner
+// starts their own, if they want one).
+model OwnershipTransfer {
+  id          String                   @id @default(cuid())
+  storeId     String
+  fromUserId  String
+  toUserId    String
+  token       String                   @unique
+  message     String?
+  status      OwnershipTransferStatus  @default(pending)
+  expiresAt   DateTime
+  respondedAt DateTime?
+  createdAt   DateTime                 @default(now())
+
+  store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  fromUser User  @relation("TransferSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User  @relation("TransferRecipient", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status])
+  @@index([toUserId, status])
+}
+
+// --- Analytics / Insights ----------------------------------------------------
+// Deliberately minimal & privacy-conscious: no raw IP addresses are stored,
+// no cross-day tracking identifiers. See lib/analytics.ts for how
+// `visitorHash` is derived (daily-rotating salted hash) and lib/geo-ip.ts for
+// the best-effort, header-first country lookup.
+
+model PageView {
+  id           String   @id @default(cuid())
+  storeId      String
+  path         String
+  referrerUrl  String?
+  referrerHost String?
+  country      String?
+  visitorHash  String
+  createdAt    DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
+}
+
+model SearchImpression {
+  id        String   @id @default(cuid())
+  storeId   String
+  query     String?
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
 }
 
 model StoreAttestation {
@@ -240,10 +387,31 @@ model Review {
   status       ReviewStatus @default(published)
   createdAt    DateTime     @default(now())
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store   Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports ReviewReport[]
 
   @@unique([storeId, userId])
+}
+
+// Community reporting for reviews. One report per person per review
+// (re-reporting just no-ops) — see REVIEW_REPORT_THRESHOLD in
+// lib/constants.ts for the count that surfaces a review in the admin
+// moderation queue. Reaching the threshold does NOT hide the review
+// automatically; it only makes it visible to admins/moderators, who can
+// then hide it (status -> "hidden") or dismiss the reports.
+model ReviewReport {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
 }
 
 model SavedStore {
@@ -284,11 +452,36 @@ model StoreClaim {
 }
 
 model StorePhoto {
-  id        String @id @default(cuid())
-  storeId   String
-  url       String
-  caption   String?
-  sortOrder Int    @default(0)
+  id               String   @id @default(cuid())
+  storeId          String
+  url              String
+  caption          String?
+  sortOrder        Int      @default(0)
+  uploadedByUserId String?
+  createdAt        DateTime @default(now())
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store      Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  uploadedBy User?         @relation("PhotoUploader", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  reports    PhotoReport[]
+
+  @@index([storeId])
+}
+
+// Community reporting for user-uploaded gallery photos. One report per
+// person per photo (re-reporting just no-ops) — see PHOTO_REPORT_THRESHOLD
+// in lib/constants.ts for the count that surfaces a photo in the admin
+// moderation queue. Reaching the threshold does NOT auto-remove the photo;
+// it only makes it visible to admins/moderators, who can then delete it.
+model PhotoReport {
+  id        String   @id @default(cuid())
+  photoId   String
+  userId    String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  photo StorePhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([photoId, userId])
+  @@index([photoId])
 }

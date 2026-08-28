@@ -1,3 +1,4 @@
+// path: src/lib/uploads.ts
 import { mkdir, writeFile, unlink } from "fs/promises";
 import path from "path";
 
@@ -103,6 +104,41 @@ export async function deleteStoreCoverFileIfLocal(coverImage: string | null): Pr
   if (!coverImage.startsWith("/api/uploads/stores/")) return;
 
   const filename = path.basename(coverImage);
+  const filePath = path.join(STORE_COVER_DIR, filename);
+
+  await unlink(filePath).catch(() => {
+    // File already gone / never existed — nothing to do.
+  });
+}
+
+/**
+ * Saves a user-uploaded gallery photo for a store. Shares the same disk
+ * folder and serving route as the cover image (see saveStoreCoverFile) —
+ * only the filename prefix differs ("gallery-") so the two can't collide
+ * and so cleanup code can tell them apart if ever needed.
+ */
+export async function saveStorePhotoFile(storeId: string, file: File): Promise<string> {
+  await mkdir(STORE_COVER_DIR, { recursive: true });
+
+  const ext = ALLOWED_MIME_EXT[file.type];
+  const filename = `gallery-${storeId}-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+  const filePath = path.join(STORE_COVER_DIR, filename);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await writeFile(filePath, buffer);
+
+  return `/api/uploads/stores/${filename}`;
+}
+
+/**
+ * Deletes a gallery photo file from disk, if the given URL points to our
+ * local uploads volume.
+ */
+export async function deleteStorePhotoFileIfLocal(url: string | null): Promise<void> {
+  if (!url) return;
+  if (!url.startsWith("/api/uploads/stores/")) return;
+
+  const filename = path.basename(url);
   const filePath = path.join(STORE_COVER_DIR, filename);
 
   await unlink(filePath).catch(() => {

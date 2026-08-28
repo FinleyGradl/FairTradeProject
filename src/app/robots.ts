@@ -1,6 +1,7 @@
+// path: src/app/robots.ts
 import type { MetadataRoute } from "next";
 
-const BASE_URL = "https://traceable.ddns.net";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export default function robots(): MetadataRoute.Robots {
   return {

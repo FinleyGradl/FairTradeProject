@@ -1,66 +1,47 @@
-"use client";
-
-import { useEffect, useState } from "react";
+// path: src/app/me/saved/page.tsx
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { StoreCard, type StoreCardData } from "@/components/store/StoreCard";
+import { auth } from "@/auth";
+import { getSavedStores } from "@/lib/stores";
 import { EmptyState } from "@/components/EmptyState";
-import { Loader2 } from "lucide-react";
+import { SavedStoresGrid } from "@/components/store/SavedStoresGrid";
 
-export default function SavedPage() {
-  const [stores, setStores] = useState<StoreCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+export const metadata: Metadata = { title: "Merkliste" };
 
-  useEffect(() => {
-    const stored = localStorage.getItem("fairfind-saved-stores");
-    const ids: string[] = stored ? JSON.parse(stored) : [];
+export default async function SavedPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login?callbackUrl=/me/saved");
+  }
 
-    if (ids.length === 0) {
-      setLoading(false);
-      return;
-    }
-
-    fetch("/api/v1/stores?limit=50")
-      .then((r) => r.json())
-      .then((data) => {
-        const saved = (data.stores ?? []).filter((s: StoreCardData) =>
-          ids.includes(s.id)
-        );
-        setStores(saved);
-        setLoading(false);
-      });
-  }, []);
+  const stores = await getSavedStores(session.user.id);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex items-center gap-2">
         <Heart className="h-6 w-6 text-sage" />
-        <h1 className="text-2xl font-bold text-earth">Saved stores</h1>
+        <h1 className="text-2xl font-bold text-earth">Merkliste</h1>
       </div>
       <p className="mt-1 text-sm text-earth/70">
-        Stores you&apos;ve bookmarked (saved locally in this prototype)
+        Läden, die du dir gemerkt hast.
       </p>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-sage" />
+      {stores.length === 0 ? (
+        <div className="mt-8">
+          <EmptyState
+            title="Noch keine gemerkten Läden"
+            description="Tippe auf das Herz-Symbol bei einem Laden, um ihn hier zu speichern."
+          />
         </div>
-      ) : stores.length === 0 ? (
-        <EmptyState
-          title="No saved stores yet"
-          description="Tap the heart icon on any store to save it here."
-        />
       ) : (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {stores.map((store) => (
-            <StoreCard key={store.id} store={store} />
-          ))}
-        </div>
+        <SavedStoresGrid initialStores={stores} />
       )}
 
       <p className="mt-8 text-center text-sm text-earth/50">
         <Link href="/explore" className="text-sage hover:underline">
-          Discover more stores →
+          Weitere Läden entdecken →
         </Link>
       </p>
     </div>

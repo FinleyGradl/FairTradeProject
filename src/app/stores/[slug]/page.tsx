@@ -1,19 +1,25 @@
+// src/app/stores/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil } from "lucide-react";
+import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
-import { getStoreBySlug, canEditStore } from "@/lib/stores";
+import { getStoreBySlug, canEditStore, isStoreSaved } from "@/lib/stores";
+import { canManageSponsorship } from "@/lib/sponsorship";
 import { RatingStars } from "@/components/store/RatingStars";
 import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
 import { SaveButton, ShareButton } from "@/components/store/SaveShareButtons";
 import { ProductCard } from "@/components/store/ProductCard";
+import { StoreHeroGallery } from "@/components/store/StoreHeroGallery";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { ReviewForm } from "@/components/store/ReviewForm";
+import { ReviewsList } from "@/components/store/ReviewsList";
 import { DistanceFromYou } from "@/components/store/DistanceFromYou";
+import { SponsoredBadge } from "@/components/store/SponsoredBadge";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getOpenStatusLabel, isOpenNow } from "@/lib/hours";
@@ -51,22 +57,44 @@ export default async function StoreDetailPage({ params }: PageProps) {
   if (!store) notFound();
 
   const canEdit = canEditStore(store, session?.user);
+  // Owner (real, confirmed) or admin/moderator — mirrors the access check
+  // the /insights page and API route enforce, so we don't show a button
+  // that then 403s. Sponsoring itself (billing) stays owner-only below.
+  const canViewInsights = await canManageSponsorship(store, session?.user);
+  const initialSaved = session?.user ? await isStoreSaved(store.id, session.user.id) : false;
   const isSignedIn = Boolean(session?.user);
+  // Only the current owner (or the creator, while the store is still
+  // unclaimed) counts as "own store" here — once someone else has claimed
+  // it, the original creator can review/attest like anyone else.
   const isOwnStore = Boolean(
-    session?.user && (store.ownerUserId === session.user.id || store.createdById === session.user.id)
+    session?.user &&
+      (store.ownerUserId === session.user.id ||
+        (store.createdById === session.user.id && store.ownerUserId === null))
   );
 
   const open = isOpenNow(store.hours);
   const statusLabel = getOpenStatusLabel(store.hours);
 
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": "Store",
+    "@id": `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/stores/${store.slug}`,
+    url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/stores/${store.slug}`,
     name: store.name,
     description: store.description,
-    url: `https://traceable.ddns.net/stores/${store.slug}`,
     ...(store.coverImage && { image: store.coverImage }),
     ...(store.phone && { telephone: store.phone }),
+    ...(store.website && { sameAs: store.website }),
     address: {
       "@type": "PostalAddress",
       streetAddress: store.addressLine,
@@ -79,6 +107,16 @@ export default async function StoreDetailPage({ params }: PageProps) {
       latitude: store.latitude,
       longitude: store.longitude,
     },
+    ...(store.hours?.length && {
+      openingHoursSpecification: store.hours
+        .filter((h) => !h.isClosed)
+        .map((h) => ({
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: `https://schema.org/${dayNames[h.dayOfWeek]}`,
+          opens: h.openTime,
+          closes: h.closeTime,
+        })),
+    }),
     ...(store.avgRating && {
       aggregateRating: {
         "@type": "AggregateRating",
@@ -94,26 +132,27 @@ export default async function StoreDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <PageViewTracker storeId={store.id} path={`/stores/${store.slug}`} />
 
       {/* Hero */}
       <div className="relative h-64 bg-sage-100 md:h-80">
-        {store.coverImage && (
-          <Image
-            src={store.coverImage}
-            alt={`Fairtrade Laden ${store.name} in ${store.city}`}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+        <StoreHeroGallery
+          storeSlug={store.slug}
+          storeName={store.name}
+          coverImage={store.coverImage}
+          photos={store.photos}
+          isSignedIn={isSignedIn}
+          currentUserId={session?.user?.id ?? null}
+          canManageStore={canEdit}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-6 text-white">
           <div className="mx-auto max-w-4xl">
             <FairBadges badges={store.fairBadges} className="mb-2" />
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-3xl font-bold md:text-4xl">{store.name}</h1>
               <VerifiedBadge level={store.verificationLevel} />
+              {store.isSponsored && <SponsoredBadge />}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {store.avgRating != null && (
@@ -137,21 +176,52 @@ export default async function StoreDetailPage({ params }: PageProps) {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6 flex gap-2">
-          <SaveButton storeId={store.id} />
+          <SaveButton
+            storeSlug={store.slug}
+            initialSaved={initialSaved}
+            isLoggedIn={Boolean(session?.user)}
+          />
           <ShareButton title={store.name} />
-          {canEdit ? (
-            <Link href={`/stores/${store.slug}/edit`} className="ml-auto">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Pencil className="h-3.5 w-3.5" /> Bearbeiten
-              </Button>
-            </Link>
-          ) : !store.ownerUserId ? (
+          {canEdit && (
+            <div className="ml-auto flex gap-2">
+              {canViewInsights && (
+                <Link href={`/me/stores/${store.slug}/insights`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <BarChart3 className="h-3.5 w-3.5" /> Insights
+                  </Button>
+                </Link>
+              )}
+              {store.ownerUserId === session?.user?.id && (
+                <Link href={`/me/stores/${store.slug}/sponsoring`}>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <Megaphone className="h-3.5 w-3.5" /> Sponsoring
+                  </Button>
+                </Link>
+              )}
+              {/* Editable but unclaimed (e.g. its own creator, or an
+                  admin/moderator) — still offer claiming so this actually
+                  gets a confirmed owner and unlocks Insights/Sponsoring. */}
+              {!store.ownerUserId && (
+                <Link href={`/claim/${store.slug}`}>
+                  <Button variant="outline" size="sm">
+                    Laden beanspruchen
+                  </Button>
+                </Link>
+              )}
+              <Link href={`/stores/${store.slug}/edit`}>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Bearbeiten
+                </Button>
+              </Link>
+            </div>
+          )}
+          {!canEdit && !store.ownerUserId && (
             <Link href={`/claim/${store.slug}`} className="ml-auto">
               <Button variant="outline" size="sm">
-                Claim this store
+                Laden beanspruchen
               </Button>
             </Link>
-          ) : null}
+          )}
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
@@ -184,33 +254,33 @@ export default async function StoreDetailPage({ params }: PageProps) {
                 <h2 className="text-xl font-semibold text-earth">
                   Bewertungen {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
                 </h2>
-                {!isOwnStore && <ReviewForm storeSlug={store.slug} isSignedIn={isSignedIn} />}
+                {!isOwnStore && (
+                  <ReviewForm
+                    storeSlug={store.slug}
+                    isSignedIn={isSignedIn}
+                    existingReview={
+                      session?.user
+                        ? (store.reviews.find((r) => r.user.id === session.user!.id) ?? null)
+                        : null
+                    }
+                  />
+                )}
               </div>
               {store.reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {store.reviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="rounded-lg border border-sage/10 bg-white p-4"
-                    >
-                      <RatingStars rating={review.rating} size="sm" />
-                      {review.title && (
-                        <p className="mt-1 font-medium text-earth">{review.title}</p>
-                      )}
-                      <p className="mt-1 text-sm text-earth/80">{review.body}</p>
-                      <p className="mt-2 text-xs text-earth/50">
-                        {review.user.name ?? "Anonym"} ·{" "}
-                        {new Date(review.createdAt).toLocaleDateString("de-DE")}
-                      </p>
-                      {review.ownerReply && (
-                        <div className="mt-3 rounded bg-sage-50 p-3 text-sm">
-                          <p className="font-medium text-sage">Antwort des Inhabers</p>
-                          <p className="text-earth/80">{review.ownerReply}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <ReviewsList
+                  reviews={store.reviews.map((r) => ({
+                    id: r.id,
+                    rating: r.rating,
+                    title: r.title,
+                    body: r.body,
+                    createdAt: r.createdAt,
+                    ownerReply: r.ownerReply,
+                    user: { id: r.user.id, name: r.user.name },
+                    reportedByMe: r.reportedByMe,
+                  }))}
+                  isSignedIn={isSignedIn}
+                  currentUserId={session?.user?.id}
+                />
               ) : (
                 <p className="text-sm text-earth/60">
                   Noch keine Bewertungen. Sei die/der Erste!
@@ -280,7 +350,12 @@ export default async function StoreDetailPage({ params }: PageProps) {
             {store.owner && (
               <section className="rounded-xl border border-sage/10 bg-white p-4">
                 <h3 className="font-semibold text-earth">Verwaltet von</h3>
-                <p className="mt-1 text-sm text-earth/70">{store.owner.name}</p>
+                <Link
+                  href={`/profile/${store.owner.id}`}
+                  className="mt-1 block text-sm text-sage hover:underline"
+                >
+                  {store.owner.name}
+                </Link>
               </section>
             )}
 

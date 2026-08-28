@@ -10,27 +10,62 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const siteName = "FairFind";
+const defaultTitle = "FairFind — Discover Fair Trade Stores";
+const defaultDescription =
+  "Find fair-trade stores near you. Browse ethical shops, products, and reviews across Germany.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://traceable.ddns.net"),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "FairFind – Fairtrade Läden in deiner Nähe finden",
+    default: defaultTitle,
     template: "%s | FairFind",
   },
-  description:
-    "Finde Fairtrade Shops, nachhaltige Mode und faire Lebensmittel. Entdecke zertifizierte Weltläden und lies Bewertungen der Community.",
+  description: defaultDescription,
+  keywords: [
+    "fair trade",
+    "fairer handel",
+    "fair trade shop",
+    "Weltladen",
+    "ethical shopping",
+    "sustainable products",
+    "fair trade Germany",
+  ],
+  applicationName: siteName,
+  authors: [{ name: siteName }],
+  generator: "Next.js",
+  referrer: "origin-when-cross-origin",
+  formatDetection: { email: false, address: false, telephone: false },
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "FairFind – Fairtrade Läden in deiner Nähe finden",
-    description:
-      "Standortbasiertes Verzeichnis für Fairtrade-Läden und Weltläden in ganz Deutschland.",
+    title: defaultTitle,
+    description: defaultDescription,
+    url: siteUrl,
+    siteName,
     type: "website",
     locale: "de_DE",
-    siteName: "FairFind",
+    // images intentionally omitted here — Next.js auto-detects
+    // src/app/opengraph-image.tsx and injects og:image (and the twitter
+    // equivalent) for every route that doesn't define its own.
   },
   twitter: {
     card: "summary_large_image",
-    title: "FairFind – Fairtrade Läden in deiner Nähe finden",
-    description:
-      "Finde zertifizierte Fairtrade-Shops und Weltläden in deiner Nähe.",
+    title: defaultTitle,
+    description: defaultDescription,
   },
 };
 

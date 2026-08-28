@@ -1,10 +1,19 @@
+// path: src/app/admin/moderation/page.tsx
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { listFlaggedStores, listPendingClaims, canModerate } from "@/lib/stores";
+import {
+  listFlaggedStores,
+  listPendingClaims,
+  listReportedPhotos,
+  listReportedReviews,
+  canModerate,
+} from "@/lib/stores";
 import { parseJsonArray } from "@/lib/utils";
 import { FlaggedStoresQueue } from "@/components/moderation/FlaggedStoresQueue";
 import { PendingClaimsQueue } from "@/components/moderation/PendingClaimsQueue";
+import { ReportedPhotosQueue } from "@/components/moderation/ReportedPhotosQueue";
+import { ReportedReviewsQueue } from "@/components/moderation/ReportedReviewsQueue";
 
 export const metadata: Metadata = { title: "Moderation" };
 
@@ -17,9 +26,11 @@ export default async function ModerationPage() {
     notFound();
   }
 
-  const [flaggedStores, pendingClaims] = await Promise.all([
+  const [flaggedStores, pendingClaims, reportedPhotos, reportedReviews] = await Promise.all([
     listFlaggedStores(),
     listPendingClaims(),
+    listReportedPhotos(),
+    listReportedReviews(),
   ]);
 
   return (
@@ -48,6 +59,49 @@ export default async function ModerationPage() {
               userName: a.user.name,
               reason: a.reason,
               createdAt: a.createdAt.toISOString(),
+            })),
+          }))}
+        />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-semibold text-earth">
+          Gemeldete Fotos ({reportedPhotos.length})
+        </h2>
+        <ReportedPhotosQueue
+          photos={reportedPhotos.map((p) => ({
+            id: p.id,
+            url: p.url,
+            caption: p.caption,
+            reportCount: p._count.reports,
+            store: p.store,
+            uploadedBy: p.uploadedBy,
+            reports: p.reports.map((r) => ({
+              userName: r.user.name,
+              reason: r.reason,
+              createdAt: r.createdAt.toISOString(),
+            })),
+          }))}
+        />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-semibold text-earth">
+          Gemeldete Bewertungen ({reportedReviews.length})
+        </h2>
+        <ReportedReviewsQueue
+          reviews={reportedReviews.map((r) => ({
+            id: r.id,
+            rating: r.rating,
+            title: r.title,
+            body: r.body,
+            reportCount: r._count.reports,
+            store: r.store,
+            user: r.user,
+            reports: r.reports.map((rep) => ({
+              userName: rep.user.name,
+              reason: rep.reason,
+              createdAt: rep.createdAt.toISOString(),
             })),
           }))}
         />

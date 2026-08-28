@@ -29,17 +29,17 @@ export async function Header() {
         <nav className="ml-auto flex items-center gap-2">
           <Link href="/explore">
             <Button variant="ghost" size="sm">
-              Explore
+              Entdecken
             </Button>
           </Link>
           <Link href="/search">
             <Button variant="ghost" size="sm" className="md:hidden">
-              Search
+              Suche
             </Button>
           </Link>
           <Link href="/add-store">
             <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-              Add store
+              Laden hinzufügen
             </Button>
           </Link>
           <UserMenu pendingModerationCount={pendingModerationCount} />

@@ -14,7 +14,7 @@ interface SearchBarProps {
 
 export function SearchBar({
   defaultValue = "",
-  placeholder = "Search stores, products, cities…",
+  placeholder = "Läden, Produkte, Orte suchen…",
   action = "/search",
   className,
 }: SearchBarProps) {

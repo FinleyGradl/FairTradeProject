@@ -34,7 +34,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
       <div className="flex items-center gap-2">
         <Link href="/login">
           <Button variant="ghost" size="sm">
-            Login
+            Anmelden
           </Button>
         </Link>
         <Link href="/register">

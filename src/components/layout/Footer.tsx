@@ -9,23 +9,31 @@ export function Footer() {
           <div>
             <p className="font-bold text-earth">FairFind</p>
             <p className="mt-1 max-w-sm text-sm text-earth/70">
-              Discover fair-trade stores near you. Supporting ethical shopping across Germany.
+              Fairtrade Läden und Weltläden in deiner Nähe entdecken. Nachhaltiges Einkaufen in ganz Deutschland.
             </p>
           </div>
           <div className="flex gap-8 text-sm">
             <div>
-              <p className="font-medium text-earth">Explore</p>
+              <p className="font-medium text-earth">Entdecken</p>
               <ul className="mt-2 space-y-1 text-earth/70">
-                <li><Link href="/explore" className="hover:text-sage">Browse stores</Link></li>
-                <li><Link href="/search" className="hover:text-sage">Search</Link></li>
-                <li><Link href="/add-store" className="hover:text-sage">Add a store</Link></li>
+                <li><Link href="/explore" className="hover:text-sage">Läden erkunden</Link></li>
+                <li><Link href="/search" className="hover:text-sage">Suche</Link></li>
+                <li><Link href="/add-store" className="hover:text-sage">Laden hinzufügen</Link></li>
               </ul>
             </div>
             <div>
-              <p className="font-medium text-earth">About</p>
+              <p className="font-medium text-earth">Kategorien</p>
               <ul className="mt-2 space-y-1 text-earth/70">
-                <li><Link href="/about" className="hover:text-sage">Our mission</Link></li>
-                <li><Link href="/about#fair-trade" className="hover:text-sage">What is fair trade?</Link></li>
+                <li><Link href="/kategorie/mode" className="hover:text-sage">Mode &amp; Kleidung</Link></li>
+                <li><Link href="/kategorie/lebensmittel" className="hover:text-sage">Lebensmittel</Link></li>
+                <li><Link href="/kategorie/kaffee-tee" className="hover:text-sage">Kaffee &amp; Tee</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-medium text-earth">Über uns</p>
+              <ul className="mt-2 space-y-1 text-earth/70">
+                <li><Link href="/about" className="hover:text-sage">Unsere Mission</Link></li>
+                <li><Link href="/about#fair-trade" className="hover:text-sage">Was ist Fairtrade?</Link></li>
               </ul>
             </div>
             <div>
@@ -48,10 +56,10 @@ export function Footer() {
 
 export function MobileNav() {
   const links = [
-    { href: "/explore", icon: Compass, label: "Explore" },
-    { href: "/search", icon: Search, label: "Search" },
-    { href: "/me/saved", icon: Heart, label: "Saved" },
-    { href: "/about", icon: User, label: "About" },
+    { href: "/explore", icon: Compass, label: "Entdecken" },
+    { href: "/search", icon: Search, label: "Suche" },
+    { href: "/me/saved", icon: Heart, label: "Gespeichert" },
+    { href: "/about", icon: User, label: "Über uns" },
   ];
 
   return (

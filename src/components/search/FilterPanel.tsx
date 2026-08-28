@@ -40,29 +40,40 @@ export function FilterPanel({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-earth">Category</p>
+        <p className="mb-2 text-sm font-medium text-earth">Kategorie</p>
         <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() =>
-                onCategoryChange(selectedCategory === cat ? undefined : cat)
-              }
-            >
-              <Badge
-                variant={selectedCategory === cat ? "default" : "outline"}
-                className="cursor-pointer"
+          {CATEGORIES.map((cat) => {
+            const displayCat = {
+              "Grocery": "Lebensmittel",
+              "Coffee & Tea": "Kaffee & Tee",
+              "Clothing": "Mode",
+              "Gifts": "Geschenke",
+              "Zero Waste": "Zero Waste",
+              "Chocolate": "Schokolade",
+              "Home & Living": "Wohnen & Leben",
+            }[cat] || cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() =>
+                  onCategoryChange(selectedCategory === cat ? undefined : cat)
+                }
               >
-                {cat}
-              </Badge>
-            </button>
-          ))}
+                <Badge
+                  variant={selectedCategory === cat ? "default" : "outline"}
+                  className="cursor-pointer"
+                >
+                  {displayCat}
+                </Badge>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-earth">Fair-trade badges</p>
+        <p className="mb-2 text-sm font-medium text-earth">Zertifizierungen</p>
         <div className="flex flex-wrap gap-1.5">
           {Object.entries(FAIR_BADGE_LABELS).map(([key, label]) => (
             <button

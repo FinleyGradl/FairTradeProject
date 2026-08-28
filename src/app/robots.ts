@@ -9,9 +9,21 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api", "/me", "/login", "/register", "/reset-password", "/forgot-password"],
+        // Admin- und Nutzer-Dashboards aus dem Index ausschließen
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/login",
+          "/register",
+          "/forgot-password",
+          "/reset-password",
+          "/verify-email",
+          "/me/",
+          "/profile/",
+        ],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${BASE_URL}/sitemap.xml`,
+    host: BASE_URL,
   };
 }

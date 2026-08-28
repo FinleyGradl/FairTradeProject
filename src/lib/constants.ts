@@ -18,7 +18,7 @@ export const FAIR_BADGE_LABELS: Record<string, string> = {
   fairtrade: "Fairtrade",
   wfto: "WFTO",
   bcorp: "B Corp",
-  organic: "Organic",
+  organic: "Bio / Organic",
 };
 
 export const CATEGORIES = [

@@ -46,14 +46,14 @@ export function StoreCard({ store, className }: StoreCardProps) {
           {store.coverImage ? (
             <Image
               src={store.coverImage}
-              alt={store.name}
+              alt={`Fairtrade Laden ${store.name} in ${store.city}`}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 400px"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sage-400">
-              No image
+              Kein Bild
             </div>
           )}
           {statusLabel && (

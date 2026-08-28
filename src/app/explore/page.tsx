@@ -47,10 +47,10 @@ export default function ExplorePage() {
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-earth">Explore</h1>
+          <h1 className="text-2xl font-bold text-earth">Fairtrade-Läden entdecken</h1>
           <p className="text-sm text-earth/70">
-            {stores.length} fair-trade stores within {radius} km
-            {locationLabel ? ` of ${locationLabel}` : ""}
+            {stores.length} Fairtrade-Läden im Umkreis von {radius} km
+            {locationLabel ? ` von ${locationLabel}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -31,31 +31,21 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const store = await getStoreBySlug(slug);
-  if (!store) return { title: "Store not found" };
-
+  if (!store) return { title: "Laden nicht gefunden" };
   const description =
-    store.description?.slice(0, 160) ||
-    `${store.name} — fair-trade store in ${store.city}. Find opening hours, products, and reviews on FairFind.`;
-  const ogImages = store.coverImage
-    ? [{ url: store.coverImage, width: 1200, height: 630, alt: store.name }]
-    : undefined; // falls back to the site-wide /opengraph-image
-
+    store.description ??
+    `${store.name} – Fairtrade-Laden in ${store.city}. Öffnungszeiten, Bewertungen und Kontakt auf FairFind.`;
   return {
-    title: store.name,
+    title: `${store.name} – Fairtrade-Laden in ${store.city}`,
     description,
-    alternates: { canonical: `/stores/${slug}` },
-    openGraph: {
-      title: store.name,
-      description,
-      url: `/stores/${slug}`,
-      type: "website",
-      images: ogImages,
+    alternates: {
+      canonical: `/stores/${slug}`,
     },
-    twitter: {
-      card: "summary_large_image",
-      title: store.name,
+    openGraph: {
+      title: `${store.name} – Fairtrade-Laden in ${store.city}`,
       description,
-      images: store.coverImage ? [store.coverImage] : undefined,
+      images: store.coverImage ? [store.coverImage] : [],
+      locale: "de_DE",
     },
   };
 }
@@ -237,13 +227,13 @@ export default async function StoreDetailPage({ params }: PageProps) {
         <div className="grid gap-8 md:grid-cols-3">
           <div className="md:col-span-2 space-y-8">
             <section>
-              <h2 className="text-xl font-semibold text-earth">About</h2>
+              <h2 className="text-xl font-semibold text-earth">Über den Laden</h2>
               <p className="mt-2 text-earth/80 leading-relaxed">{store.description}</p>
             </section>
 
             {store.products.length > 0 && (
               <section>
-                <h2 className="mb-4 text-xl font-semibold text-earth">Products</h2>
+                <h2 className="mb-4 text-xl font-semibold text-earth">Produkte</h2>
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {store.products.map((product) => (
                     <div key={product.id} id={`product-${product.slug}`}>
@@ -262,7 +252,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             <section>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xl font-semibold text-earth">
-                  Reviews {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
+                  Bewertungen {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
                 </h2>
                 {!isOwnStore && (
                   <ReviewForm
@@ -301,7 +291,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
 
           <aside className="space-y-6">
             <section className="rounded-xl border border-sage/10 bg-white p-4">
-              <h3 className="font-semibold text-earth">Contact</h3>
+              <h3 className="font-semibold text-earth">Kontakt</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li className="flex items-start gap-2 text-earth/80">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
@@ -347,19 +337,19 @@ export default async function StoreDetailPage({ params }: PageProps) {
               >
                 <Button variant="outline" size="sm" className="gap-1">
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Directions
+                  Route planen
                 </Button>
               </a>
             </section>
 
             <section className="rounded-xl border border-sage/10 bg-white p-4">
-              <h3 className="font-semibold text-earth">Opening hours</h3>
+              <h3 className="font-semibold text-earth">Öffnungszeiten</h3>
               <OpeningHoursTable hours={store.hours} className="mt-3" />
             </section>
 
             {store.owner && (
               <section className="rounded-xl border border-sage/10 bg-white p-4">
-                <h3 className="font-semibold text-earth">Managed by</h3>
+                <h3 className="font-semibold text-earth">Verwaltet von</h3>
                 <Link
                   href={`/profile/${store.owner.id}`}
                   className="mt-1 block text-sm text-sage hover:underline"

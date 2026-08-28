@@ -39,12 +39,12 @@ export function ProductCard({ product }: ProductCardProps) {
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sage-300 text-sm">
-              No image
+              Kein Bild
             </div>
           )}
           {!product.inStock && (
             <Badge className="absolute right-2 top-2" variant="secondary">
-              Out of stock
+              Ausverkauft
             </Badge>
           )}
         </div>

@@ -7,7 +7,7 @@ export interface StoreHourRow {
   isClosed: boolean;
 }
 
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_NAMES = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
 export function getDayName(dayOfWeek: number): string {
   return DAY_NAMES[dayOfWeek] ?? "?";
@@ -29,20 +29,20 @@ export function isOpenNow(hours: StoreHourRow[], now = new Date()): boolean {
 }
 
 export function getOpenStatusLabel(hours: StoreHourRow[], now = new Date()): string {
-  if (isOpenNow(hours, now)) return "Open now";
+  if (isOpenNow(hours, now)) return "Geöffnet";
   const day = jsDayToSchemaDay(now.getDay());
   const today = hours.find((h) => h.dayOfWeek === day);
   if (today && !today.isClosed) {
-    return `Opens ${today.openTime}`;
+    return `Öffnet ${today.openTime}`;
   }
   for (let i = 1; i <= 7; i++) {
     const nextDay = (day + i) % 7;
     const row = hours.find((h) => h.dayOfWeek === nextDay);
     if (row && !row.isClosed) {
-      return `Opens ${getDayName(nextDay)} ${row.openTime}`;
+      return `Öffnet ${getDayName(nextDay)} ${row.openTime}`;
     }
   }
-  return "Closed";
+  return "Geschlossen";
 }
 
 export function formatHoursTable(hours: StoreHourRow[]): { day: string; hours: string; isToday: boolean }[] {
@@ -51,7 +51,7 @@ export function formatHoursTable(hours: StoreHourRow[]): { day: string; hours: s
     const row = hours.find((h) => h.dayOfWeek === day);
     return {
       day: getDayName(day),
-      hours: row?.isClosed ? "Closed" : row ? `${row.openTime} – ${row.closeTime}` : "—",
+      hours: row?.isClosed ? "Geschlossen" : row ? `${row.openTime} – ${row.closeTime}` : "—",
       isToday: day === today,
     };
   });

@@ -98,7 +98,7 @@ export default async function HomePage() {
           <Search className="mx-auto h-10 w-10 text-sage" />
           <h2 className="mt-4 text-2xl font-bold text-earth">Kennst du einen Fairtrade-Laden?</h2>
           <p className="mt-2 text-earth/70">
-            Kennst du einen Fairtrade-Laden? Hilf uns, die Plattform zu vergrößern, indem du nachhaltige Shops aus deiner Region hinzufügst.
+            Hilf uns, die Plattform zu vergrößern, indem du nachhaltige Shops aus deiner Region hinzufügst.
           </p>
           <Link href="/add-store" className="mt-6 inline-block">
             <Button size="lg">Laden eintragen</Button>

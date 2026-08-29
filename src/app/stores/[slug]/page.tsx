@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
 import { getStoreBySlug, canEditStore, isStoreSaved } from "@/lib/stores";
+import { listPublicSuggestionsForStore } from "@/lib/edit-suggestions";
 import { canManageSponsorship } from "@/lib/sponsorship";
 import { RatingStars } from "@/components/store/RatingStars";
 import { FairBadges } from "@/components/store/FairBadges";
@@ -15,6 +16,7 @@ import { ProductCard } from "@/components/store/ProductCard";
 import { StoreHeroGallery } from "@/components/store/StoreHeroGallery";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
+import { SuggestionVoteWidget } from "@/components/store/SuggestionVoteWidget";
 import { ReviewForm } from "@/components/store/ReviewForm";
 import { ReviewsList } from "@/components/store/ReviewsList";
 import { DistanceFromYou } from "@/components/store/DistanceFromYou";
@@ -31,21 +33,31 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const store = await getStoreBySlug(slug);
-  if (!store) return { title: "Laden nicht gefunden" };
+  if (!store) return { title: "Store not found" };
+
   const description =
-    store.description ??
-    `${store.name} – Fairtrade-Laden in ${store.city}. Öffnungszeiten, Bewertungen und Kontakt auf FairFind.`;
+    store.description?.slice(0, 160) ||
+    `${store.name} — fair-trade store in ${store.city}. Find opening hours, products, and reviews on FairFind.`;
+  const ogImages = store.coverImage
+    ? [{ url: store.coverImage, width: 1200, height: 630, alt: store.name }]
+    : undefined; // falls back to the site-wide /opengraph-image
+
   return {
-    title: `${store.name} – Fairtrade-Laden in ${store.city}`,
+    title: store.name,
     description,
-    alternates: {
-      canonical: `/stores/${slug}`,
-    },
+    alternates: { canonical: `/stores/${slug}` },
     openGraph: {
-      title: `${store.name} – Fairtrade-Laden in ${store.city}`,
+      title: store.name,
       description,
-      images: store.coverImage ? [store.coverImage] : [],
-      locale: "de_DE",
+      url: `/stores/${slug}`,
+      type: "website",
+      images: ogImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: store.name,
+      description,
+      images: store.coverImage ? [store.coverImage] : undefined,
     },
   };
 }
@@ -63,6 +75,12 @@ export default async function StoreDetailPage({ params }: PageProps) {
   const canViewInsights = await canManageSponsorship(store, session?.user);
   const initialSaved = session?.user ? await isStoreSaved(store.id, session.user.id) : false;
   const isSignedIn = Boolean(session?.user);
+  // Unmanaged stores open proposed edits up to community confirm/dispute
+  // votes — see SuggestionVoteWidget below. Managed stores route
+  // suggestions privately to the owner's edit page instead.
+  const communitySuggestions = store.ownerUserId
+    ? []
+    : await listPublicSuggestionsForStore(store.id, session?.user?.id);
   // Only the current owner (or the creator, while the store is still
   // unclaimed) counts as "own store" here — once someone else has claimed
   // it, the original creator can review/attest like anyone else.
@@ -215,25 +233,34 @@ export default async function StoreDetailPage({ params }: PageProps) {
               </Link>
             </div>
           )}
-          {!canEdit && !store.ownerUserId && (
-            <Link href={`/claim/${store.slug}`} className="ml-auto">
-              <Button variant="outline" size="sm">
-                Laden beanspruchen
-              </Button>
-            </Link>
+          {!canEdit && (
+            <div className="ml-auto flex gap-2">
+              {!store.ownerUserId && (
+                <Link href={`/claim/${store.slug}`}>
+                  <Button variant="outline" size="sm">
+                    Laden beanspruchen
+                  </Button>
+                </Link>
+              )}
+              <Link href={`/stores/${store.slug}/suggest-edit`}>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Änderung vorschlagen
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
           <div className="md:col-span-2 space-y-8">
             <section>
-              <h2 className="text-xl font-semibold text-earth">Über den Laden</h2>
+              <h2 className="text-xl font-semibold text-earth">About</h2>
               <p className="mt-2 text-earth/80 leading-relaxed">{store.description}</p>
             </section>
 
             {store.products.length > 0 && (
               <section>
-                <h2 className="mb-4 text-xl font-semibold text-earth">Produkte</h2>
+                <h2 className="mb-4 text-xl font-semibold text-earth">Products</h2>
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {store.products.map((product) => (
                     <div key={product.id} id={`product-${product.slug}`}>
@@ -252,7 +279,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             <section>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xl font-semibold text-earth">
-                  Bewertungen {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
+                  Reviews {store.reviewCount > 0 ? `(${store.reviewCount})` : ""}
                 </h2>
                 {!isOwnStore && (
                   <ReviewForm
@@ -291,7 +318,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
 
           <aside className="space-y-6">
             <section className="rounded-xl border border-sage/10 bg-white p-4">
-              <h3 className="font-semibold text-earth">Kontakt</h3>
+              <h3 className="font-semibold text-earth">Contact</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li className="flex items-start gap-2 text-earth/80">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
@@ -337,19 +364,19 @@ export default async function StoreDetailPage({ params }: PageProps) {
               >
                 <Button variant="outline" size="sm" className="gap-1">
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Route planen
+                  Directions
                 </Button>
               </a>
             </section>
 
             <section className="rounded-xl border border-sage/10 bg-white p-4">
-              <h3 className="font-semibold text-earth">Öffnungszeiten</h3>
+              <h3 className="font-semibold text-earth">Opening hours</h3>
               <OpeningHoursTable hours={store.hours} className="mt-3" />
             </section>
 
             {store.owner && (
               <section className="rounded-xl border border-sage/10 bg-white p-4">
-                <h3 className="font-semibold text-earth">Verwaltet von</h3>
+                <h3 className="font-semibold text-earth">Managed by</h3>
                 <Link
                   href={`/profile/${store.owner.id}`}
                   className="mt-1 block text-sm text-sage hover:underline"
@@ -368,6 +395,30 @@ export default async function StoreDetailPage({ params }: PageProps) {
               isSignedIn={Boolean(session?.user)}
               isOwnStore={isOwnStore}
             />
+
+            {communitySuggestions.length > 0 && (
+              <SuggestionVoteWidget
+                storeSlug={store.slug}
+                current={{
+                  name: store.name,
+                  description: store.description,
+                  addressLine: store.addressLine,
+                  city: store.city,
+                  postalCode: store.postalCode,
+                  phone: store.phone,
+                  website: store.website,
+                  email: store.email,
+                  hours: store.hours.map((h) => ({
+                    dayOfWeek: h.dayOfWeek,
+                    openTime: h.openTime,
+                    closeTime: h.closeTime,
+                    isClosed: h.isClosed,
+                  })),
+                }}
+                suggestions={communitySuggestions}
+                isSignedIn={isSignedIn}
+              />
+            )}
           </aside>
         </div>
       </div>

@@ -47,6 +47,12 @@ enum AttestationVote {
   dispute
 }
 
+enum EditSuggestionStatus {
+  pending
+  approved
+  rejected
+}
+
 enum SponsorshipTier {
   basic
   plus
@@ -91,6 +97,9 @@ model User {
   claims        StoreClaim[]
   claimsReviewed StoreClaim[] @relation("ClaimReviewer")
   attestations  StoreAttestation[]
+  editSuggestions       StoreEditSuggestion[]     @relation("SuggestionAuthor")
+  editSuggestionsReviewed StoreEditSuggestion[]   @relation("SuggestionReviewer")
+  editSuggestionVotes   EditSuggestionVote[]
   sponsorships  SponsorshipSubscription[]
   promoCodesCreated PromoCode[]
   photosUploaded    StorePhoto[]   @relation("PhotoUploader")
@@ -207,10 +216,65 @@ model Store {
   claims    StoreClaim[]
   photos    StorePhoto[]
   attestations StoreAttestation[]
+  editSuggestions StoreEditSuggestion[]
   sponsorships SponsorshipSubscription[]
   pageViews    PageView[]
   searchImpressions SearchImpression[]
   ownershipTransfers OwnershipTransfer[]
+}
+
+// --- Community-suggested edits ----------------------------------------------
+// The "suggest an edit" flow (à la Google Business Profile): any signed-in
+// user who is not already allowed to edit a store directly (see
+// canEditStore()) can propose a set of field changes instead of editing
+// nothing at all. What happens to the suggestion depends on whether the
+// store is "managed" (has a confirmed ownerUserId):
+//   - Managed:   only that owner (or an admin/moderator) can review it —
+//                see reviewEditSuggestion() in lib/edit-suggestions.ts.
+//   - Unmanaged: it's surfaced in the admin moderation queue AND opened up
+//                to community confirm/dispute votes (see castSuggestionVote())
+//                — whichever resolves first (an admin decision, or enough
+//                net votes) applies or discards it.
+// `changes` holds only the fields that differ from the store's current
+// values at submission time, as JSON: { fieldName: newValue }. Diffs are
+// rendered by comparing this against the store's *current* values at
+// review time (not a frozen snapshot), so a suggestion never goes stale
+// even if the store changed in the meantime.
+model StoreEditSuggestion {
+  id                String               @id @default(cuid())
+  storeId           String
+  suggestedByUserId String
+  changes           String
+  note              String?
+  status            EditSuggestionStatus @default(pending)
+  confirmCount      Int                  @default(0)
+  disputeCount      Int                  @default(0)
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  store       Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  suggestedBy User                 @relation("SuggestionAuthor", fields: [suggestedByUserId], references: [id], onDelete: Cascade)
+  reviewedBy  User?                @relation("SuggestionReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  votes       EditSuggestionVote[]
+
+  @@index([storeId, status])
+}
+
+// Community confirm/dispute votes on a pending suggestion for an unmanaged
+// store — same one-vote-per-person shape as StoreAttestation.
+model EditSuggestionVote {
+  id           String          @id @default(cuid())
+  suggestionId String
+  userId       String
+  vote         AttestationVote
+  createdAt    DateTime        @default(now())
+
+  suggestion StoreEditSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([suggestionId, userId])
 }
 
 // --- Sponsoring (paid preferred placement) ----------------------------------

@@ -17,6 +17,10 @@ export const TRUST_SCORE_DELTAS = {
   claimApproved: 6,
   /** An ownership claim this user filed gets rejected. */
   claimRejected: -4,
+  /** An edit suggestion this user filed gets approved/applied. */
+  editSuggestionApplied: 2,
+  /** An edit suggestion this user filed gets rejected. */
+  editSuggestionRejected: -2,
 } as const;
 
 /**
@@ -31,6 +35,19 @@ export const ATTESTATION_THRESHOLDS = {
   communityVerify: 3,
   /** Net disputes needed to pull a store out of the public listing. */
   flagForReview: 3,
+} as const;
+
+/**
+ * Net (confirm − dispute) votes an edit suggestion on an *unmanaged* store
+ * needs before the community itself resolves it — mirrors
+ * ATTESTATION_THRESHOLDS. An admin/moderator can still resolve it directly
+ * at any time via the moderation queue, whichever comes first.
+ */
+export const EDIT_SUGGESTION_THRESHOLDS = {
+  /** Net confirmations needed to auto-apply the suggested change. */
+  autoApply: 3,
+  /** Net disputes needed to auto-reject the suggestion. */
+  autoReject: 3,
 } as const;
 
 export function trustBadgeLabel(score: number): string {

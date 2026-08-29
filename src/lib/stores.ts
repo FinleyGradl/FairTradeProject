@@ -140,9 +140,9 @@ export async function getStores(params: {
 
   if (q) {
     where.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { description: { contains: q, mode: "insensitive" } },
-      { categories: { contains: q, mode: "insensitive" } },
+      { name: { contains: q } },
+      { description: { contains: q } },
+      { city: { contains: q } },
     ];
   }
 
@@ -500,9 +500,8 @@ export async function searchProducts(params: {
   const where: Prisma.ProductWhereInput = {};
   if (q) {
     where.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { description: { contains: q, mode: "insensitive" } },
-      { category: { contains: q, mode: "insensitive" } },
+      { name: { contains: q } },
+      { description: { contains: q } },
     ];
   }
   if (category) where.category = { contains: category };
@@ -941,15 +940,26 @@ export function canModerate(user: { role?: string } | null | undefined): boolean
 
 /**
  * Total open moderation items (flagged stores + photos past the report
- * threshold + reviews past the report threshold + pending claims) — drives
- * the red badge in the nav. Computed server-side so it's correct on first
- * render, no client fetch involved.
+ * threshold + reviews past the report threshold + pending claims + pending
+ * edit suggestions on unmanaged stores) — drives the red badge in the nav.
+ * Computed server-side so it's correct on first render, no client fetch
+ * involved.
  */
 export async function getPendingModerationCount(): Promise<number> {
-  const [flaggedStores, pendingClaims, photosWithReportCounts, reviewsWithReportCounts] =
-    await Promise.all([
+  const [
+    flaggedStores,
+    pendingClaims,
+    pendingCommunitySuggestions,
+    photosWithReportCounts,
+    reviewsWithReportCounts,
+  ] = await Promise.all([
       prisma.store.count({ where: { status: "pending" } }),
       prisma.storeClaim.count({ where: { status: "pending" } }),
+      // Edit suggestions on unmanaged stores — see listCommunitySuggestions()
+      // in lib/edit-suggestions.ts for the queue this count backs.
+      prisma.storeEditSuggestion.count({
+        where: { status: "pending", store: { ownerUserId: null } },
+      }),
       // Prisma can't filter a relation by count threshold directly, so we
       // pull just the report counts for photos that have at least one report
       // and apply the same >= PHOTO_REPORT_THRESHOLD filter listReportedPhotos()
@@ -972,10 +982,16 @@ export async function getPendingModerationCount(): Promise<number> {
     (r) => r._count.reports >= REVIEW_REPORT_THRESHOLD
   ).length;
 
-  return flaggedStores + reportedPhotosOverThreshold + reportedReviewsOverThreshold + pendingClaims;
+  return (
+    flaggedStores +
+    reportedPhotosOverThreshold +
+    reportedReviewsOverThreshold +
+    pendingClaims +
+    pendingCommunitySuggestions
+  );
 }
 
-async function adjustTrustScore(userId: string | null | undefined, delta: number) {
+export async function adjustTrustScore(userId: string | null | undefined, delta: number) {
   if (!userId || delta === 0) return;
   await prisma.user.update({
     where: { id: userId },

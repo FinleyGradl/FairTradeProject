@@ -5,7 +5,9 @@ import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { getStoreForEdit, canEditStore } from "@/lib/stores";
+import { listPendingSuggestionsForStore, parseSuggestionChanges } from "@/lib/edit-suggestions";
 import { StoreForm, type StoreFormValues } from "@/components/store/StoreForm";
+import { SuggestionReviewQueue } from "@/components/store/SuggestionReviewQueue";
 import { TransferStoreCard } from "@/components/store/TransferStoreCard";
 import { Button } from "@/components/ui/button";
 
@@ -78,6 +80,24 @@ export default async function EditStorePage({ params }: PageProps) {
           })),
   };
 
+  const suggestionCurrent = {
+    name: store.name,
+    description: store.description,
+    addressLine: store.addressLine,
+    city: store.city,
+    postalCode: store.postalCode,
+    phone: store.phone,
+    website: store.website,
+    email: store.email,
+    hours: store.hours.map((h) => ({
+      dayOfWeek: h.dayOfWeek,
+      openTime: h.openTime,
+      closeTime: h.closeTime,
+      isClosed: h.isClosed,
+    })),
+  };
+  const pendingSuggestions = await listPendingSuggestionsForStore(store.id);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="flex items-center justify-between">
@@ -91,6 +111,22 @@ export default async function EditStorePage({ params }: PageProps) {
           Dieser Laden wurde von der Community gemeldet und ist aktuell nicht öffentlich
           sichtbar, bis ein Moderations-Team ihn geprüft hat.
         </p>
+      )}
+
+      {pendingSuggestions.length > 0 && (
+        <div className="mt-8">
+          <SuggestionReviewQueue
+            storeSlug={slug}
+            current={suggestionCurrent}
+            suggestions={pendingSuggestions.map((s) => ({
+              id: s.id,
+              changes: parseSuggestionChanges(s.changes),
+              note: s.note,
+              createdAt: s.createdAt.toISOString(),
+              suggestedBy: s.suggestedBy,
+            }))}
+          />
+        </div>
       )}
 
       <div className="mt-8">

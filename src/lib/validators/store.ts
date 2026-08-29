@@ -61,6 +61,36 @@ export const storeClaimSchema = z.object({
   businessEmail: z.string().email("Ungültige E-Mail-Adresse").optional().or(z.literal("")),
 });
 
+// Deliberately a smaller field set than storeUpdateSchema: the "suggest an
+// edit" flow is meant for the kind of thing any visitor might notice from
+// outside (name, description, address, contact details, opening hours) —
+// not for coverImage/badges/categories/geolocation, which stay
+// owner/admin-only via the normal edit form.
+export const storeEditSuggestionSchema = z
+  .object({
+    name: storeBaseSchema.shape.name.optional(),
+    description: storeBaseSchema.shape.description.optional(),
+    addressLine: storeBaseSchema.shape.addressLine.optional(),
+    city: storeBaseSchema.shape.city.optional(),
+    postalCode: storeBaseSchema.shape.postalCode.optional(),
+    phone: z.string().max(40).optional().or(z.literal("")),
+    website: z.string().url().optional().or(z.literal("")),
+    email: z.string().email().optional().or(z.literal("")),
+    hours: z.array(storeHourInputSchema).max(7).optional(),
+    note: z.string().max(500).optional().or(z.literal("")),
+  })
+  .refine(
+    (data) =>
+      Object.entries(data).some(
+        ([key, value]) => key !== "note" && value !== undefined
+      ),
+    { message: "Bitte ändere mindestens ein Feld." }
+  );
+
+export const editSuggestionVoteSchema = z.object({
+  vote: z.enum(["confirm", "dispute"]),
+});
+
 export const storeAttestationSchema = z.object({
   vote: z.enum(["confirm", "dispute"]),
   reason: z.string().max(500).optional(),
@@ -93,5 +123,6 @@ export const storesQuerySchema = z.object({
 export type StoreCreateInput = z.infer<typeof storeCreateSchema>;
 export type StoreUpdateInput = z.infer<typeof storeUpdateSchema>;
 export type StoreClaimInput = z.infer<typeof storeClaimSchema>;
+export type StoreEditSuggestionInput = z.infer<typeof storeEditSuggestionSchema>;
 export type ReviewInput = z.infer<typeof reviewSchema>;
 export type StoresQuery = z.infer<typeof storesQuerySchema>;

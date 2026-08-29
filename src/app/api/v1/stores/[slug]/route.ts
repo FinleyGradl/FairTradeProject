@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getStoreBySlug, getStoreForEdit, updateStore, canEditStore, canModerate, serializeStore } from "@/lib/stores";
+import {
+  getStoreBySlug,
+  getStoreForEdit,
+  updateStore,
+  deleteStore,
+  canEditStore,
+  canDeleteStore,
+  canModerate,
+  serializeStore,
+} from "@/lib/stores";
 import { storeUpdateSchema } from "@/lib/validators/store";
 
 export async function GET(
@@ -63,5 +72,44 @@ export async function PATCH(
   } catch (error) {
     console.error("PATCH /api/v1/stores/[slug]:", error);
     return NextResponse.json({ error: "Speichern fehlgeschlagen." }, { status: 500 });
+  }
+}
+
+/**
+ * Permanently deletes a store — the confirmed owner may delete their own
+ * listing, admins/moderators may delete any. See canDeleteStore() and
+ * deleteStore() in lib/stores.ts for the authorization rule and the
+ * cleanup (Mollie subscription, uploaded files) this triggers.
+ */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
+  }
+
+  const { slug } = await params;
+  const existing = await getStoreForEdit(slug);
+  if (!existing) {
+    return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
+  }
+  if (!canDeleteStore(existing, session.user)) {
+    return NextResponse.json(
+      { error: "Du darfst diesen Laden nicht löschen." },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const result = await deleteStore(slug);
+    if ("error" in result) {
+      return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/v1/stores/[slug]:", error);
+    return NextResponse.json({ error: "Löschen fehlgeschlagen." }, { status: 500 });
   }
 }

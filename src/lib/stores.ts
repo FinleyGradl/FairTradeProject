@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { filterByRadius } from "@/lib/geo";
 import { parseJsonArray, slugify } from "@/lib/utils";
 import { TRUST_SCORE_DELTAS, ATTESTATION_THRESHOLDS } from "@/lib/trust";
-import { computeRankingScore } from "@/lib/sponsorship";
+import { computeRankingScore, cancelSponsorship, getActiveSponsorship } from "@/lib/sponsorship";
+import { deleteStoreCoverFileIfLocal, deleteStorePhotoFileIfLocal } from "@/lib/uploads";
 import { recordSearchImpressions } from "@/lib/analytics";
 import {
   SPONSORSHIP_TIERS,
@@ -668,6 +669,52 @@ export function canEditStore(
   if (user.role === "admin" || user.role === "moderator") return true;
   if (store.ownerUserId) return store.ownerUserId === user.id;
   return store.createdById === user.id;
+}
+
+/**
+ * Deliberately narrower than canEditStore: unlike editing (which the
+ * original creator of a still-unclaimed listing may also do), deleting is
+ * reserved for admins/moderators, or the store's *confirmed* owner —
+ * someone who merely created an unclaimed listing doesn't get to remove
+ * it outright.
+ */
+export function canDeleteStore(
+  store: Pick<Store, "ownerUserId">,
+  user: { id: string; role?: string } | null | undefined
+): boolean {
+  if (!user) return false;
+  if (user.role === "admin" || user.role === "moderator") return true;
+  return store.ownerUserId === user.id;
+}
+
+/**
+ * Permanently removes a store. All dependent rows (hours, products,
+ * reviews, photos, claims, attestations, edit suggestions, sponsorship
+ * history, analytics, transfers, ...) cascade via the schema's
+ * onDelete: Cascade relations — see prisma/schema.prisma. This function
+ * additionally handles the two things a DB cascade can't: canceling any
+ * live Mollie subscription, and removing uploaded files from disk.
+ *
+ * Authorization is the caller's responsibility — see canDeleteStore().
+ */
+export async function deleteStore(slug: string): Promise<{ error: "NOT_FOUND" } | { success: true }> {
+  const store = await prisma.store.findUnique({
+    where: { slug },
+    include: { photos: true },
+  });
+  if (!store) return { error: "NOT_FOUND" };
+
+  const activeSponsorship = await getActiveSponsorship(store.id);
+  if (activeSponsorship) {
+    await cancelSponsorship(store.id);
+  }
+
+  await prisma.store.delete({ where: { id: store.id } });
+
+  await deleteStoreCoverFileIfLocal(store.coverImage);
+  await Promise.all(store.photos.map((p) => deleteStorePhotoFileIfLocal(p.url)));
+
+  return { success: true };
 }
 
 export async function updateStore(

@@ -4,11 +4,12 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
-import { getStoreForEdit, canEditStore } from "@/lib/stores";
+import { getStoreForEdit, canEditStore, canDeleteStore, canModerate } from "@/lib/stores";
 import { listPendingSuggestionsForStore, parseSuggestionChanges } from "@/lib/edit-suggestions";
 import { StoreForm, type StoreFormValues } from "@/components/store/StoreForm";
 import { SuggestionReviewQueue } from "@/components/store/SuggestionReviewQueue";
 import { TransferStoreCard } from "@/components/store/TransferStoreCard";
+import { DeleteStoreCard } from "@/components/store/DeleteStoreCard";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
@@ -136,6 +137,16 @@ export default async function EditStorePage({ params }: PageProps) {
       {store.ownerUserId === session.user.id && (
         <div className="mt-8">
           <TransferStoreCard storeSlug={slug} />
+        </div>
+      )}
+
+      {canDeleteStore(store, session.user) && (
+        <div className="mt-8">
+          <DeleteStoreCard
+            storeSlug={slug}
+            storeName={store.name}
+            isModerator={canModerate(session.user) && store.ownerUserId !== session.user.id}
+          />
         </div>
       )}
     </div>

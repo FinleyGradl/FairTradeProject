@@ -1,3 +1,4 @@
+// path: src/auth.ts
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -6,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { loginSchema } from "@/lib/validators/auth";
 import { authConfig } from "@/auth.config";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -42,6 +44,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+
+        // Keyed by email rather than IP: the Credentials `authorize()`
+        // callback isn't given the incoming Request here, so we can't read
+        // a reliable client IP. Locking per-account still stops the
+        // realistic threat (credential stuffing / brute-forcing one
+        // person's password) even though it can't slow down someone
+        // spraying many different emails from one IP — see
+        // src/lib/rate-limit.ts for the trade-offs.
+        const loginLimit = rateLimit(`login:${email}`, 10, 15 * 60 * 1000);
+        if (!loginLimit.success) {
+          throw new Error("RATE_LIMITED");
+        }
+
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user || !user.password) return null;

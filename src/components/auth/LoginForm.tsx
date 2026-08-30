@@ -1,3 +1,4 @@
+// path: src/components/auth/LoginForm.tsx
 "use client";
 
 import { useState, FormEvent } from "react";
@@ -34,6 +35,10 @@ export function LoginForm() {
       if (result.error === "EMAIL_NOT_VERIFIED") {
         setError(
           "Bitte bestätige zuerst deine E-Mail-Adresse. Prüfe dein Postfach oder fordere den Link erneut an."
+        );
+      } else if (result.error === "RATE_LIMITED") {
+        setError(
+          "Zu viele Anmeldeversuche für dieses Konto. Bitte warte ein paar Minuten und versuch es erneut."
         );
       } else {
         setError("E-Mail oder Passwort ist falsch.");

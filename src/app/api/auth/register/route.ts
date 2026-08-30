@@ -1,3 +1,4 @@
+// path: src/app/api/auth/register/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { registerSchema } from "@/lib/validators/auth";
@@ -5,8 +6,15 @@ import { hashPassword } from "@/lib/auth/password";
 import { createEmailVerificationToken } from "@/lib/auth/tokens";
 import { sendMail } from "@/lib/email/mailer";
 import { verifyEmailTemplate } from "@/lib/email/templates";
+import { rateLimit, rateLimitResponse, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  // 5 account-creation attempts per IP per 15 min — generous enough for a
+  // household/office NAT, tight enough to blunt mass account creation.
+  const ip = getClientIp(req);
+  const limit = rateLimit(`register:${ip}`, 5, 15 * 60 * 1000);
+  if (!limit.success) return rateLimitResponse(limit);
+
   const body = await req.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
 

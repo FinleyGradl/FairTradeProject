@@ -5,6 +5,13 @@ import * as mollie from "@/lib/mollie";
 import { SPONSORSHIP_TIERS, type SponsorshipTierId } from "@/lib/constants";
 import { recordPromoRedemption } from "@/lib/promo-codes";
 import { logAudit, SYSTEM_ACTOR } from "@/lib/audit";
+import { createInvoice, formatInvoiceNumber, formatCents, parseIssuerSnapshot } from "@/lib/invoices";
+import { notifyModerators, notifyUser } from "@/lib/notify";
+import {
+  moderationAlertTemplate,
+  invoiceEmailTemplate,
+  sponsorshipPaymentFailedOwnerTemplate,
+} from "@/lib/email/templates";
 
 // Mollie calls this URL server-to-server whenever a payment's status
 // changes. It sends `id=<payment id>` as application/x-www-form-urlencoded
@@ -51,13 +58,63 @@ export async function POST(request: NextRequest) {
       where: { id: record.storeId },
       select: { name: true, slug: true },
     });
+    const owner = await prisma.user.findUnique({
+      where: { id: record.ownerUserId },
+      select: { name: true, email: true },
+    });
     const entityLabel = store ? `${store.name} (${record.tier})` : record.storeId;
+    const tierDefLabel = SPONSORSHIP_TIERS[record.tier as SponsorshipTierId]?.label ?? record.tier;
     const baseMetadata = {
       storeSlug: store?.slug ?? null,
       tier: record.tier,
       molliePaymentId: paymentId,
       sequenceType: payment.sequenceType,
     };
+
+    // Billed-amount cents, straight from what Mollie actually charged —
+    // more reliable than recomputing from tier price/discount, which
+    // could drift if either changes after the fact.
+    const amountGrossCents = Math.round(parseFloat(payment.amount.value) * 100);
+
+    async function issueInvoiceAndNotifyOwner(
+      sub: NonNullable<typeof record>,
+      periodStart: Date,
+      periodEnd: Date
+    ) {
+      if (!store || !owner) return;
+      const invoice = await createInvoice({
+        subscriptionId: sub.id,
+        storeId: sub.storeId,
+        storeName: store.name,
+        recipientUserId: sub.ownerUserId,
+        recipientName: owner.name,
+        recipientEmail: owner.email,
+        tier: sub.tier,
+        periodStart,
+        periodEnd,
+        amountGrossCents,
+        molliePaymentId: paymentId,
+      });
+      const issuer = parseIssuerSnapshot(invoice.issuerSnapshot);
+      await notifyUser(
+        owner.email,
+        invoiceEmailTemplate({
+          invoiceNumber: formatInvoiceNumber(invoice),
+          invoiceDate: invoice.createdAt.toLocaleDateString("de-DE"),
+          storeName: store.name,
+          tierLabel: tierDefLabel,
+          periodStart: periodStart.toLocaleDateString("de-DE"),
+          periodEnd: periodEnd.toLocaleDateString("de-DE"),
+          recipientName: owner.name,
+          amountNet: formatCents(invoice.amountNetCents),
+          vatRatePercent: invoice.vatRatePercent,
+          vatAmount: formatCents(invoice.vatAmountCents),
+          amountGross: formatCents(invoice.amountGrossCents),
+          isKleinunternehmer: invoice.isKleinunternehmer,
+          issuer,
+        })
+      );
+    }
 
     if (payment.status === "paid") {
       if (payment.sequenceType === "first" && record.status === "incomplete") {
@@ -73,14 +130,16 @@ export async function POST(request: NextRequest) {
           subscriptionRecordId: record.id,
         });
 
+        const periodEnd = subscription.nextPaymentDate
+          ? new Date(subscription.nextPaymentDate)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
         await prisma.sponsorshipSubscription.update({
           where: { id: record.id },
           data: {
             status: "active",
             mollieSubscriptionId: subscription.id,
-            currentPeriodEnd: subscription.nextPaymentDate
-              ? new Date(subscription.nextPaymentDate)
-              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            currentPeriodEnd: periodEnd,
           },
         });
 
@@ -97,12 +156,29 @@ export async function POST(request: NextRequest) {
           metadata: { ...baseMetadata, mollieSubscriptionId: subscription.id },
           request,
         });
+
+        if (amountGrossCents > 0) {
+          await issueInvoiceAndNotifyOwner(record, new Date(), periodEnd);
+        }
+
+        if (store) {
+          await notifyModerators(
+            "notifySponsorshipStarted",
+            moderationAlertTemplate({
+              headline: `Neues Sponsoring: „${store.name}“ (${tierDefLabel})`,
+              detailHtml: `<strong>„${store.name}“</strong> hat soeben ein <strong>${tierDefLabel}</strong>-Sponsoring abgeschlossen.`,
+              detailText: `„${store.name}“ hat ein ${tierDefLabel}-Sponsoring abgeschlossen.`,
+              dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/sponsoring`,
+            })
+          );
+        }
       } else if (payment.sequenceType === "recurring") {
+        const periodEnd = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000);
         await prisma.sponsorshipSubscription.update({
           where: { id: record.id },
           data: {
             status: "active",
-            currentPeriodEnd: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+            currentPeriodEnd: periodEnd,
           },
         });
 
@@ -115,6 +191,11 @@ export async function POST(request: NextRequest) {
           metadata: baseMetadata,
           request,
         });
+
+        if (amountGrossCents > 0) {
+          const periodStart = record.currentPeriodEnd ?? new Date();
+          await issueInvoiceAndNotifyOwner(record, periodStart, periodEnd);
+        }
       }
     } else if (["failed", "expired", "canceled"].includes(payment.status)) {
       if (payment.sequenceType === "first") {
@@ -151,6 +232,22 @@ export async function POST(request: NextRequest) {
           request,
         });
       }
+
+      if (store && owner) {
+        await notifyUser(
+          owner.email,
+          sponsorshipPaymentFailedOwnerTemplate({ storeName: store.name, tierLabel: tierDefLabel })
+        );
+      }
+      await notifyModerators(
+        "notifySponsorshipPaymentFailed",
+        moderationAlertTemplate({
+          headline: `Zahlung fehlgeschlagen: „${store?.name ?? record.storeId}“`,
+          detailHtml: `Eine Zahlung für das <strong>${tierDefLabel}</strong>-Sponsoring von <strong>„${store?.name ?? record.storeId}“</strong> ist fehlgeschlagen (${payment.status}).`,
+          detailText: `Zahlung für „${store?.name ?? record.storeId}“ (${tierDefLabel}) fehlgeschlagen: ${payment.status}.`,
+          dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/sponsoring`,
+        })
+      );
     }
 
     return NextResponse.json({ received: true });

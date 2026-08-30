@@ -114,6 +114,7 @@ model User {
   transfersSent     OwnershipTransfer[] @relation("TransferSender")
   transfersReceived OwnershipTransfer[] @relation("TransferRecipient")
   auditLogs         AuditLog[]          @relation("AuditActor")
+  notificationPreference NotificationPreference?
 
   accounts             Account[]
   sessions             Session[]
@@ -332,6 +333,7 @@ model SponsorshipSubscription {
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   owner User  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
 
   @@index([storeId])
   @@index([status])
@@ -591,4 +593,102 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([actorId])
   @@index([action])
+}
+
+// --- Notification preferences --------------------------------------------
+// Per-user, per-category opt-in/-out for the moderation/sponsorship email
+// notifications sent via lib/notify.ts. Only meaningful for admins/
+// moderators (see getRecipientsForCategory in lib/notification-preferences.ts).
+// A missing row is treated as "everything on" (the default), so ordinary
+// users never need one and new admins/mods start out fully notified.
+model NotificationPreference {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notifyNewStoreReport  Boolean @default(true) // store flagged via community disputes
+  notifyNewReviewReport Boolean @default(true)
+  notifyNewPhotoReport  Boolean @default(true)
+  notifyNewClaim        Boolean @default(true)
+  notifyNewSuggestion   Boolean @default(true)
+
+  notifySponsorshipStarted       Boolean @default(true)
+  notifySponsorshipCanceled      Boolean @default(true)
+  notifySponsorshipPaymentFailed Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Billing / invoice settings (singleton) -------------------------------
+// Superuser-managed under /admin/settings/billing. Single row keyed by the
+// fixed id "default". Every issued Invoice snapshots these fields at
+// creation time (see Invoice.issuerSnapshot) so a legally issued invoice
+// never silently changes if these settings are edited afterwards.
+model PlatformSettings {
+  id String @id @default("default")
+
+  invoiceIssuerName    String @default("FairTradeProject")
+  invoiceIssuerStreet  String @default("")
+  invoiceIssuerZipCity String @default("")
+  invoiceIssuerCountry String @default("Deutschland")
+  invoiceIssuerEmail   String @default("")
+
+  invoiceIssuerTaxNumber String? // Steuernummer
+  invoiceIssuerVatId     String? // USt-IdNr.
+
+  // §19 UStG: no VAT is shown on invoices while this is true, regardless
+  // of vatRatePercent below (kept around so switching to Regelbesteuerung
+  // later doesn't require re-entering the rate).
+  isKleinunternehmer Boolean @default(true)
+  vatRatePercent     Int     @default(19)
+
+  invoiceIssuerIban     String?
+  invoiceIssuerBankName String?
+  invoiceFooterNote     String?
+
+  updatedAt       DateTime @updatedAt
+  updatedByUserId String?
+}
+
+// --- Invoices --------------------------------------------------------------
+// One row per billed sponsorship payment (first payment + every recurring
+// renewal) — see lib/invoices.ts. Immutable once created: amounts and the
+// issuer's address/tax details are snapshotted at creation time, exactly
+// as German invoice law (§14 UStG) requires — an invoice must not change
+// retroactively just because platform settings changed later.
+model Invoice {
+  id             String @id @default(cuid())
+  sequenceNumber Int    @unique @default(autoincrement())
+
+  subscriptionId String
+  subscription   SponsorshipSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  storeId  String
+  storeName String // snapshot — the store could be renamed/deleted later
+
+  recipientUserId String
+  recipientName   String?
+  recipientEmail  String
+
+  tier        String
+  periodStart DateTime
+  periodEnd   DateTime
+
+  amountNetCents     Int
+  vatRatePercent     Int
+  vatAmountCents     Int
+  amountGrossCents   Int
+  isKleinunternehmer Boolean
+
+  // JSON snapshot of PlatformSettings' invoiceIssuer* fields at the moment
+  // this invoice was created.
+  issuerSnapshot String
+
+  molliePaymentId String?
+  createdAt       DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([storeId])
+  @@index([recipientUserId])
 }

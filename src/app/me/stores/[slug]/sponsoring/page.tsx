@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getActiveSponsorship, canManageSponsorship } from "@/lib/sponsorship";
 import { SponsoringPlans } from "@/components/sponsoring/SponsoringPlans";
+import { listInvoicesForStore, formatInvoiceNumber, formatCents } from "@/lib/invoices";
 
 export const metadata: Metadata = { title: "Sponsoring" };
 
@@ -29,6 +30,7 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
   }
 
   const sponsorship = await getActiveSponsorship(store.id);
+  const invoices = await listInvoicesForStore(store.id);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -58,6 +60,28 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
           }
         />
       </div>
+
+      {invoices.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-earth">Rechnungen</h2>
+          <p className="mt-1 text-sm text-earth/60">
+            Alle Rechnungen wurden dir zusätzlich per E-Mail zugestellt.
+          </p>
+          <div className="mt-3 divide-y divide-sage/10 rounded-lg border border-sage/10 bg-white">
+            {invoices.map((invoice) => (
+              <div key={invoice.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                <div>
+                  <p className="text-earth">{formatInvoiceNumber(invoice)}</p>
+                  <p className="text-xs text-earth/50">
+                    {invoice.createdAt.toLocaleDateString("de-DE")} · {invoice.tier}
+                  </p>
+                </div>
+                <p className="font-medium text-earth">{formatCents(invoice.amountGrossCents)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

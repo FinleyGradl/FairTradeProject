@@ -110,3 +110,169 @@ export function transferDeclinedTemplate(params: { storeName: string; toName: st
   const text = `${toName} hat deine Übertragungsanfrage für „${storeName}“ abgelehnt. Du bleibst Inhaber:in.`;
   return { html, text };
 }
+
+// --- Moderation / admin notification emails --------------------------------
+// Sent to admins/moderators who opted in — see lib/notify.ts +
+// lib/notification-preferences.ts. Deliberately generic (one function for
+// all four "something needs your attention" cases) rather than one
+// function per case, since the shape is identical.
+export function moderationAlertTemplate(params: {
+  headline: string;
+  detailHtml: string;
+  detailText: string;
+  dashboardUrl: string;
+}) {
+  const { headline, detailHtml, detailText, dashboardUrl } = params;
+  const subject = `Moderation: ${headline}`;
+  const html = wrapper(
+    headline,
+    `<p style="line-height:1.6;">${detailHtml}</p>
+     ${buttonHtml(dashboardUrl, "Im Moderations-Dashboard ansehen")}
+     <p style="font-size:12px;color:#5C4033a0;margin-top:24px;">Du erhältst diese Mail, weil du als Admin/Moderator:in für diese Kategorie Benachrichtigungen aktiviert hast. Das lässt sich unter „Benachrichtigungs-Einstellungen“ anpassen.</p>`
+  );
+  const text = `${headline}\n\n${detailText}\n\nDashboard: ${dashboardUrl}`;
+  return { subject, html, text };
+}
+
+// --- Content-moderation transparency to the affected user -------------------
+// Sent to the author/owner of content a moderator hid, removed, or
+// rejected, so they're never left wondering where it went.
+export function contentModeratedTemplate(params: {
+  headline: string;
+  detailHtml: string;
+  detailText: string;
+}) {
+  const { headline, detailHtml, detailText } = params;
+  const subject = headline;
+  const html = wrapper(
+    headline,
+    `<p style="line-height:1.6;">${detailHtml}</p>
+     <p style="font-size:12px;color:#5C4033a0;margin-top:24px;">Wenn du das für einen Fehler hältst, antworte gern auf diese E-Mail oder wende dich an unseren Support.</p>`
+  );
+  const text = `${headline}\n\n${detailText}`;
+  return { subject, html, text };
+}
+
+// --- Sponsoring / subscription lifecycle -----------------------------------
+export function sponsorshipCanceledOwnerTemplate(params: {
+  storeName: string;
+  tierLabel: string;
+  activeUntil: string | null;
+}) {
+  const { storeName, tierLabel, activeUntil } = params;
+  const subject = `Sponsoring für „${storeName}“ gekündigt`;
+  const untilHtml = activeUntil
+    ? `Es bleibt bis zum <strong>${activeUntil}</strong> aktiv, danach wird es nicht mehr verlängert.`
+    : "Es wird nicht mehr verlängert.";
+  const html = wrapper(
+    "Sponsoring gekündigt",
+    `<p style="line-height:1.6;">Das <strong>${tierLabel}</strong>-Sponsoring für <strong>„${storeName}“</strong> wurde gekündigt. ${untilHtml}</p>
+     <p style="line-height:1.6;">Du kannst jederzeit ein neues Sponsoring abschließen.</p>`
+  );
+  const text = `Das ${tierLabel}-Sponsoring für „${storeName}“ wurde gekündigt. ${
+    activeUntil ? `Aktiv bis ${activeUntil}.` : "Es wird nicht mehr verlängert."
+  }`;
+  return { subject, html, text };
+}
+
+export function sponsorshipPaymentFailedOwnerTemplate(params: { storeName: string; tierLabel: string }) {
+  const { storeName, tierLabel } = params;
+  const subject = `Zahlung für „${storeName}“ fehlgeschlagen`;
+  const html = wrapper(
+    "Zahlung fehlgeschlagen",
+    `<p style="line-height:1.6;">Die Zahlung für dein <strong>${tierLabel}</strong>-Sponsoring von <strong>„${storeName}“</strong> ist fehlgeschlagen. Mollie versucht es automatisch erneut — bitte prüfe, ob deine Zahlungsmethode noch gültig ist, damit dein Sponsoring aktiv bleibt.</p>`
+  );
+  const text = `Die Zahlung für dein ${tierLabel}-Sponsoring von „${storeName}“ ist fehlgeschlagen. Bitte prüfe deine Zahlungsmethode.`;
+  return { subject, html, text };
+}
+
+// --- Invoice / receipt email -------------------------------------------------
+// The legally relevant one — includes every field a German Rechnung needs
+// (§14 UStG): issuer name+address, recipient, date, a sequential invoice
+// number, description/period, net amount, VAT (or the §19-UStG note), and
+// gross amount. Sent as plain HTML (no PDF) — that's legally sufficient
+// for an electronic invoice as long as the format is accepted, which is
+// standard practice for SaaS subscriptions.
+export function invoiceEmailTemplate(params: {
+  invoiceNumber: string;
+  invoiceDate: string;
+  storeName: string;
+  tierLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  recipientName: string | null;
+  amountNet: string;
+  vatRatePercent: number;
+  vatAmount: string;
+  amountGross: string;
+  isKleinunternehmer: boolean;
+  issuer: {
+    name: string;
+    street: string;
+    zipCity: string;
+    country: string;
+    email: string;
+    taxNumber: string | null;
+    vatId: string | null;
+    iban: string | null;
+    bankName: string | null;
+    footerNote: string | null;
+  };
+}) {
+  const {
+    invoiceNumber,
+    invoiceDate,
+    storeName,
+    tierLabel,
+    periodStart,
+    periodEnd,
+    recipientName,
+    amountNet,
+    vatRatePercent,
+    vatAmount,
+    amountGross,
+    isKleinunternehmer,
+    issuer,
+  } = params;
+
+  const vatRow = isKleinunternehmer
+    ? `<tr><td colspan="2" style="padding-top:8px;font-size:12px;color:#5C4033a0;">Gemäß §19 UStG wird keine Umsatzsteuer berechnet und ausgewiesen.</td></tr>`
+    : `<tr><td style="padding:2px 0;">USt. (${vatRatePercent}%)</td><td style="padding:2px 0;text-align:right;">${vatAmount}</td></tr>`;
+
+  const html = wrapper(
+    `Rechnung ${invoiceNumber}`,
+    `<p style="line-height:1.6;">Vielen Dank für dein Sponsoring! Anbei die Rechnung für <strong>„${storeName}“</strong> (${tierLabel}), Zeitraum ${periodStart} – ${periodEnd}.</p>
+     <table width="100%" style="margin:16px 0;font-size:14px;border-top:1px solid #e3ede6;padding-top:12px;">
+       <tr><td style="padding:2px 0;color:#5C4033a0;">Rechnungsnummer</td><td style="padding:2px 0;text-align:right;">${invoiceNumber}</td></tr>
+       <tr><td style="padding:2px 0;color:#5C4033a0;">Rechnungsdatum</td><td style="padding:2px 0;text-align:right;">${invoiceDate}</td></tr>
+       <tr><td style="padding:2px 0;color:#5C4033a0;">Empfänger</td><td style="padding:2px 0;text-align:right;">${recipientName ?? "—"}</td></tr>
+     </table>
+     <table width="100%" style="margin:16px 0;font-size:14px;border-top:1px solid #e3ede6;padding-top:12px;">
+       <tr><td style="padding:2px 0;">Netto</td><td style="padding:2px 0;text-align:right;">${amountNet}</td></tr>
+       ${vatRow}
+       <tr><td style="padding:8px 0 0;font-weight:700;">Gesamt</td><td style="padding:8px 0 0;text-align:right;font-weight:700;">${amountGross}</td></tr>
+     </table>
+     <table width="100%" style="margin:16px 0;font-size:12px;color:#5C4033a0;border-top:1px solid #e3ede6;padding-top:12px;">
+       <tr><td>${issuer.name}</td></tr>
+       <tr><td>${issuer.street}</td></tr>
+       <tr><td>${issuer.zipCity}, ${issuer.country}</td></tr>
+       <tr><td>${issuer.email}</td></tr>
+       ${issuer.taxNumber ? `<tr><td>Steuernummer: ${issuer.taxNumber}</td></tr>` : ""}
+       ${issuer.vatId ? `<tr><td>USt-IdNr.: ${issuer.vatId}</td></tr>` : ""}
+       ${issuer.iban ? `<tr><td>IBAN: ${issuer.iban}${issuer.bankName ? ` (${issuer.bankName})` : ""}</td></tr>` : ""}
+     </table>
+     ${issuer.footerNote ? `<p style="font-size:12px;color:#5C4033a0;">${issuer.footerNote}</p>` : ""}`
+  );
+
+  const text = `Rechnung ${invoiceNumber} für „${storeName}“ (${tierLabel}), Zeitraum ${periodStart} – ${periodEnd}.
+Netto: ${amountNet}${isKleinunternehmer ? " (gemäß §19 UStG keine USt.)" : ` zzgl. ${vatRatePercent}% USt. (${vatAmount})`}
+Gesamt: ${amountGross}
+
+${issuer.name}
+${issuer.street}
+${issuer.zipCity}, ${issuer.country}
+${issuer.email}
+${issuer.taxNumber ? `Steuernummer: ${issuer.taxNumber}\n` : ""}${issuer.vatId ? `USt-IdNr.: ${issuer.vatId}\n` : ""}${issuer.iban ? `IBAN: ${issuer.iban}\n` : ""}`;
+
+  return { subject: `Rechnung ${invoiceNumber} — ${storeName}`, html, text };
+}

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { canDeletePhoto, deleteStorePhoto, canModerate } from "@/lib/stores";
 import { deleteStorePhotoFileIfLocal } from "@/lib/uploads";
 import { logAudit } from "@/lib/audit";
+import { notifyUser } from "@/lib/notify";
+import { contentModeratedTemplate } from "@/lib/email/templates";
 
 export async function DELETE(
   request: NextRequest,
@@ -39,15 +41,34 @@ export async function DELETE(
   await deleteStorePhoto(photo.id);
   await deleteStorePhotoFileIfLocal(photo.url).catch(() => {});
 
+  const isModeratorDeletingOthers = canModerate(session.user) && photo.uploadedByUserId !== session.user.id;
+
   await logAudit({
     actor: session.user,
     action: "photo.delete",
     entityType: "StorePhoto",
     entityId: photo.id,
     entityLabel: `Foto von ${store.name}`,
-    metadata: { storeSlug: slug, byModerator: canModerate(session.user) },
+    metadata: { storeSlug: slug, byModerator: isModeratorDeletingOthers },
     request,
   });
+
+  if (isModeratorDeletingOthers && photo.uploadedByUserId) {
+    const uploader = await prisma.user.findUnique({
+      where: { id: photo.uploadedByUserId },
+      select: { email: true },
+    });
+    if (uploader) {
+      await notifyUser(
+        uploader.email,
+        contentModeratedTemplate({
+          headline: `Dein Foto bei „${store.name}“ wurde entfernt`,
+          detailHtml: `Ein:e Moderator:in hat ein von dir hochgeladenes Foto bei <strong>„${store.name}“</strong> entfernt, da es gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.`,
+          detailText: `Dein Foto bei „${store.name}“ wurde von der Moderation entfernt.`,
+        })
+      );
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

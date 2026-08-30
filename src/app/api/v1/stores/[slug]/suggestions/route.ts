@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { createEditSuggestion, listPendingSuggestionsForStore, parseSuggestionChanges } from "@/lib/edit-suggestions";
 import { getStoreForEdit, canEditStore, canModerate } from "@/lib/stores";
 import { storeEditSuggestionSchema } from "@/lib/validators/store";
+import { notifyModerators } from "@/lib/notify";
+import { moderationAlertTemplate } from "@/lib/email/templates";
 
 export async function POST(
   request: NextRequest,
@@ -35,6 +37,16 @@ export async function POST(
     const status = result.error === "NOT_FOUND" ? 404 : 409;
     return NextResponse.json({ error: messages[result.error] }, { status });
   }
+
+  await notifyModerators(
+    "notifyNewSuggestion",
+    moderationAlertTemplate({
+      headline: `Neuer Änderungsvorschlag für „${slug}“`,
+      detailHtml: `${session.user.name ?? session.user.email} hat einen Änderungsvorschlag für <strong>„${slug}“</strong> eingereicht, der auf Prüfung wartet.`,
+      detailText: `${session.user.name ?? session.user.email} hat einen Änderungsvorschlag für „${slug}“ eingereicht.`,
+      dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
+    })
+  );
 
   return NextResponse.json({ success: true, suggestion: result.suggestion }, { status: 201 });
 }

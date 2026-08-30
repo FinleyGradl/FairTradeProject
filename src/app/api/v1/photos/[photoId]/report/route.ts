@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { reportStorePhoto, dismissPhotoReports, canModerate } from "@/lib/stores";
 import { logAudit } from "@/lib/audit";
+import { PHOTO_REPORT_THRESHOLD } from "@/lib/constants";
+import { prisma } from "@/lib/db";
+import { notifyModerators } from "@/lib/notify";
+import { moderationAlertTemplate } from "@/lib/email/templates";
 
 // Any signed-in user can report a gallery photo once. Reports accumulate
 // silently — nothing is hidden automatically. Once a photo collects
@@ -31,6 +35,24 @@ export async function POST(
       { error: "Du hast dieses Bild bereits gemeldet.", reportCount: result.reportCount },
       { status: 409 }
     );
+  }
+
+  if (result.reportCount === PHOTO_REPORT_THRESHOLD) {
+    const photo = await prisma.storePhoto.findUnique({
+      where: { id: photoId },
+      include: { store: { select: { name: true } } },
+    });
+    if (photo) {
+      await notifyModerators(
+        "notifyNewPhotoReport",
+        moderationAlertTemplate({
+          headline: `Foto bei „${photo.store.name}“ mehrfach gemeldet`,
+          detailHtml: `Ein Foto bei <strong>„${photo.store.name}“</strong> hat die Melde-Schwelle (${PHOTO_REPORT_THRESHOLD} Meldungen) erreicht und wartet auf Prüfung.`,
+          detailText: `Ein Foto bei „${photo.store.name}“ hat die Melde-Schwelle (${PHOTO_REPORT_THRESHOLD} Meldungen) erreicht.`,
+          dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
+        })
+      );
+    }
   }
 
   return NextResponse.json({ success: true, reportCount: result.reportCount });

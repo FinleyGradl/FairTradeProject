@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hideReview, deleteReview, canModerate } from "@/lib/stores";
 import { logAudit } from "@/lib/audit";
+import { prisma } from "@/lib/db";
+import { notifyUser } from "@/lib/notify";
+import { contentModeratedTemplate } from "@/lib/email/templates";
 
 // DELETE means two different things depending on who's asking:
 // - The review's author permanently deletes their own review.
@@ -56,6 +59,21 @@ export async function DELETE(
     entityLabel: `Review ${reviewId}`,
     request,
   });
+
+  const reviewAuthor = await prisma.review.findUnique({
+    where: { id: reviewId },
+    include: { store: { select: { name: true } }, user: { select: { email: true } } },
+  });
+  if (reviewAuthor) {
+    await notifyUser(
+      reviewAuthor.user.email,
+      contentModeratedTemplate({
+        headline: `Deine Bewertung zu „${reviewAuthor.store.name}“ wurde ausgeblendet`,
+        detailHtml: `Ein:e Moderator:in hat deine Bewertung zu <strong>„${reviewAuthor.store.name}“</strong> ausgeblendet, da sie gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.`,
+        detailText: `Deine Bewertung zu „${reviewAuthor.store.name}“ wurde von der Moderation ausgeblendet.`,
+      })
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

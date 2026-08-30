@@ -4,6 +4,9 @@ import { auth } from "@/auth";
 import { reviewEditSuggestion } from "@/lib/edit-suggestions";
 import { moderationActionSchema } from "@/lib/validators/store";
 import { logAudit } from "@/lib/audit";
+import { prisma } from "@/lib/db";
+import { notifyUser } from "@/lib/notify";
+import { contentModeratedTemplate } from "@/lib/email/templates";
 
 export async function PATCH(
   request: NextRequest,
@@ -43,6 +46,31 @@ export async function PATCH(
     metadata: { decision: parsed.data.action, storeSlug: slug },
     request,
   });
+
+  // Only notify when a moderator/admin (not the owner reviewing their own
+  // queue) made the call — otherwise this is just the owner's normal
+  // workflow, not a moderation decision worth a transparency email.
+  const suggestion = await prisma.storeEditSuggestion.findUnique({
+    where: { id },
+    include: { store: { select: { name: true, ownerUserId: true } }, suggestedBy: { select: { email: true } } },
+  });
+  if (suggestion && suggestion.store.ownerUserId !== session.user.id && suggestion.suggestedBy) {
+    const approved = parsed.data.action === "approve";
+    await notifyUser(
+      suggestion.suggestedBy.email,
+      contentModeratedTemplate({
+        headline: approved
+          ? `Dein Änderungsvorschlag für „${suggestion.store.name}“ wurde übernommen`
+          : `Dein Änderungsvorschlag für „${suggestion.store.name}“ wurde abgelehnt`,
+        detailHtml: approved
+          ? `Dein Änderungsvorschlag für <strong>„${suggestion.store.name}“</strong> wurde geprüft und übernommen.`
+          : `Dein Änderungsvorschlag für <strong>„${suggestion.store.name}“</strong> wurde geprüft und abgelehnt.`,
+        detailText: approved
+          ? `Dein Änderungsvorschlag für „${suggestion.store.name}“ wurde übernommen.`
+          : `Dein Änderungsvorschlag für „${suggestion.store.name}“ wurde abgelehnt.`,
+      })
+    );
+  }
 
   return NextResponse.json({ success: true });
 }

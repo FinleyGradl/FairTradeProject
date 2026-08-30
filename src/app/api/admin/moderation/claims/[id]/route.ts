@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { reviewClaim, canModerate } from "@/lib/stores";
 import { moderationActionSchema } from "@/lib/validators/store";
 import { logAudit } from "@/lib/audit";
+import { prisma } from "@/lib/db";
+import { notifyUser } from "@/lib/notify";
+import { contentModeratedTemplate } from "@/lib/email/templates";
 
 export async function POST(
   request: NextRequest,
@@ -34,6 +37,28 @@ export async function POST(
     metadata: { decision: parsed.data.action },
     request,
   });
+
+  const [store, claimant] = await Promise.all([
+    prisma.store.findUnique({ where: { id: updated.storeId }, select: { name: true } }),
+    prisma.user.findUnique({ where: { id: updated.userId }, select: { email: true } }),
+  ]);
+  if (store && claimant) {
+    const approved = parsed.data.action === "approve";
+    await notifyUser(
+      claimant.email,
+      contentModeratedTemplate({
+        headline: approved
+          ? `Du bist jetzt Inhaber:in von „${store.name}“`
+          : `Deine Inhaberschafts-Anfrage für „${store.name}“ wurde abgelehnt`,
+        detailHtml: approved
+          ? `Deine Anfrage, Inhaber:in von <strong>„${store.name}“</strong> zu werden, wurde bestätigt. Du kannst den Eintrag jetzt bearbeiten.`
+          : `Deine Anfrage, Inhaber:in von <strong>„${store.name}“</strong> zu werden, wurde abgelehnt.`,
+        detailText: approved
+          ? `Deine Anfrage für „${store.name}“ wurde bestätigt.`
+          : `Deine Anfrage für „${store.name}“ wurde abgelehnt.`,
+      })
+    );
+  }
 
   return NextResponse.json({ success: true, claim: updated });
 }

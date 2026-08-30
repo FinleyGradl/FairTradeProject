@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { getActiveSponsorship, canManageSponsorship, startSponsorship, cancelSponsorship } from "@/lib/sponsorship";
 import { SPONSORSHIP_TIERS } from "@/lib/constants";
 import { logAudit } from "@/lib/audit";
+import { notifyModerators, notifyUser } from "@/lib/notify";
+import { moderationAlertTemplate, sponsorshipCanceledOwnerTemplate } from "@/lib/email/templates";
 
 const startSchema = z.object({
   tier: z.enum(["basic", "plus", "top"]),
@@ -122,6 +124,37 @@ export async function DELETE(
     metadata: { storeSlug: slug, tier: canceled.tier, initiatedByRole: session.user.role },
     request,
   });
+
+  const tierLabel = SPONSORSHIP_TIERS[canceled.tier as keyof typeof SPONSORSHIP_TIERS]?.label ?? canceled.tier;
+  const owner = await prisma.user.findUnique({
+    where: { id: canceled.ownerUserId },
+    select: { email: true },
+  });
+  if (owner) {
+    await notifyUser(
+      owner.email,
+      sponsorshipCanceledOwnerTemplate({
+        storeName: store.name,
+        tierLabel,
+        activeUntil: canceled.currentPeriodEnd
+          ? canceled.currentPeriodEnd.toLocaleDateString("de-DE")
+          : null,
+      })
+    );
+  }
+  await notifyModerators(
+    "notifySponsorshipCanceled",
+    moderationAlertTemplate({
+      headline: `Sponsoring gekündigt: „${store.name}“`,
+      detailHtml: `Das <strong>${tierLabel}</strong>-Sponsoring von <strong>„${store.name}“</strong> wurde gekündigt${
+        session.user.role === "admin" || session.user.role === "moderator"
+          ? ` (von ${session.user.name ?? session.user.email})`
+          : " (vom Inhaber)"
+      }.`,
+      detailText: `Das ${tierLabel}-Sponsoring von „${store.name}“ wurde gekündigt.`,
+      dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/sponsoring`,
+    })
+  );
 
   return NextResponse.json({ success: true, sponsorship: canceled });
 }

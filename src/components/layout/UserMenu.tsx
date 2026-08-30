@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket, Users, ScrollText } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket, Users, ScrollText, Bell, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCount?: number }) {
@@ -117,6 +117,15 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               )}
             </Link>
           )}
+          {canModerate && (
+            <Link
+              href="/admin/notification-settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+            >
+              <Bell className="h-4 w-4" /> Benachrichtigungen
+            </Link>
+          )}
           {session.user.role === "admin" && (
             <>
               <Link
@@ -150,6 +159,13 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
               >
                 <Users className="h-4 w-4" /> Nutzerverwaltung
+              </Link>
+              <Link
+                href="/admin/settings/billing"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+              >
+                <Receipt className="h-4 w-4" /> Rechnungs-Einstellungen
               </Link>
               {session.user.role !== "admin" && (
                 <Link

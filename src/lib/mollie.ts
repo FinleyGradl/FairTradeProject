@@ -68,6 +68,7 @@ export interface MolliePayment {
   customerId?: string;
   subscriptionId?: string;
   metadata?: { subscriptionRecordId?: string } | null;
+  amount: { currency: string; value: string };
   _links: { checkout?: { href: string } };
 }
 

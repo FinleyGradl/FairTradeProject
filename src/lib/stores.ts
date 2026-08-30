@@ -1051,7 +1051,7 @@ export async function castAttestation(
   userId: string,
   vote: AttestationVote,
   reason?: string
-): Promise<{ error: "NOT_FOUND" | "OWN_STORE" } | { store: Store }> {
+): Promise<{ error: "NOT_FOUND" | "OWN_STORE" } | { store: Store; justFlagged: boolean }> {
   const store = await prisma.store.findUnique({ where: { slug: storeSlug } });
   if (!store) return { error: "NOT_FOUND" };
   // The submitter/owner vouching for their own listing wouldn't mean much
@@ -1081,6 +1081,7 @@ export async function castAttestation(
 
   let nextStatus = store.status;
   let nextVerification = store.verificationLevel;
+  let justFlagged = false;
 
   if (
     store.verificationLevel === "unverified" &&
@@ -1096,6 +1097,7 @@ export async function castAttestation(
     // automatically — disputes can be wrong too, so this stage always
     // needs a person to look at the "reason" text before rejecting.
     nextStatus = "pending";
+    justFlagged = true;
     await adjustTrustScore(responsibleUserId, TRUST_SCORE_DELTAS.storeFlagged);
   }
 
@@ -1104,7 +1106,7 @@ export async function castAttestation(
     data: { confirmCount, disputeCount, status: nextStatus, verificationLevel: nextVerification },
   });
 
-  return { store: updated };
+  return { store: updated, justFlagged };
 }
 
 // --- Moderation queue --------------------------------------------------------

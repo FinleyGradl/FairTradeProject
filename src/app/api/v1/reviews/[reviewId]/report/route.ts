@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { reportReview, dismissReviewReports, canModerate } from "@/lib/stores";
 import { logAudit } from "@/lib/audit";
+import { REVIEW_REPORT_THRESHOLD } from "@/lib/constants";
+import { prisma } from "@/lib/db";
+import { notifyModerators } from "@/lib/notify";
+import { moderationAlertTemplate } from "@/lib/email/templates";
 
 // Any signed-in user can report a review once (not their own). Reports
 // accumulate silently — nothing is hidden automatically. Once a review
@@ -37,6 +41,27 @@ export async function POST(
       { error: "Du hast diese Bewertung bereits gemeldet.", reportCount: result.reportCount },
       { status: 409 }
     );
+  }
+
+  // Notify mods the moment this review actually enters the moderation
+  // queue, not on every single report (which would spam on threshold+1,
+  // +2, ...).
+  if (result.reportCount === REVIEW_REPORT_THRESHOLD) {
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { store: { select: { name: true } } },
+    });
+    if (review) {
+      await notifyModerators(
+        "notifyNewReviewReport",
+        moderationAlertTemplate({
+          headline: `Bewertung bei „${review.store.name}“ mehrfach gemeldet`,
+          detailHtml: `Eine Bewertung bei <strong>„${review.store.name}“</strong> hat die Melde-Schwelle (${REVIEW_REPORT_THRESHOLD} Meldungen) erreicht und wartet auf Prüfung.`,
+          detailText: `Eine Bewertung bei „${review.store.name}“ hat die Melde-Schwelle (${REVIEW_REPORT_THRESHOLD} Meldungen) erreicht.`,
+          dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
+        })
+      );
+    }
   }
 
   return NextResponse.json({ success: true, reportCount: result.reportCount });

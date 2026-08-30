@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { castAttestation } from "@/lib/stores";
 import { storeAttestationSchema } from "@/lib/validators/store";
+import { notifyModerators } from "@/lib/notify";
+import { moderationAlertTemplate } from "@/lib/email/templates";
 
 export async function POST(
   request: NextRequest,
@@ -36,6 +38,18 @@ export async function POST(
     } as const;
     const status = result.error === "NOT_FOUND" ? 404 : 409;
     return NextResponse.json({ error: messages[result.error] }, { status });
+  }
+
+  if (result.justFlagged) {
+    await notifyModerators(
+      "notifyNewStoreReport",
+      moderationAlertTemplate({
+        headline: `„${result.store.name}“ zur Prüfung gemeldet`,
+        detailHtml: `<strong>„${result.store.name}“</strong> hat genug Community-Disputes gesammelt und wurde aus der öffentlichen Liste genommen, bis ein:e Moderator:in entscheidet.`,
+        detailText: `„${result.store.name}“ wurde per Community-Dispute zur Prüfung markiert.`,
+        dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
+      })
+    );
   }
 
   return NextResponse.json({ success: true, store: result.store }, { status: 200 });

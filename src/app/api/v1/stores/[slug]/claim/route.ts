@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createStoreClaim } from "@/lib/stores";
 import { storeClaimSchema } from "@/lib/validators/store";
+import { notifyModerators } from "@/lib/notify";
+import { moderationAlertTemplate } from "@/lib/email/templates";
 
 export async function POST(
   request: NextRequest,
@@ -33,6 +35,16 @@ export async function POST(
     const status = result.error === "NOT_FOUND" ? 404 : 409;
     return NextResponse.json({ error: messages[result.error] }, { status });
   }
+
+  await notifyModerators(
+    "notifyNewClaim",
+    moderationAlertTemplate({
+      headline: `Neue Inhaberschafts-Anfrage für „${slug}“`,
+      detailHtml: `${session.user.name ?? session.user.email} möchte Inhaber:in von <strong>„${slug}“</strong> werden und wartet auf Prüfung.`,
+      detailText: `${session.user.name ?? session.user.email} möchte Inhaber:in von „${slug}“ werden.`,
+      dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
+    })
+  );
 
   return NextResponse.json({ success: true, claim: result.claim }, { status: 201 });
 }

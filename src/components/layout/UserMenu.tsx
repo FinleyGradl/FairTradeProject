@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket, Users, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCount?: number }) {
@@ -133,6 +133,33 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               >
                 <Ticket className="h-4 w-4" /> Promo-Codes
               </Link>
+              <Link
+                href="/admin/audit-log"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+              >
+                <ScrollText className="h-4 w-4" /> Audit-Log
+              </Link>
+            </>
+          )}
+          {session.user.isSuperuser && (
+            <>
+              <Link
+                href="/admin/users"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+              >
+                <Users className="h-4 w-4" /> Nutzerverwaltung
+              </Link>
+              {session.user.role !== "admin" && (
+                <Link
+                  href="/admin/audit-log"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+                >
+                  <ScrollText className="h-4 w-4" /> Audit-Log
+                </Link>
+              )}
             </>
           )}
           <button

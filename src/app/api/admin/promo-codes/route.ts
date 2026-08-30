@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { listPromoCodes, createPromoCode } from "@/lib/promo-codes";
+import { logAudit } from "@/lib/audit";
 
 function requireAdmin(role: string | undefined) {
   return role === "admin";
@@ -46,6 +47,17 @@ export async function POST(request: NextRequest) {
       expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
       createdByUserId: session.user.id,
     });
+
+    await logAudit({
+      actor: session.user,
+      action: "promo_code.create",
+      entityType: "PromoCode",
+      entityId: code.id,
+      entityLabel: code.code,
+      metadata: { discountPercent: code.discountPercent, maxRedemptions: code.maxRedemptions },
+      request,
+    });
+
     return NextResponse.json({ code }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Code konnte nicht erstellt werden.";

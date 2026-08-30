@@ -11,6 +11,7 @@ import {
   serializeStore,
 } from "@/lib/stores";
 import { storeUpdateSchema } from "@/lib/validators/store";
+import { logAudit } from "@/lib/audit";
 
 export async function GET(
   _request: NextRequest,
@@ -65,6 +66,17 @@ export async function PATCH(
     if (!updated) {
       return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
     }
+
+    await logAudit({
+      actor: session.user,
+      action: "store.update",
+      entityType: "Store",
+      entityId: updated.id,
+      entityLabel: updated.name,
+      metadata: { fields: Object.keys(parsed.data), byModerator: isTrustedEditor },
+      request,
+    });
+
     return NextResponse.json({
       success: true,
       store: serializeStore({ ...updated, avgRating: null, reviewCount: 0 }),
@@ -82,7 +94,7 @@ export async function PATCH(
  * cleanup (Mollie subscription, uploaded files) this triggers.
  */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
@@ -107,6 +119,17 @@ export async function DELETE(
     if ("error" in result) {
       return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
     }
+
+    await logAudit({
+      actor: session.user,
+      action: "store.delete",
+      entityType: "Store",
+      entityId: existing.id,
+      entityLabel: existing.name,
+      metadata: { byModerator: canModerate(session.user) },
+      request,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/v1/stores/[slug]:", error);

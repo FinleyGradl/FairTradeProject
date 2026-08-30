@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { setPromoCodeActive, deletePromoCode } from "@/lib/promo-codes";
+import { logAudit } from "@/lib/audit";
 
 function requireAdmin(role: string | undefined) {
   return role === "admin";
@@ -27,11 +28,22 @@ export async function PATCH(
   }
 
   const code = await setPromoCodeActive(id, parsed.data.active);
+
+  await logAudit({
+    actor: session.user,
+    action: "promo_code.update",
+    entityType: "PromoCode",
+    entityId: id,
+    entityLabel: code.code,
+    metadata: { active: parsed.data.active },
+    request,
+  });
+
   return NextResponse.json({ code });
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -40,6 +52,16 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await deletePromoCode(id);
+  const deleted = await deletePromoCode(id);
+
+  await logAudit({
+    actor: session.user,
+    action: "promo_code.delete",
+    entityType: "PromoCode",
+    entityId: id,
+    entityLabel: deleted.code,
+    request,
+  });
+
   return NextResponse.json({ success: true });
 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import * as mollie from "@/lib/mollie";
 import { SPONSORSHIP_TIERS, type SponsorshipTierId } from "@/lib/constants";
 import { recordPromoRedemption } from "@/lib/promo-codes";
+import { logAudit, SYSTEM_ACTOR } from "@/lib/audit";
 
 // Mollie calls this URL server-to-server whenever a payment's status
 // changes. It sends `id=<payment id>` as application/x-www-form-urlencoded
@@ -46,6 +47,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    const store = await prisma.store.findUnique({
+      where: { id: record.storeId },
+      select: { name: true, slug: true },
+    });
+    const entityLabel = store ? `${store.name} (${record.tier})` : record.storeId;
+    const baseMetadata = {
+      storeSlug: store?.slug ?? null,
+      tier: record.tier,
+      molliePaymentId: paymentId,
+      sequenceType: payment.sequenceType,
+    };
+
     if (payment.status === "paid") {
       if (payment.sequenceType === "first" && record.status === "incomplete") {
         // Mandate established — now create the actual recurring subscription.
@@ -74,6 +87,16 @@ export async function POST(request: NextRequest) {
         if (record.promoCode) {
           await recordPromoRedemption(record.promoCode);
         }
+
+        await logAudit({
+          actor: SYSTEM_ACTOR,
+          action: "subscription.activate",
+          entityType: "SponsorshipSubscription",
+          entityId: record.id,
+          entityLabel,
+          metadata: { ...baseMetadata, mollieSubscriptionId: subscription.id },
+          request,
+        });
       } else if (payment.sequenceType === "recurring") {
         await prisma.sponsorshipSubscription.update({
           where: { id: record.id },
@@ -81,6 +104,16 @@ export async function POST(request: NextRequest) {
             status: "active",
             currentPeriodEnd: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
           },
+        });
+
+        await logAudit({
+          actor: SYSTEM_ACTOR,
+          action: "subscription.renew",
+          entityType: "SponsorshipSubscription",
+          entityId: record.id,
+          entityLabel,
+          metadata: baseMetadata,
+          request,
         });
       }
     } else if (["failed", "expired", "canceled"].includes(payment.status)) {
@@ -90,12 +123,32 @@ export async function POST(request: NextRequest) {
           where: { id: record.id },
           data: { status: "canceled", canceledAt: new Date() },
         });
+
+        await logAudit({
+          actor: SYSTEM_ACTOR,
+          action: "subscription.mandate_failed",
+          entityType: "SponsorshipSubscription",
+          entityId: record.id,
+          entityLabel,
+          metadata: { ...baseMetadata, paymentStatus: payment.status },
+          request,
+        });
       } else {
         // A renewal failed. Mollie retries automatically for a while, so we
         // mark it past_due rather than immediately canceling the boost.
         await prisma.sponsorshipSubscription.update({
           where: { id: record.id },
           data: { status: "past_due" },
+        });
+
+        await logAudit({
+          actor: SYSTEM_ACTOR,
+          action: "subscription.payment_failed",
+          entityType: "SponsorshipSubscription",
+          entityId: record.id,
+          entityLabel,
+          metadata: { ...baseMetadata, paymentStatus: payment.status },
+          request,
         });
       }
     }

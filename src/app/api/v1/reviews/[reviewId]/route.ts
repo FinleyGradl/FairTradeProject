@@ -2,13 +2,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { hideReview, deleteReview, canModerate } from "@/lib/stores";
+import { logAudit } from "@/lib/audit";
 
 // DELETE means two different things depending on who's asking:
 // - The review's author permanently deletes their own review.
 // - A moderator/admin hides it instead (status -> "hidden"), keeping the
 //   record and its reports around as a moderation trail.
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ reviewId: string }> }
 ) {
   const session = await auth();
@@ -20,6 +21,14 @@ export async function DELETE(
 
   const deleteResult = await deleteReview(reviewId, session.user.id);
   if ("success" in deleteResult) {
+    await logAudit({
+      actor: session.user,
+      action: "review.delete",
+      entityType: "Review",
+      entityId: reviewId,
+      entityLabel: `Review ${reviewId} (eigene)`,
+      request,
+    });
     return NextResponse.json({ success: true });
   }
   if (deleteResult.error === "NOT_FOUND") {
@@ -38,6 +47,15 @@ export async function DELETE(
   if (!ok) {
     return NextResponse.json({ error: "Bewertung nicht gefunden." }, { status: 404 });
   }
+
+  await logAudit({
+    actor: session.user,
+    action: "review.hide",
+    entityType: "Review",
+    entityId: reviewId,
+    entityLabel: `Review ${reviewId}`,
+    request,
+  });
 
   return NextResponse.json({ success: true });
 }

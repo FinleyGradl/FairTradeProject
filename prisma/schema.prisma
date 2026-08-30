@@ -83,6 +83,12 @@ model User {
   name          String?
   avatarUrl     String?
   role          UserRole  @default(user)
+  // A superuser can manage other users' roles (promote/demote to
+  // admin/moderator) via /admin/users — a level of trust above plain
+  // "admin", which by itself does NOT grant user-management rights. There
+  // is no UI to grant the first superuser; it must be set directly in the
+  // DB (or via prisma/seed.ts) to bootstrap the very first one.
+  isSuperuser   Boolean   @default(false)
   // Community-moderation reputation. Grows with approved/community-verified
   // submissions and shrinks on rejections/upheld reports — see
   // TRUST_SCORE_DELTAS in lib/trust.ts for the concrete point values.
@@ -107,6 +113,7 @@ model User {
   reviewReports     ReviewReport[]
   transfersSent     OwnershipTransfer[] @relation("TransferSender")
   transfersReceived OwnershipTransfer[] @relation("TransferRecipient")
+  auditLogs         AuditLog[]          @relation("AuditActor")
 
   accounts             Account[]
   sessions             Session[]
@@ -548,4 +555,40 @@ model PhotoReport {
 
   @@unique([photoId, userId])
   @@index([photoId])
+}
+
+// --- Audit log ----------------------------------------------------------
+// Append-only trail of who edited/deleted/moderated what. Written via
+// logAudit() in lib/audit.ts, which is fire-and-forget (a logging failure
+// never blocks the underlying action). Actor fields are denormalized
+// (snapshotted at write time) so entries stay meaningful even after the
+// acting user's account is later deleted or renamed — see onDelete:
+// SetNull on `actor` below.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String?
+  actorName  String?
+  actorRole  String?
+  // Dot-namespaced, e.g. "store.delete", "user.role_change" — see
+  // AUDIT_ACTIONS in lib/audit.ts for the canonical list.
+  action     String
+  entityType String
+  entityId   String?
+  // Short human-readable label of the affected entity (store name, user
+  // email, ...) so the log reads well without joining back to now-deleted
+  // rows.
+  entityLabel String?
+  // Optional extra context as JSON, e.g. { "from": "user", "to": "admin" }
+  // or { "reason": "..." }. Parsed with parseJsonObject() from lib/utils.
+  metadata   String?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
 }

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getActiveSponsorship, canManageSponsorship, startSponsorship, cancelSponsorship } from "@/lib/sponsorship";
 import { SPONSORSHIP_TIERS } from "@/lib/constants";
+import { logAudit } from "@/lib/audit";
 
 const startSchema = z.object({
   tier: z.enum(["basic", "plus", "top"]),
@@ -66,6 +67,22 @@ export async function POST(
       tier: parsed.data.tier,
       promoCode: parsed.data.promoCode,
     });
+
+    await logAudit({
+      actor: session.user,
+      action: "subscription.start",
+      entityType: "SponsorshipSubscription",
+      entityId: result.subscriptionId,
+      entityLabel: `${store.name} (${parsed.data.tier})`,
+      metadata: {
+        storeSlug: slug,
+        tier: parsed.data.tier,
+        promoCode: parsed.data.promoCode ?? null,
+        redeemedPromo: result.redeemedPromo,
+      },
+      request,
+    });
+
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error("POST sponsoring:", error);
@@ -75,7 +92,7 @@ export async function POST(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
@@ -95,5 +112,16 @@ export async function DELETE(
   if (!canceled) {
     return NextResponse.json({ error: "Kein aktives Sponsoring gefunden." }, { status: 404 });
   }
+
+  await logAudit({
+    actor: session.user,
+    action: "subscription.cancel",
+    entityType: "SponsorshipSubscription",
+    entityId: canceled.id,
+    entityLabel: `${store.name} (${canceled.tier})`,
+    metadata: { storeSlug: slug, tier: canceled.tier, initiatedByRole: session.user.role },
+    request,
+  });
+
   return NextResponse.json({ success: true, sponsorship: canceled });
 }

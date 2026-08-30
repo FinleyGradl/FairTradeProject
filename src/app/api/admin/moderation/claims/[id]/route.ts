@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { reviewClaim, canModerate } from "@/lib/stores";
 import { moderationActionSchema } from "@/lib/validators/store";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(
   request: NextRequest,
@@ -23,6 +24,16 @@ export async function POST(
   if (!updated) {
     return NextResponse.json({ error: "Anfrage nicht gefunden." }, { status: 404 });
   }
+
+  await logAudit({
+    actor: session.user,
+    action: "claim.review",
+    entityType: "StoreClaim",
+    entityId: updated.id,
+    entityLabel: `Store ${updated.storeId}`,
+    metadata: { decision: parsed.data.action },
+    request,
+  });
 
   return NextResponse.json({ success: true, claim: updated });
 }

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { reportReview, dismissReviewReports, canModerate } from "@/lib/stores";
+import { logAudit } from "@/lib/audit";
 
 // Any signed-in user can report a review once (not their own). Reports
 // accumulate silently — nothing is hidden automatically. Once a review
@@ -46,7 +47,7 @@ export async function POST(
 // stays visible, the queue entry goes away, and fresh reports can still
 // accumulate again later.
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ reviewId: string }> }
 ) {
   const session = await auth();
@@ -59,6 +60,15 @@ export async function DELETE(
   if (!ok) {
     return NextResponse.json({ error: "Bewertung nicht gefunden." }, { status: 404 });
   }
+
+  await logAudit({
+    actor: session!.user,
+    action: "review.report_dismiss",
+    entityType: "Review",
+    entityId: reviewId,
+    entityLabel: `Review ${reviewId}`,
+    request,
+  });
 
   return NextResponse.json({ success: true });
 }

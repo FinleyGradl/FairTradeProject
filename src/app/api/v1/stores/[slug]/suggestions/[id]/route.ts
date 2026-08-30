@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { reviewEditSuggestion } from "@/lib/edit-suggestions";
 import { moderationActionSchema } from "@/lib/validators/store";
+import { logAudit } from "@/lib/audit";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { slug, id } = await params;
   const body = await request.json().catch(() => null);
   const parsed = moderationActionSchema.safeParse(body);
   if (!parsed.success) {
@@ -32,6 +33,16 @@ export async function PATCH(
       result.error === "NOT_FOUND" ? 404 : result.error === "FORBIDDEN" ? 403 : 409;
     return NextResponse.json({ error: messages[result.error] }, { status });
   }
+
+  await logAudit({
+    actor: session.user,
+    action: "suggestion.review",
+    entityType: "StoreEditSuggestion",
+    entityId: id,
+    entityLabel: `Vorschlag für ${slug}`,
+    metadata: { decision: parsed.data.action, storeSlug: slug },
+    request,
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -2,11 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { canDeletePhoto, deleteStorePhoto } from "@/lib/stores";
+import { canDeletePhoto, deleteStorePhoto, canModerate } from "@/lib/stores";
 import { deleteStorePhotoFileIfLocal } from "@/lib/uploads";
+import { logAudit } from "@/lib/audit";
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string; photoId: string }> }
 ) {
   const session = await auth();
@@ -17,7 +18,7 @@ export async function DELETE(
   const { slug, photoId } = await params;
   const store = await prisma.store.findUnique({
     where: { slug },
-    select: { id: true, ownerUserId: true, createdById: true },
+    select: { id: true, name: true, ownerUserId: true, createdById: true },
   });
   if (!store) {
     return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
@@ -37,6 +38,16 @@ export async function DELETE(
 
   await deleteStorePhoto(photo.id);
   await deleteStorePhotoFileIfLocal(photo.url).catch(() => {});
+
+  await logAudit({
+    actor: session.user,
+    action: "photo.delete",
+    entityType: "StorePhoto",
+    entityId: photo.id,
+    entityLabel: `Foto von ${store.name}`,
+    metadata: { storeSlug: slug, byModerator: canModerate(session.user) },
+    request,
+  });
 
   return NextResponse.json({ success: true });
 }

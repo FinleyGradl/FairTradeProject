@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { reportStorePhoto, dismissPhotoReports, canModerate } from "@/lib/stores";
+import { logAudit } from "@/lib/audit";
 
 // Any signed-in user can report a gallery photo once. Reports accumulate
 // silently — nothing is hidden automatically. Once a photo collects
@@ -40,7 +41,7 @@ export async function POST(
 // stays live, the queue entry goes away, and fresh reports can still
 // accumulate again later.
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ photoId: string }> }
 ) {
   const session = await auth();
@@ -53,6 +54,15 @@ export async function DELETE(
   if (!ok) {
     return NextResponse.json({ error: "Foto nicht gefunden." }, { status: 404 });
   }
+
+  await logAudit({
+    actor: session!.user,
+    action: "photo.report_dismiss",
+    entityType: "StorePhoto",
+    entityId: photoId,
+    entityLabel: `Foto ${photoId}`,
+    request,
+  });
 
   return NextResponse.json({ success: true });
 }

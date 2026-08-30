@@ -26,6 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: profile.email,
           avatarUrl: profile.picture,
           role: "user" as const,
+          isSuperuser: false,
           emailVerified: profile.email_verified ? new Date() : null,
         };
       },
@@ -58,6 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           avatarUrl: user.avatarUrl,
           role: user.role,
+          isSuperuser: user.isSuperuser,
         };
       },
     }),
@@ -69,6 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string;
         token.role = (user as { role?: string }).role ?? "user";
         token.avatarUrl = (user as { avatarUrl?: string | null }).avatarUrl ?? null;
+        token.isSuperuser = (user as { isSuperuser?: boolean }).isSuperuser ?? false;
       }
 
       // Client called `update()` (e.g. after an avatar upload/removal) —
@@ -85,6 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.avatarUrl = token.avatarUrl as string | null;
+        session.user.isSuperuser = Boolean(token.isSuperuser);
       }
       return session;
     },

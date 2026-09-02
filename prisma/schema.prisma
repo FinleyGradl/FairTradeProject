@@ -53,6 +53,16 @@ enum EditSuggestionStatus {
   rejected
 }
 
+// Product suggestions can propose a brand-new product ("create"), a change
+// to an existing one ("edit"), or its removal ("delete") — unlike stores,
+// which are always created directly, products can be *proposed* by anyone,
+// see lib/products.ts.
+enum ProductSuggestionType {
+  create
+  edit
+  delete
+}
+
 enum SponsorshipTier {
   basic
   plus
@@ -98,6 +108,7 @@ model User {
   storesCreated Store[]      @relation("StoreCreator")
   storesOwned   Store[]      @relation("StoreOwner")
   reviews       Review[]
+  productReviews ProductReview[]
   savedStores   SavedStore[]
   savedProducts SavedProduct[]
   claims        StoreClaim[]
@@ -106,6 +117,10 @@ model User {
   editSuggestions       StoreEditSuggestion[]     @relation("SuggestionAuthor")
   editSuggestionsReviewed StoreEditSuggestion[]   @relation("SuggestionReviewer")
   editSuggestionVotes   EditSuggestionVote[]
+  productSuggestions         ProductSuggestion[]     @relation("ProductSuggestionAuthor")
+  productSuggestionsReviewed ProductSuggestion[]     @relation("ProductSuggestionReviewer")
+  productSuggestionVotes     ProductSuggestionVote[]
+  productReviewReports       ProductReviewReport[]
   sponsorships  SponsorshipSubscription[]
   promoCodesCreated PromoCode[]
   photosUploaded    StorePhoto[]   @relation("PhotoUploader")
@@ -225,6 +240,7 @@ model Store {
   photos    StorePhoto[]
   attestations StoreAttestation[]
   editSuggestions StoreEditSuggestion[]
+  productSuggestions ProductSuggestion[]
   sponsorships SponsorshipSubscription[]
   pageViews    PageView[]
   searchImpressions SearchImpression[]
@@ -441,11 +457,104 @@ model Product {
   imageUrl    String?
   inStock     Boolean  @default(true)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  store     Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  savedBy   SavedProduct[]
+  store       Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  savedBy     SavedProduct[]
+  reviews     ProductReview[]
+  suggestions ProductSuggestion[]
 
   @@unique([storeId, slug])
+}
+
+// Product-level rating — separate from a store's own Review, but factored
+// into the store's overall avgRating alongside it (see
+// computeCombinedAvgRating() in lib/stores.ts): every published product
+// review is pooled together with the store's own reviews for the
+// store-wide average, while a product's *own* page shows only its own
+// reviews. One review per user per product, same upsert-on-resubmit shape
+// as Review.
+model ProductReview {
+  id           String       @id @default(cuid())
+  productId    String
+  userId       String
+  rating       Int
+  title        String?
+  body         String
+  ownerReply   String?
+  ownerReplyAt DateTime?
+  status       ReviewStatus @default(published)
+  createdAt    DateTime     @default(now())
+
+  product Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports ProductReviewReport[]
+
+  @@unique([productId, userId])
+}
+
+// Mirrors ReviewReport — see PRODUCT_REVIEW_REPORT_THRESHOLD in
+// lib/constants.ts.
+model ProductReviewReport {
+  id              String   @id @default(cuid())
+  productReviewId String
+  userId          String
+  reason          String?
+  createdAt       DateTime @default(now())
+
+  productReview ProductReview @relation(fields: [productReviewId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productReviewId, userId])
+  @@index([productReviewId])
+}
+
+// --- Community-suggested products -------------------------------------------
+// Products can always be created/edited/deleted directly by whoever can
+// edit the store (see canEditStore()). Anyone else proposes a change
+// instead — same managed/unmanaged split as StoreEditSuggestion:
+//   - Managed store:   only the owner (or an admin/moderator) reviews it.
+//   - Unmanaged store: opened to community confirm/dispute votes AND the
+//                       admin moderation queue, whichever resolves first.
+// `productId` is null for a "create" suggestion (there's no product yet);
+// `changes` holds the proposed field values as JSON, same shape as a real
+// product's editable fields.
+model ProductSuggestion {
+  id                String                @id @default(cuid())
+  storeId           String
+  productId         String?
+  type              ProductSuggestionType @default(edit)
+  suggestedByUserId String
+  changes           String
+  note              String?
+  status            EditSuggestionStatus  @default(pending)
+  confirmCount      Int                   @default(0)
+  disputeCount      Int                   @default(0)
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  store       Store                   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product     Product?                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  suggestedBy User                    @relation("ProductSuggestionAuthor", fields: [suggestedByUserId], references: [id], onDelete: Cascade)
+  reviewedBy  User?                   @relation("ProductSuggestionReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  votes       ProductSuggestionVote[]
+
+  @@index([storeId, status])
+}
+
+model ProductSuggestionVote {
+  id           String          @id @default(cuid())
+  suggestionId String
+  userId       String
+  vote         AttestationVote
+  createdAt    DateTime        @default(now())
+
+  suggestion ProductSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([suggestionId, userId])
 }
 
 model Review {

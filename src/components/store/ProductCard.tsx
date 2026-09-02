@@ -1,9 +1,11 @@
 "use client";
+// path: src/components/store/ProductCard.tsx
 
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RatingStars } from "@/components/store/RatingStars";
 
 interface ProductCardProps {
   product: {
@@ -16,13 +18,15 @@ interface ProductCardProps {
     category?: string | null;
     imageUrl?: string | null;
     inStock: boolean;
+    avgRating?: number | null;
+    reviewCount?: number;
     store?: { slug: string; name: string; city: string };
   };
 }
 
 export function ProductCard({ product }: ProductCardProps) {
   const href = product.store
-    ? `/stores/${product.store.slug}#product-${product.slug}`
+    ? `/stores/${product.store.slug}/products/${product.slug}`
     : "#";
 
   return (
@@ -52,6 +56,15 @@ export function ProductCard({ product }: ProductCardProps) {
           <h4 className="font-medium text-earth line-clamp-1">{product.name}</h4>
           {product.store && (
             <p className="text-xs text-earth/60">{product.store.name}</p>
+          )}
+          {product.avgRating != null && (
+            <RatingStars
+              rating={product.avgRating}
+              size="sm"
+              showValue
+              reviewCount={product.reviewCount}
+              className="mt-1"
+            />
           )}
           {product.price != null && (
             <p className="mt-1 font-semibold text-sage">

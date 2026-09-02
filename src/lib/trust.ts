@@ -21,6 +21,10 @@ export const TRUST_SCORE_DELTAS = {
   editSuggestionApplied: 2,
   /** An edit suggestion this user filed gets rejected. */
   editSuggestionRejected: -2,
+  /** A product suggestion this user filed gets approved/applied. */
+  productSuggestionApplied: 2,
+  /** A product suggestion this user filed gets rejected. */
+  productSuggestionRejected: -2,
 } as const;
 
 /**

@@ -14,6 +14,10 @@ export const PHOTO_REPORT_THRESHOLD = 5;
 // admins/moderators the option to.
 export const REVIEW_REPORT_THRESHOLD = 5;
 
+// Same idea as REVIEW_REPORT_THRESHOLD, for per-product reviews (see
+// listReportedProductReviews() in lib/product-reviews.ts).
+export const PRODUCT_REVIEW_REPORT_THRESHOLD = 5;
+
 export const FAIR_BADGE_LABELS: Record<string, string> = {
   fairtrade: "Fairtrade",
   wfto: "WFTO",

@@ -20,12 +20,15 @@ export async function GET() {
     return NextResponse.json({ error: "Nicht erlaubt." }, { status: 403 });
   }
 
-  const [flaggedStores, reportedPhotos, pendingClaims] = await Promise.all([
-    prisma.store.count({ where: { status: "pending" } }),
-    prisma.storePhoto.count({ where: { reports: { some: {} } } }),
-    prisma.storeClaim.count({ where: { status: "pending" } }),
-  ]);
+  const [flaggedStores, reportedPhotos, pendingClaims, communityProductSuggestions, reportedProductReviews] =
+    await Promise.all([
+      prisma.store.count({ where: { status: "pending" } }),
+      prisma.storePhoto.count({ where: { reports: { some: {} } } }),
+      prisma.storeClaim.count({ where: { status: "pending" } }),
+      prisma.productSuggestion.count({ where: { status: "pending", store: { ownerUserId: null } } }),
+      prisma.productReview.count({ where: { reports: { some: {} } } }),
+    ]);
 
-  const count = flaggedStores + reportedPhotos + pendingClaims;
+  const count = flaggedStores + reportedPhotos + pendingClaims + communityProductSuggestions + reportedProductReviews;
   return NextResponse.json({ count });
 }

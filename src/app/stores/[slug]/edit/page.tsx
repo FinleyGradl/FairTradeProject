@@ -6,8 +6,15 @@ import { ShieldAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { getStoreForEdit, canEditStore, canDeleteStore, canModerate } from "@/lib/stores";
 import { listPendingSuggestionsForStore, parseSuggestionChanges } from "@/lib/edit-suggestions";
+import {
+  listProductsForStore,
+  listPendingProductSuggestionsForStore,
+  parseProductSuggestionChanges,
+} from "@/lib/products";
 import { StoreForm, type StoreFormValues } from "@/components/store/StoreForm";
 import { SuggestionReviewQueue } from "@/components/store/SuggestionReviewQueue";
+import { ProductManagePanel } from "@/components/store/ProductManagePanel";
+import { ProductSuggestionReviewQueue } from "@/components/store/ProductSuggestionReviewQueue";
 import { TransferStoreCard } from "@/components/store/TransferStoreCard";
 import { DeleteStoreCard } from "@/components/store/DeleteStoreCard";
 import { Button } from "@/components/ui/button";
@@ -98,6 +105,8 @@ export default async function EditStorePage({ params }: PageProps) {
     })),
   };
   const pendingSuggestions = await listPendingSuggestionsForStore(store.id);
+  const products = await listProductsForStore(store.id);
+  const pendingProductSuggestions = await listPendingProductSuggestionsForStore(store.id);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
@@ -133,6 +142,27 @@ export default async function EditStorePage({ params }: PageProps) {
       <div className="mt-8">
         <StoreForm mode="edit" initialValues={initialValues} storeSlug={slug} />
       </div>
+
+      <div id="produkte" className="mt-8 scroll-mt-4">
+        <ProductManagePanel storeSlug={slug} products={products} />
+      </div>
+
+      {pendingProductSuggestions.length > 0 && (
+        <div className="mt-8">
+          <ProductSuggestionReviewQueue
+            storeSlug={slug}
+            suggestions={pendingProductSuggestions.map((s) => ({
+              id: s.id,
+              type: s.type,
+              changes: parseProductSuggestionChanges(s.changes),
+              note: s.note,
+              createdAt: s.createdAt.toISOString(),
+              suggestedBy: s.suggestedBy,
+              product: s.product,
+            }))}
+          />
+        </div>
+      )}
 
       {store.ownerUserId === session.user.id && (
         <div className="mt-8">

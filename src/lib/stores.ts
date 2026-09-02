@@ -51,7 +51,7 @@ async function getFirstPhotoUrls(storeIds: string[]): Promise<Map<string, string
 
 export type StoreWithRelations = Store & {
   hours: StoreHours[];
-  products: Product[];
+  products: (Product & { avgRating: number | null; reviewCount: number })[];
   reviews: Review[];
   _count?: { reviews: number };
 };
@@ -66,23 +66,46 @@ export type StoreListItem = Store & {
   firstPhotoUrl?: string | null;
 };
 
-function computeAvgRating(reviews: Review[]): number | null {
+function computeAvgRating(reviews: { rating: number; status: string }[]): number | null {
   const published = reviews.filter((r) => r.status === "published");
   if (published.length === 0) return null;
   const sum = published.reduce((acc, r) => acc + r.rating, 0);
   return Math.round((sum / published.length) * 10) / 10;
 }
 
+/**
+ * A store's overall rating pools its own Reviews together with every
+ * published ProductReview across all of its products (per Moritz: product
+ * ratings "werden im Gesamtrating mit dem vom Geschäft verrechnet") — a
+ * simple combined average across every individual rating, store- and
+ * product-level alike. A product's *own* page shows only its own reviews
+ * (see computeProductAvgRating() in lib/product-reviews.ts) — this
+ * pooling only applies to the store-wide number.
+ */
+function computeCombinedAvgRating(
+  storeReviews: { rating: number; status: string }[],
+  productReviews: { rating: number; status: string }[]
+): number | null {
+  return computeAvgRating([...storeReviews, ...productReviews]);
+}
+
 function enrichStore(
-  store: Store & { hours: StoreHours[]; reviews: Review[] },
+  store: Store & {
+    hours: StoreHours[];
+    reviews: Review[];
+    products?: { reviews: { rating: number; status: string }[] }[];
+  },
   distanceM?: number,
   sponsorTier?: SponsorshipTierId | null,
   firstPhotoUrl?: string | null
 ): StoreListItem {
+  const productReviews = (store.products ?? []).flatMap((p) => p.reviews);
   return {
     ...store,
-    avgRating: computeAvgRating(store.reviews),
-    reviewCount: store.reviews.filter((r) => r.status === "published").length,
+    avgRating: computeCombinedAvgRating(store.reviews, productReviews),
+    reviewCount:
+      store.reviews.filter((r) => r.status === "published").length +
+      productReviews.filter((r) => r.status === "published").length,
     distanceM,
     sponsorTier: sponsorTier ?? null,
     firstPhotoUrl: firstPhotoUrl ?? null,
@@ -152,6 +175,7 @@ export async function getStores(params: {
     include: {
       hours: true,
       reviews: { where: { status: "published" } },
+      products: { select: { reviews: { where: { status: "published" }, select: { rating: true, status: true } } } },
     },
     orderBy: { name: "asc" },
   });
@@ -227,7 +251,10 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
     where: { slug },
     include: {
       hours: { orderBy: { dayOfWeek: "asc" } },
-      products: { orderBy: { name: "asc" } },
+      products: {
+        orderBy: { name: "asc" },
+        include: { reviews: { where: { status: "published" }, select: { rating: true, status: true } } },
+      },
       reviews: {
         where: { status: "published" },
         orderBy: { createdAt: "desc" },
@@ -291,6 +318,8 @@ export async function getStoreBySlug(slug: string, viewerId?: string) {
       category: p.category,
       imageUrl: p.imageUrl,
       inStock: p.inStock,
+      avgRating: computeAvgRating(p.reviews),
+      reviewCount: p.reviews.filter((r) => r.status === "published").length,
     })),
     reviews: store.reviews.map((r) => ({
       id: r.id,
@@ -493,36 +522,58 @@ export async function searchProducts(params: {
   q?: string;
   category?: string;
   storeId?: string;
+  lat?: number;
+  lng?: number;
+  radius?: number;
   page?: number;
   limit?: number;
 }) {
-  const { q, category, storeId, page = 1, limit = 20 } = params;
+  const { q, category, storeId, lat, lng, radius = 15, page = 1, limit = 20 } = params;
 
-  const where: Prisma.ProductWhereInput = {};
+  const where: Prisma.ProductWhereInput = { store: { status: "active" } };
   if (q) {
+    // Also matches the store's name/city, so e.g. "Bio-Kaffee Nürnberg"
+    // finds products of stores located/named in Nürnberg, not just
+    // products whose own name/description happens to say "Nürnberg".
     where.OR = [
       { name: { contains: q } },
       { description: { contains: q } },
+      { store: { is: { name: { contains: q } } } },
+      { store: { is: { city: { contains: q } } } },
     ];
   }
   if (category) where.category = { contains: category };
   if (storeId) where.storeId = storeId;
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        store: { select: { slug: true, name: true, city: true } },
-      },
-      orderBy: { name: "asc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.product.count({ where }),
-  ]);
+  // Radius filtering needs the store's coordinates, which aren't a plain
+  // column we can filter with in SQL here (no PostGIS) — same approach as
+  // getStores(): fetch the (already store/category/q-filtered) candidates,
+  // then filter/sort by haversine distance in JS. Products are a small
+  // table for a local directory, so this stays cheap.
+  const candidates = await prisma.product.findMany({
+    where,
+    include: {
+      store: { select: { slug: true, name: true, city: true, latitude: true, longitude: true } },
+      reviews: { where: { status: "published" }, select: { rating: true, status: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  let filtered = candidates;
+  if (lat != null && lng != null) {
+    filtered = filterByRadius(
+      candidates.map((p) => ({ ...p, latitude: p.store.latitude, longitude: p.store.longitude })),
+      lat,
+      lng,
+      radius
+    );
+  }
+
+  const total = filtered.length;
+  const paginated = filtered.slice((page - 1) * limit, (page - 1) * limit + limit);
 
   return {
-    products: products.map((p) => ({
+    products: paginated.map((p) => ({
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -532,6 +583,8 @@ export async function searchProducts(params: {
       category: p.category,
       imageUrl: p.imageUrl,
       inStock: p.inStock,
+      avgRating: computeAvgRating(p.reviews),
+      reviewCount: p.reviews.filter((r) => r.status === "published").length,
       store: p.store,
     })),
     pagination: { page, limit, total, pages: Math.ceil(total / limit) },
@@ -547,6 +600,7 @@ export async function getFeaturedStores(limit = 6) {
     include: {
       hours: true,
       reviews: { where: { status: "published" } },
+      products: { select: { reviews: { where: { status: "published" }, select: { rating: true, status: true } } } },
     },
     take: Math.max(limit * 4, 24),
     orderBy: { createdAt: "desc" },

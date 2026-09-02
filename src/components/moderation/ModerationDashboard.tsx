@@ -2,13 +2,15 @@
 // path: src/components/moderation/ModerationDashboard.tsx
 
 import { useState } from "react";
-import { Store, Camera, MessageSquareWarning, UserCheck, PenLine } from "lucide-react";
+import { Store, Camera, MessageSquareWarning, UserCheck, PenLine, Package, Star } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { FlaggedStoresQueue } from "@/components/moderation/FlaggedStoresQueue";
 import { PendingClaimsQueue } from "@/components/moderation/PendingClaimsQueue";
 import { ReportedPhotosQueue } from "@/components/moderation/ReportedPhotosQueue";
 import { ReportedReviewsQueue } from "@/components/moderation/ReportedReviewsQueue";
 import { SuggestedEditsQueue } from "@/components/moderation/SuggestedEditsQueue";
+import { SuggestedProductsQueue } from "@/components/moderation/SuggestedProductsQueue";
+import { ReportedProductReviewsQueue } from "@/components/moderation/ReportedProductReviewsQueue";
 import type { ComponentProps } from "react";
 
 type Props = {
@@ -17,6 +19,8 @@ type Props = {
   reportedReviews: ComponentProps<typeof ReportedReviewsQueue>["reviews"];
   pendingClaims: ComponentProps<typeof PendingClaimsQueue>["claims"];
   suggestedEdits: ComponentProps<typeof SuggestedEditsQueue>["suggestions"];
+  suggestedProducts: ComponentProps<typeof SuggestedProductsQueue>["suggestions"];
+  reportedProductReviews: ComponentProps<typeof ReportedProductReviewsQueue>["reviews"];
 };
 
 /** Tabbed moderation dashboard — each tab carries its own open-item count
@@ -28,6 +32,8 @@ export function ModerationDashboard({
   reportedReviews,
   pendingClaims,
   suggestedEdits,
+  suggestedProducts,
+  reportedProductReviews,
 }: Props) {
   const tabs = [
     { id: "stores", label: "Läden", icon: Store, count: flaggedStores.length },
@@ -35,6 +41,8 @@ export function ModerationDashboard({
     { id: "reviews", label: "Bewertungen", icon: MessageSquareWarning, count: reportedReviews.length },
     { id: "claims", label: "Beanspruchungen", icon: UserCheck, count: pendingClaims.length },
     { id: "suggestions", label: "Änderungsvorschläge", icon: PenLine, count: suggestedEdits.length },
+    { id: "products", label: "Produktvorschläge", icon: Package, count: suggestedProducts.length },
+    { id: "productReviews", label: "Produktbewertungen", icon: Star, count: reportedProductReviews.length },
   ] as const;
 
   const [active, setActive] = useState<(typeof tabs)[number]["id"]>(
@@ -64,6 +72,8 @@ export function ModerationDashboard({
         {active === "reviews" && <ReportedReviewsQueue reviews={reportedReviews} />}
         {active === "claims" && <PendingClaimsQueue claims={pendingClaims} />}
         {active === "suggestions" && <SuggestedEditsQueue suggestions={suggestedEdits} />}
+        {active === "products" && <SuggestedProductsQueue suggestions={suggestedProducts} />}
+        {active === "productReviews" && <ReportedProductReviewsQueue reviews={reportedProductReviews} />}
       </div>
     </div>
   );

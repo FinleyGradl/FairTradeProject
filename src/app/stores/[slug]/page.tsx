@@ -7,6 +7,7 @@ import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone 
 import { auth } from "@/auth";
 import { getStoreBySlug, canEditStore, isStoreSaved } from "@/lib/stores";
 import { listPublicSuggestionsForStore } from "@/lib/edit-suggestions";
+import { listPublicProductSuggestionsForStore } from "@/lib/products";
 import { canManageSponsorship } from "@/lib/sponsorship";
 import { RatingStars } from "@/components/store/RatingStars";
 import { FairBadges } from "@/components/store/FairBadges";
@@ -17,6 +18,8 @@ import { StoreHeroGallery } from "@/components/store/StoreHeroGallery";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { SuggestionVoteWidget } from "@/components/store/SuggestionVoteWidget";
+import { ProductSuggestionVoteWidget } from "@/components/store/ProductSuggestionVoteWidget";
+import { ProductSuggestForm } from "@/components/store/ProductSuggestForm";
 import { ReviewForm } from "@/components/store/ReviewForm";
 import { ReviewsList } from "@/components/store/ReviewsList";
 import { DistanceFromYou } from "@/components/store/DistanceFromYou";
@@ -81,6 +84,9 @@ export default async function StoreDetailPage({ params }: PageProps) {
   const communitySuggestions = store.ownerUserId
     ? []
     : await listPublicSuggestionsForStore(store.id, session?.user?.id);
+  const communityProductSuggestions = store.ownerUserId
+    ? []
+    : await listPublicProductSuggestionsForStore(store.id, session?.user?.id);
   // Only the current owner (or the creator, while the store is still
   // unclaimed) counts as "own store" here — once someone else has claimed
   // it, the original creator can review/attest like anyone else.
@@ -258,21 +264,43 @@ export default async function StoreDetailPage({ params }: PageProps) {
               <p className="mt-2 text-earth/80 leading-relaxed">{store.description}</p>
             </section>
 
-            {store.products.length > 0 && (
+            {(store.products.length > 0 || !canEdit) && (
               <section>
-                <h2 className="mb-4 text-xl font-semibold text-earth">Products</h2>
-                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
-                  {store.products.map((product) => (
-                    <div key={product.id} id={`product-${product.slug}`}>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-xl font-semibold text-earth">Produkte</h2>
+                  {!canEdit && (
+                    <ProductSuggestForm
+                      storeSlug={store.slug}
+                      isSignedIn={isSignedIn}
+                      existingProducts={store.products.map((p) => ({ id: p.id, name: p.name }))}
+                    />
+                  )}
+                </div>
+                {store.products.length > 0 ? (
+                  <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+                    {store.products.map((product) => (
                       <ProductCard
+                        key={product.id}
                         product={{
                           ...product,
                           store: { slug: store.slug, name: store.name, city: store.city },
                         }}
                       />
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-earth/60">Noch keine Produkte gelistet.</p>
+                )}
+
+                {!store.ownerUserId && communityProductSuggestions.length > 0 && (
+                  <div className="mt-4">
+                    <ProductSuggestionVoteWidget
+                      storeSlug={store.slug}
+                      suggestions={communityProductSuggestions}
+                      isSignedIn={isSignedIn}
+                    />
+                  </div>
+                )}
               </section>
             )}
 

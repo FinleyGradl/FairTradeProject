@@ -10,6 +10,8 @@ import {
   canModerate,
 } from "@/lib/stores";
 import { listCommunitySuggestions, parseSuggestionChanges } from "@/lib/edit-suggestions";
+import { listCommunityProductSuggestions, parseProductSuggestionChanges } from "@/lib/products";
+import { listReportedProductReviews } from "@/lib/product-reviews";
 import { parseJsonArray } from "@/lib/utils";
 import { ModerationDashboard } from "@/components/moderation/ModerationDashboard";
 
@@ -24,14 +26,23 @@ export default async function ModerationPage() {
     notFound();
   }
 
-  const [flaggedStores, pendingClaims, reportedPhotos, reportedReviews, suggestedEdits] =
-    await Promise.all([
-      listFlaggedStores(),
-      listPendingClaims(),
-      listReportedPhotos(),
-      listReportedReviews(),
-      listCommunitySuggestions(),
-    ]);
+  const [
+    flaggedStores,
+    pendingClaims,
+    reportedPhotos,
+    reportedReviews,
+    suggestedEdits,
+    suggestedProducts,
+    reportedProductReviews,
+  ] = await Promise.all([
+    listFlaggedStores(),
+    listPendingClaims(),
+    listReportedPhotos(),
+    listReportedReviews(),
+    listCommunitySuggestions(),
+    listCommunityProductSuggestions(),
+    listReportedProductReviews(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -96,6 +107,32 @@ export default async function ModerationPage() {
           disputeCount: s.disputeCount,
           store: s.store,
           suggestedBy: s.suggestedBy,
+        }))}
+        suggestedProducts={suggestedProducts.map((s) => ({
+          id: s.id,
+          type: s.type,
+          changes: parseProductSuggestionChanges(s.changes),
+          note: s.note,
+          createdAt: s.createdAt.toISOString(),
+          confirmCount: s.confirmCount,
+          disputeCount: s.disputeCount,
+          store: s.store,
+          suggestedBy: s.suggestedBy,
+          product: s.product,
+        }))}
+        reportedProductReviews={reportedProductReviews.map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          title: r.title,
+          body: r.body,
+          reportCount: r._count.reports,
+          product: r.product,
+          user: r.user,
+          reports: r.reports.map((rep) => ({
+            userName: rep.user.name,
+            reason: rep.reason,
+            createdAt: rep.createdAt.toISOString(),
+          })),
         }))}
       />
     </div>

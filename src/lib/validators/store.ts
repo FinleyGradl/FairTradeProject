@@ -1,6 +1,23 @@
+// src/lib/validators/store.ts
 import { z } from "zod";
 
 export const fairBadgeEnum = z.enum(["fairtrade", "wfto", "bcorp", "organic"]);
+
+export const socialPlatformEnum = z.enum([
+  "instagram",
+  "facebook",
+  "tiktok",
+  "youtube",
+  "twitter",
+  "linkedin",
+  "pinterest",
+  "other",
+]);
+
+export const socialLinkSchema = z.object({
+  platform: socialPlatformEnum,
+  url: z.string().url("Ungültige URL"),
+});
 
 export const storeHourInputSchema = z
   .object({
@@ -25,6 +42,10 @@ export const storeBaseSchema = z.object({
   longitude: z.number().min(-180).max(180),
   phone: z.string().max(40).optional().or(z.literal("")),
   website: z.string().url().optional().or(z.literal("")),
+  // Up to 8 profiles (Instagram, Facebook, …) — see socialLinkSchema.
+  // Owner/admin-only, same as fairBadges/categories below: not part of
+  // the smaller "suggest an edit" field set.
+  socialLinks: z.array(socialLinkSchema).max(8).optional(),
   email: z.string().email().optional().or(z.literal("")),
   // Either a full external URL (someone pastes a link to a hosted photo)
   // or one of our own uploaded-file paths from POST /cover, which is a
@@ -120,6 +141,7 @@ export const storesQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
 });
 
+export type SocialLink = z.infer<typeof socialLinkSchema>;
 export type StoreCreateInput = z.infer<typeof storeCreateSchema>;
 export type StoreUpdateInput = z.infer<typeof storeUpdateSchema>;
 export type StoreClaimInput = z.infer<typeof storeClaimSchema>;

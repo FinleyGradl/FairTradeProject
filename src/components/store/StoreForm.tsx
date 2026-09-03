@@ -1,13 +1,15 @@
 "use client";
+// src/components/store/StoreForm.tsx
 
 import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/store/LocationPicker";
 import { CoverImageUploader } from "@/components/store/CoverImageUploader";
-import { CATEGORIES, FAIR_BADGE_LABELS } from "@/lib/constants";
+import { SocialLinkIcon } from "@/components/store/SocialLinkIcon";
+import { CATEGORIES, FAIR_BADGE_LABELS, SOCIAL_PLATFORMS, type SocialPlatform } from "@/lib/constants";
 import { getDayName } from "@/lib/hours";
 import { DEFAULT_CENTER } from "@/lib/geo";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,11 @@ export interface StoreHourFormRow {
   openTime: string;
   closeTime: string;
   isClosed: boolean;
+}
+
+export interface StoreSocialLinkFormRow {
+  platform: SocialPlatform;
+  url: string;
 }
 
 export interface StoreFormValues {
@@ -30,6 +37,7 @@ export interface StoreFormValues {
   longitude: number;
   phone: string;
   website: string;
+  socialLinks: StoreSocialLinkFormRow[];
   email: string;
   coverImage: string;
   fairBadges: string[];
@@ -55,6 +63,7 @@ export const EMPTY_STORE_FORM: StoreFormValues = {
   longitude: DEFAULT_CENTER.lng,
   phone: "",
   website: "",
+  socialLinks: [],
   email: "",
   coverImage: "",
   fairBadges: [],
@@ -95,6 +104,27 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
     }));
   }
 
+  function addSocialLink() {
+    setValues((v) => ({
+      ...v,
+      socialLinks: [...v.socialLinks, { platform: "instagram", url: "" }],
+    }));
+  }
+
+  function updateSocialLink(index: number, patch: Partial<StoreSocialLinkFormRow>) {
+    setValues((v) => ({
+      ...v,
+      socialLinks: v.socialLinks.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+    }));
+  }
+
+  function removeSocialLink(index: number) {
+    setValues((v) => ({
+      ...v,
+      socialLinks: v.socialLinks.filter((_, i) => i !== index),
+    }));
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -104,6 +134,11 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
     const payload = {
       ...values,
       website: values.website.trim(),
+      // Drop rows the person added but never filled in — an empty URL
+      // would just fail the url() validation on submit.
+      socialLinks: values.socialLinks
+        .map((s) => ({ platform: s.platform, url: s.url.trim() }))
+        .filter((s) => s.url !== ""),
       email: values.email.trim(),
       phone: values.phone.trim(),
       coverImage: values.coverImage.trim(),
@@ -292,6 +327,56 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
             <label className="mb-1 block text-sm font-medium text-earth">E-Mail</label>
             <Input value={values.email} onChange={(e) => update("email", e.target.value)} type="email" />
             {fieldError("email") && <p className="mt-1 text-xs text-red-600">{fieldError("email")}</p>}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-earth">Social Media</p>
+          <div className="space-y-2">
+            {values.socialLinks.map((link, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <SocialLinkIcon platform={link.platform} className="h-4 w-4 shrink-0 text-sage" />
+                <select
+                  value={link.platform}
+                  onChange={(e) => updateSocialLink(i, { platform: e.target.value as SocialPlatform })}
+                  className="rounded-lg border border-sage/20 px-2 py-2 text-sm text-earth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
+                >
+                  {SOCIAL_PLATFORMS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  value={link.url}
+                  onChange={(e) => updateSocialLink(i, { url: e.target.value })}
+                  type="url"
+                  placeholder="https://…"
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSocialLink(i)}
+                  className="shrink-0 rounded-lg p-2 text-earth/40 hover:bg-red-50 hover:text-red-600"
+                  aria-label="Profil entfernen"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {fieldError("socialLinks") && (
+              <p className="text-xs text-red-600">{fieldError("socialLinks")}</p>
+            )}
+            {values.socialLinks.length < 8 && (
+              <button
+                type="button"
+                onClick={addSocialLink}
+                className="inline-flex items-center gap-1 rounded-lg border border-dashed border-sage/40 px-3 py-1.5 text-xs font-medium text-sage hover:bg-sage-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Profil hinzufügen
+              </button>
+            )}
           </div>
         </div>
       </section>

@@ -10,6 +10,8 @@ import { listPublicSuggestionsForStore } from "@/lib/edit-suggestions";
 import { listPublicProductSuggestionsForStore } from "@/lib/products";
 import { canManageSponsorship } from "@/lib/sponsorship";
 import { RatingStars } from "@/components/store/RatingStars";
+import { SocialLinkIcon } from "@/components/store/SocialLinkIcon";
+import { SOCIAL_PLATFORM_LABELS } from "@/lib/constants";
 import { FairBadges } from "@/components/store/FairBadges";
 import { OpeningHoursTable } from "@/components/store/OpeningHoursTable";
 import { SaveButton, ShareButton } from "@/components/store/SaveShareButtons";
@@ -118,7 +120,12 @@ export default async function StoreDetailPage({ params }: PageProps) {
     description: store.description,
     ...(store.coverImage && { image: store.coverImage }),
     ...(store.phone && { telephone: store.phone }),
-    ...(store.website && { sameAs: store.website }),
+    ...((store.website || store.socialLinks.length > 0) && {
+      sameAs: [
+        ...(store.website ? [store.website] : []),
+        ...store.socialLinks.map((s) => s.url),
+      ],
+    }),
     address: {
       "@type": "PostalAddress",
       streetAddress: store.addressLine,
@@ -383,6 +390,19 @@ export default async function StoreDetailPage({ params }: PageProps) {
                     </a>
                   </li>
                 )}
+                {store.socialLinks.map((link, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <SocialLinkIcon platform={link.platform} className="h-4 w-4 text-sage" />
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sage hover:underline"
+                    >
+                      {SOCIAL_PLATFORM_LABELS[link.platform]}
+                    </a>
+                  </li>
+                ))}
               </ul>
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${store.latitude},${store.longitude}`}

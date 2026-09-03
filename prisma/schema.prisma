@@ -214,6 +214,10 @@ model Store {
   longitude    Float
   phone        String?
   website      String?
+  // JSON-serialized SocialLink[] (see lib/validators/store.ts), e.g.
+  // [{"platform":"instagram","url":"https://instagram.com/…"}] — same
+  // stringified-array pattern as fairBadges/categories below.
+  socialLinks  String      @default("[]")
   email        String?
   ownerUserId  String?
   status       StoreStatus @default(active)

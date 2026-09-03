@@ -13,7 +13,7 @@
 import { prisma } from "@/lib/db";
 import { updateStore, canEditStore, canModerate, adjustTrustScore } from "@/lib/stores";
 import { TRUST_SCORE_DELTAS, EDIT_SUGGESTION_THRESHOLDS } from "@/lib/trust";
-import type { StoreEditSuggestionInput } from "@/lib/validators/store";
+import type { StoreEditSuggestionInput, SocialLink } from "@/lib/validators/store";
 import type { HourChange, SuggestionChanges } from "@/lib/suggestion-diff";
 import type { Store, StoreHours, AttestationVote } from "../../prisma/generated/prisma/client";
 
@@ -235,6 +235,9 @@ async function applyChanges(
     coverImage: store.coverImage ?? "",
     fairBadges: JSON.parse(store.fairBadges) as ("fairtrade" | "wfto" | "bcorp" | "organic")[],
     categories: JSON.parse(store.categories) as string[],
+    // Suggestions never touch social links either — carry them forward
+    // for the same reason as fairBadges/categories/coverImage above.
+    socialLinks: JSON.parse(store.socialLinks) as SocialLink[],
     ...(changes.hours ? { hours: changes.hours } : {}),
   };
 

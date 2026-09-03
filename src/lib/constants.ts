@@ -25,6 +25,36 @@ export const FAIR_BADGE_LABELS: Record<string, string> = {
   organic: "Bio / Organic",
 };
 
+// --- Social media -----------------------------------------------------
+// Supported platforms for a store's social links (see socialLinkSchema in
+// lib/validators/store.ts). "other" is a free-form catch-all for anything
+// not explicitly listed (Mastodon, a blog, etc.) and renders with a
+// generic link icon instead of a brand icon — see SocialLinkIcon.
+export type SocialPlatform =
+  | "instagram"
+  | "facebook"
+  | "tiktok"
+  | "youtube"
+  | "twitter"
+  | "linkedin"
+  | "pinterest"
+  | "other";
+
+export const SOCIAL_PLATFORMS: { id: SocialPlatform; label: string }[] = [
+  { id: "instagram", label: "Instagram" },
+  { id: "facebook", label: "Facebook" },
+  { id: "tiktok", label: "TikTok" },
+  { id: "youtube", label: "YouTube" },
+  { id: "twitter", label: "X (Twitter)" },
+  { id: "linkedin", label: "LinkedIn" },
+  { id: "pinterest", label: "Pinterest" },
+  { id: "other", label: "Andere" },
+];
+
+export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = Object.fromEntries(
+  SOCIAL_PLATFORMS.map((p) => [p.id, p.label])
+) as Record<SocialPlatform, string>;
+
 export const CATEGORIES = [
   "Grocery",
   "Coffee & Tea",

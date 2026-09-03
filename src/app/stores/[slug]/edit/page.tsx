@@ -68,6 +68,7 @@ export default async function EditStorePage({ params }: PageProps) {
     longitude: store.longitude,
     phone: store.phone ?? "",
     website: store.website ?? "",
+    socialLinks: store.socialLinks,
     email: store.email ?? "",
     coverImage: store.coverImage ?? "",
     fairBadges: store.fairBadges,

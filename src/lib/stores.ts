@@ -13,7 +13,7 @@ import {
   REVIEW_REPORT_THRESHOLD,
   type SponsorshipTierId,
 } from "@/lib/constants";
-import type { StoreCreateInput, StoreUpdateInput } from "@/lib/validators/store";
+import type { StoreCreateInput, StoreUpdateInput, SocialLink } from "@/lib/validators/store";
 import type {
   Prisma,
   Store,
@@ -126,6 +126,7 @@ export function serializeStore(store: StoreListItem) {
     longitude: store.longitude,
     phone: store.phone,
     website: store.website,
+    socialLinks: parseJsonArray<SocialLink>(store.socialLinks),
     email: store.email,
     status: store.status,
     ownerUserId: store.ownerUserId,
@@ -683,6 +684,7 @@ export async function createStore(userId: string, input: StoreCreateInput) {
       longitude: input.longitude,
       phone: normalizeOptional(input.phone),
       website: normalizeOptional(input.website),
+      socialLinks: JSON.stringify(input.socialLinks ?? []),
       email: normalizeOptional(input.email),
       coverImage: normalizeOptional(input.coverImage),
       fairBadges: JSON.stringify(input.fairBadges ?? []),
@@ -798,6 +800,7 @@ export async function updateStore(
         longitude: input.longitude,
         phone: normalizeOptional(input.phone),
         website: normalizeOptional(input.website),
+        socialLinks: JSON.stringify(input.socialLinks ?? []),
         email: normalizeOptional(input.email),
         coverImage: normalizeOptional(input.coverImage),
         fairBadges: JSON.stringify(input.fairBadges ?? []),
@@ -846,6 +849,7 @@ export async function getStoreForEdit(slug: string) {
     ...store,
     fairBadges: parseJsonArray(store.fairBadges),
     categories: parseJsonArray(store.categories),
+    socialLinks: parseJsonArray<SocialLink>(store.socialLinks),
   };
 }
 

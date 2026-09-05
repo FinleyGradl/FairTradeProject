@@ -58,7 +58,7 @@ export default async function MyStoresPage() {
       {incomingTransfers.length > 0 && (
         <>
           <h2 className="mt-8 flex items-center gap-2 text-lg font-semibold text-earth">
-            <ArrowRightLeft className="h-5 w-5 text-sage" /> Übertragungsanfragen an dich
+            <ArrowRightLeft className="h-5 w-5 text-sage dark:text-sage-300" /> Übertragungsanfragen an dich
           </h2>
           <div className="mt-4">
             <IncomingTransfersList
@@ -86,10 +86,10 @@ export default async function MyStoresPage() {
           {stores.map((store) => (
             <div
               key={store.id}
-              className="flex items-center gap-3 rounded-xl border border-sage/10 bg-white p-4"
+              className="flex items-center gap-3 rounded-xl border border-sage/10 bg-surface p-4"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sage-100">
-                <StoreIcon className="h-5 w-5 text-sage" />
+                <StoreIcon className="h-5 w-5 text-sage dark:text-sage-300" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -112,7 +112,7 @@ export default async function MyStoresPage() {
                     </Badge>
                   )}
                   {store.pendingTransfer && (
-                    <Badge variant="outline" className="border-amber-400 text-amber-700">
+                    <Badge variant="outline" className="border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300">
                       Übertragung ausstehend an{" "}
                       {store.pendingTransfer.toUser.name ?? store.pendingTransfer.toUser.email}
                     </Badge>
@@ -160,13 +160,13 @@ export default async function MyStoresPage() {
       {claims.length > 0 && (
         <>
           <h2 className="mt-10 flex items-center gap-2 text-lg font-semibold text-earth">
-            <Clock className="h-5 w-5 text-sage" /> Meine Beanspruchungen
+            <Clock className="h-5 w-5 text-sage dark:text-sage-300" /> Meine Beanspruchungen
           </h2>
           <div className="mt-4 space-y-3">
             {claims.map((claim) => (
               <div
                 key={claim.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-sage/10 bg-white p-4"
+                className="flex items-center justify-between gap-3 rounded-xl border border-sage/10 bg-surface p-4"
               >
                 <Link href={`/stores/${claim.store.slug}`} className="font-medium text-earth hover:underline">
                   {claim.store.name}

@@ -120,7 +120,7 @@ export function ProductReviewForm({ productId, storeSlug, isSignedIn, existingRe
             type="button"
             variant="ghost"
             size="sm"
-            className="gap-1 text-earth/50 hover:text-red-600"
+            className="gap-1 text-earth/50 hover:text-red-600 hover:dark:text-red-400"
             onClick={handleDelete}
             disabled={deleting}
           >
@@ -133,7 +133,7 @@ export function ProductReviewForm({ productId, storeSlug, isSignedIn, existingRe
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-sage/10 bg-white p-4">
+    <div className="space-y-3 rounded-xl border border-sage/10 bg-surface p-4">
       <div>
         <p className="mb-1 text-sm font-medium text-earth">Deine Bewertung</p>
         <div className="flex gap-1">
@@ -150,7 +150,7 @@ export function ProductReviewForm({ productId, storeSlug, isSignedIn, existingRe
                 className={cn(
                   "h-6 w-6",
                   n <= (hoverRating || rating)
-                    ? "fill-amber-400 text-amber-400"
+                    ? "fill-amber-400 text-amber-400 dark:text-amber-300"
                     : "fill-none text-gray-300"
                 )}
               />
@@ -180,7 +180,7 @@ export function ProductReviewForm({ productId, storeSlug, isSignedIn, existingRe
           placeholder="Wie war das Produkt? Qualität, Preis-Leistung…"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={handleSubmit} disabled={loading}>
           {loading ? (
@@ -199,7 +199,7 @@ export function ProductReviewForm({ productId, storeSlug, isSignedIn, existingRe
             type="button"
             size="sm"
             variant="ghost"
-            className="ml-auto gap-1 text-earth/50 hover:text-red-600"
+            className="ml-auto gap-1 text-earth/50 hover:text-red-600 hover:dark:text-red-400"
             onClick={handleDelete}
             disabled={deleting}
           >

@@ -84,10 +84,10 @@ export function LocationSearch({ onLocation, className }: LocationSearchProps) {
         </Button>
       </div>
 
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
 
       {open && results.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full min-w-[16rem] overflow-auto rounded-lg border border-sage/20 bg-white text-sm shadow-lg">
+        <ul className="absolute z-10 mt-1 w-full min-w-[16rem] overflow-auto rounded-lg border border-sage/20 bg-surface text-sm shadow-lg">
           {results.map((r, i) => (
             <li key={i}>
               <button

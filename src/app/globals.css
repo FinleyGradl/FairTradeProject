@@ -4,9 +4,36 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 :root {
   --background: #faf7f2;
   --foreground: #5c4033;
+
+  /* Theme-aware design tokens, as "R G B" triplets so Tailwind's
+     opacity modifiers (bg-cream/60 etc.) keep working. See
+     tailwind.config.ts withOpacity(). Values below are the light theme. */
+  --color-cream: 250 247 242; /* #FAF7F2 */
+  --color-earth: 92 64 51; /* #5C4033 */
+  --color-surface: 255 255 255; /* #FFFFFF â€” card/panel background */
+  --color-sage-50: 243 248 244; /* #F3F8F4 */
+  --color-sage-100: 227 237 230; /* #E3EDE6 */
+}
+
+.dark {
+  --background: #121512;
+  --foreground: #ece3d8;
+
+  --color-cream: 18 21 18; /* dark page background */
+  --color-earth: 236 227 216; /* warm off-white text */
+  --color-surface: 27 32 28; /* card background â€” one step lighter than page bg */
+  --color-sage-50: 33 45 38; /* dark, muted tint for hover/active backgrounds */
+  --color-sage-100: 41 55 46;
 }
 
 body {
@@ -27,4 +54,31 @@ body {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+
+  /* Accessible skip link: hidden off-screen until keyboard-focused. */
+  .skip-link {
+    @apply absolute left-2 top-2 z-[100] -translate-y-20 rounded-md bg-sage px-4 py-2 text-sm font-medium text-white transition-transform focus:translate-y-0;
+  }
+}
+
+/* Respect the OS-level "reduce motion" preference across the whole app â€”
+   required for WCAG 2.3.3 (Animation from Interactions). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Fallback focus ring for any interactive element that doesn't already
+   define its own focus-visible styles (WCAG 2.4.7 Focus Visible). Most
+   of our components already set focus-visible:ring-* explicitly; this
+   is the safety net for the rest (plain links, third-party widgets). */
+:focus-visible {
+  outline: 2px solid theme("colors.sage.500");
+  outline-offset: 2px;
 }

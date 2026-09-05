@@ -106,7 +106,7 @@ export default async function KategoriePage({ params }: PageProps) {
 
       {/* Breadcrumb */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-earth/60" aria-label="Breadcrumb">
-        <Link href="/" className="hover:text-sage">Startseite</Link>
+        <Link href="/" className="hover:text-sage hover:dark:text-sage-300">Startseite</Link>
         <span>/</span>
         <span className="text-earth">{config.name}</span>
       </nav>

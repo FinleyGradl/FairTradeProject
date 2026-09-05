@@ -103,7 +103,7 @@ export default function StoreMapInner({
                 )}
                 <Link
                   href={`/stores/${store.slug}`}
-                  className="mt-1 inline-block text-sm text-sage underline"
+                  className="mt-1 inline-block text-sm text-sage dark:text-sage-300 underline"
                 >
                   View store →
                 </Link>

@@ -116,7 +116,7 @@ export default function ExplorePage() {
             >
               {loading ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-sage" />
+                  <Loader2 className="h-8 w-8 animate-spin text-sage dark:text-sage-300" />
                 </div>
               ) : stores.length === 0 ? (
                 <EmptyState />

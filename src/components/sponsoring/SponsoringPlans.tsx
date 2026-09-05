@@ -86,7 +86,7 @@ export function SponsoringPlans({
   return (
     <div>
       {sponsorship && sponsorship.status !== "canceled" && (
-        <Card className="mb-6 border-amber-200 bg-amber-50">
+        <Card className="mb-6 border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <p className="font-medium text-earth">
@@ -107,7 +107,7 @@ export function SponsoringPlans({
       )}
 
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
+        <p className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-400">{error}</p>
       )}
 
       {!hasActiveLike && (
@@ -133,7 +133,7 @@ export function SponsoringPlans({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {tier.label}
-                  {tierId === "top" && <Sparkles className="h-4 w-4 text-amber-500" />}
+                  {tierId === "top" && <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />}
                 </CardTitle>
                 <CardDescription>{tier.description}</CardDescription>
                 <p className="pt-2 text-2xl font-bold text-earth">
@@ -145,7 +145,7 @@ export function SponsoringPlans({
                 <ul className="mb-4 space-y-1.5 text-sm text-earth/80">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sage" /> {f}
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sage dark:text-sage-300" /> {f}
                     </li>
                   ))}
                 </ul>

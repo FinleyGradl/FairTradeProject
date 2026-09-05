@@ -47,7 +47,7 @@ export function SaveButton({ storeSlug, initialSaved, isLoggedIn, className }: S
       onClick={toggle}
       aria-label={saved ? "Von der Merkliste entfernen" : "Zur Merkliste hinzufügen"}
       title={saved ? "Von der Merkliste entfernen" : "Zur Merkliste hinzufügen"}
-      className={cn(saved && "border-red-300 text-red-500", className)}
+      className={cn(saved && "border-red-300 dark:border-red-700/40 text-red-500 dark:text-red-400", className)}
     >
       <Heart className={cn("h-4 w-4", saved && "fill-current")} />
     </Button>

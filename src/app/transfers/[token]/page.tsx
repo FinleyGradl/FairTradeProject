@@ -28,7 +28,7 @@ export default async function TransferPage({ params }: { params: Promise<{ token
   if (!transfer) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <ShieldAlert className="mx-auto h-10 w-10 text-amber-500" />
+        <ShieldAlert className="mx-auto h-10 w-10 text-amber-500 dark:text-amber-400" />
         <h1 className="mt-4 text-xl font-bold text-earth">Einladung nicht gefunden</h1>
         <p className="mt-2 text-earth/70">
           Dieser Link ist ungültig oder die Einladung existiert nicht mehr.
@@ -40,7 +40,7 @@ export default async function TransferPage({ params }: { params: Promise<{ token
   if (transfer.toUserId !== session.user.id) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <ShieldAlert className="mx-auto h-10 w-10 text-amber-500" />
+        <ShieldAlert className="mx-auto h-10 w-10 text-amber-500 dark:text-amber-400" />
         <h1 className="mt-4 text-xl font-bold text-earth">Nicht für dich bestimmt</h1>
         <p className="mt-2 text-earth/70">
           Diese Übertragungsanfrage ist an eine andere E-Mail-Adresse gerichtet. Melde dich mit
@@ -53,7 +53,7 @@ export default async function TransferPage({ params }: { params: Promise<{ token
   if (transfer.status !== "pending") {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <StoreIcon className="mx-auto h-10 w-10 text-sage" />
+        <StoreIcon className="mx-auto h-10 w-10 text-sage dark:text-sage-300" />
         <h1 className="mt-4 text-xl font-bold text-earth">{transfer.store.name}</h1>
         <p className="mt-2 text-earth/70">
           {STATUS_MESSAGE[transfer.status] ?? "Diese Einladung ist nicht mehr aktiv."}

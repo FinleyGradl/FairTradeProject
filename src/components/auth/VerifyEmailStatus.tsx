@@ -36,8 +36,8 @@ export function VerifyEmailStatus({ token }: { token: string | null }) {
 
   if (status === "checking") {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
-        <Loader2 className="mx-auto h-10 w-10 animate-spin text-sage" />
+      <div role="status" aria-live="polite" className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
+        <Loader2 className="mx-auto h-10 w-10 animate-spin text-sage dark:text-sage-300" aria-hidden="true" />
         <p className="mt-3 text-sm text-earth/70">E-Mail wird bestätigt…</p>
       </div>
     );
@@ -45,8 +45,8 @@ export function VerifyEmailStatus({ token }: { token: string | null }) {
 
   if (status === "success") {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-sage" />
+      <div role="status" aria-live="polite" className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
+        <CheckCircle2 className="mx-auto h-10 w-10 text-sage dark:text-sage-300" aria-hidden="true" />
         <h2 className="mt-3 font-semibold text-earth">E-Mail bestätigt!</h2>
         <p className="mt-1 text-sm text-earth/70">Du kannst dich jetzt anmelden.</p>
         <Link href="/login">
@@ -57,20 +57,24 @@ export function VerifyEmailStatus({ token }: { token: string | null }) {
   }
 
   return (
-    <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
-      <XCircle className="mx-auto h-10 w-10 text-red-500" />
+    <div role="alert" className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
+      <XCircle className="mx-auto h-10 w-10 text-red-500 dark:text-red-400" aria-hidden="true" />
       <h2 className="mt-3 font-semibold text-earth">Link ungültig oder abgelaufen</h2>
       <p className="mt-1 text-sm text-earth/70">
         Fordere einfach eine neue Bestätigungs-E-Mail an.
       </p>
 
       {resendSent ? (
-        <p className="mt-4 text-sm text-sage">
+        <p role="status" aria-live="polite" className="mt-4 text-sm text-sage dark:text-sage-300">
           Falls das Konto existiert, ist eine neue E-Mail unterwegs.
         </p>
       ) : (
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <label htmlFor="resend-email" className="sr-only">
+            E-Mail-Adresse
+          </label>
           <Input
+            id="resend-email"
             type="email"
             placeholder="deine@email.de"
             value={resendEmail}

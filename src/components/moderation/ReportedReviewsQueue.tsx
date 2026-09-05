@@ -52,7 +52,7 @@ export function ReportedReviewsQueue({ reviews }: { reviews: ReportedReview[] })
   return (
     <div className="space-y-4">
       {items.map((review) => (
-        <div key={review.id} className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+        <div key={review.id} className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-950/20 p-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <Link
@@ -65,22 +65,22 @@ export function ReportedReviewsQueue({ reviews }: { reviews: ReportedReview[] })
                 Verfasst von {review.user?.name ?? review.user?.email ?? "Unbekannt"}
               </p>
             </div>
-            <Badge variant="outline" className="border-amber-400 text-amber-700">
+            <Badge variant="outline" className="border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300">
               {review.reportCount} Meldungen
             </Badge>
           </div>
 
-          <div className="mt-3 rounded-lg border border-sage/10 bg-white p-3">
+          <div className="mt-3 rounded-lg border border-sage/10 bg-surface p-3">
             <RatingStars rating={review.rating} size="sm" />
             {review.title && <p className="mt-1 font-medium text-earth">{review.title}</p>}
             <p className="mt-1 text-sm text-earth/80">{review.body}</p>
           </div>
 
           {review.reports.length > 0 && (
-            <ul className="mt-3 space-y-1.5 border-t border-amber-200/60 pt-3">
+            <ul className="mt-3 space-y-1.5 border-t border-amber-200/60 dark:border-amber-800/40 pt-3">
               {review.reports.map((r, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-earth/80">
-                  <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                  <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                   <span>
                     <span className="font-medium">{r.userName ?? "Anonym"}:</span>{" "}
                     {r.reason || "Kein Grund angegeben"}

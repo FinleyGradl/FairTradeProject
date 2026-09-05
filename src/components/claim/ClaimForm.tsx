@@ -38,8 +38,8 @@ export function ClaimForm({ storeSlug }: { storeSlug: string }) {
 
   if (success) {
     return (
-      <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-sage/10 bg-white p-6 text-center">
-        <CheckCircle2 className="h-8 w-8 text-sage" />
+      <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-sage/10 bg-surface p-6 text-center">
+        <CheckCircle2 className="h-8 w-8 text-sage dark:text-sage-300" />
         <p className="font-medium text-earth">Anfrage eingereicht</p>
         <p className="text-sm text-earth/70">
           Wir prüfen deine Angaben und melden uns per E-Mail, sobald der Laden freigegeben ist.
@@ -49,7 +49,7 @@ export function ClaimForm({ storeSlug }: { storeSlug: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 space-y-4 rounded-xl border border-sage/10 bg-white p-6">
+    <form onSubmit={handleSubmit} className="mt-8 space-y-4 rounded-xl border border-sage/10 bg-surface p-6">
       <div>
         <label className="text-sm font-medium text-earth">Geschäftliche E-Mail</label>
         <Input
@@ -72,7 +72,7 @@ export function ClaimForm({ storeSlug }: { storeSlug: string }) {
           className="mt-1 w-full rounded-lg border border-sage/20 px-3 py-2 text-sm text-earth placeholder:text-earth/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Anfrage einreichen"}
       </Button>

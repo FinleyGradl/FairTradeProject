@@ -77,16 +77,16 @@ export function TransferStoreCard({ storeSlug }: { storeSlug: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-5">
-        <Loader2 className="h-4 w-4 animate-spin text-sage" />
+      <div className="rounded-xl border border-sage/10 bg-surface p-5">
+        <Loader2 className="h-4 w-4 animate-spin text-sage dark:text-sage-300" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-sage/10 bg-white p-5">
+    <div className="rounded-xl border border-sage/10 bg-surface p-5">
       <h2 className="flex items-center gap-2 text-base font-semibold text-earth">
-        <ArrowRightLeft className="h-4 w-4 text-sage" />
+        <ArrowRightLeft className="h-4 w-4 text-sage dark:text-sage-300" />
         Laden übertragen
       </h2>
       <p className="mt-1 text-sm text-earth/60">
@@ -94,8 +94,8 @@ export function TransferStoreCard({ storeSlug }: { storeSlug: string }) {
         Nachfolgerwechsel. Die Übertragung wird erst wirksam, wenn die Person sie annimmt.
       </p>
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      {success && <p className="mt-3 text-sm text-sage-700">{success}</p>}
+      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {success && <p className="mt-3 text-sm text-sage-700 dark:text-sage-300">{success}</p>}
 
       {pending ? (
         <div className="mt-4 rounded-lg bg-cream p-4">

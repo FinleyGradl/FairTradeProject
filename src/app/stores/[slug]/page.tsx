@@ -352,31 +352,31 @@ export default async function StoreDetailPage({ params }: PageProps) {
           </div>
 
           <aside className="space-y-6">
-            <section className="rounded-xl border border-sage/10 bg-white p-4">
+            <section className="rounded-xl border border-sage/10 bg-surface p-4">
               <h3 className="font-semibold text-earth">Contact</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li className="flex items-start gap-2 text-earth/80">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-sage dark:text-sage-300" />
                   <span>
                     {store.addressLine}, {store.postalCode} {store.city}
                   </span>
                 </li>
                 {store.phone && (
                   <li className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-sage" />
-                    <a href={`tel:${store.phone}`} className="text-sage hover:underline">
+                    <Phone className="h-4 w-4 text-sage dark:text-sage-300" />
+                    <a href={`tel:${store.phone}`} className="text-sage dark:text-sage-300 hover:underline">
                       {store.phone}
                     </a>
                   </li>
                 )}
                 {store.website && (
                   <li className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-sage" />
+                    <Globe className="h-4 w-4 text-sage dark:text-sage-300" />
                     <a
                       href={store.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sage hover:underline"
+                      className="text-sage dark:text-sage-300 hover:underline"
                     >
                       Website
                     </a>
@@ -384,20 +384,20 @@ export default async function StoreDetailPage({ params }: PageProps) {
                 )}
                 {store.email && (
                   <li className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-sage" />
-                    <a href={`mailto:${store.email}`} className="text-sage hover:underline">
+                    <Mail className="h-4 w-4 text-sage dark:text-sage-300" />
+                    <a href={`mailto:${store.email}`} className="text-sage dark:text-sage-300 hover:underline">
                       {store.email}
                     </a>
                   </li>
                 )}
                 {store.socialLinks.map((link, i) => (
                   <li key={i} className="flex items-center gap-2">
-                    <SocialLinkIcon platform={link.platform} className="h-4 w-4 text-sage" />
+                    <SocialLinkIcon platform={link.platform} className="h-4 w-4 text-sage dark:text-sage-300" />
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sage hover:underline"
+                      className="text-sage dark:text-sage-300 hover:underline"
                     >
                       {SOCIAL_PLATFORM_LABELS[link.platform]}
                     </a>
@@ -417,17 +417,17 @@ export default async function StoreDetailPage({ params }: PageProps) {
               </a>
             </section>
 
-            <section className="rounded-xl border border-sage/10 bg-white p-4">
+            <section className="rounded-xl border border-sage/10 bg-surface p-4">
               <h3 className="font-semibold text-earth">Opening hours</h3>
               <OpeningHoursTable hours={store.hours} className="mt-3" />
             </section>
 
             {store.owner && (
-              <section className="rounded-xl border border-sage/10 bg-white p-4">
+              <section className="rounded-xl border border-sage/10 bg-surface p-4">
                 <h3 className="font-semibold text-earth">Managed by</h3>
                 <Link
                   href={`/profile/${store.owner.id}`}
-                  className="mt-1 block text-sm text-sage hover:underline"
+                  className="mt-1 block text-sm text-sage dark:text-sage-300 hover:underline"
                 >
                   {store.owner.name}
                 </Link>

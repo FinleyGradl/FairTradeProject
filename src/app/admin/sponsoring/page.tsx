@@ -84,21 +84,21 @@ export default async function AdminSponsoringPage() {
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="text-xs uppercase text-earth/50">
             <tr>
-              <th className="pb-2 pr-4">Laden</th>
-              <th className="pb-2 pr-4">Inhaber:in</th>
-              <th className="pb-2 pr-4">Plan</th>
-              <th className="pb-2 pr-4">Status</th>
-              <th className="pb-2 pr-4">Betrag/Monat</th>
-              <th className="pb-2 pr-4">Code</th>
-              <th className="pb-2 pr-4">Seit</th>
-              <th className="pb-2">Nächste Abbuchung</th>
+              <th scope="col" className="pb-2 pr-4">Laden</th>
+              <th scope="col" className="pb-2 pr-4">Inhaber:in</th>
+              <th scope="col" className="pb-2 pr-4">Plan</th>
+              <th scope="col" className="pb-2 pr-4">Status</th>
+              <th scope="col" className="pb-2 pr-4">Betrag/Monat</th>
+              <th scope="col" className="pb-2 pr-4">Code</th>
+              <th scope="col" className="pb-2 pr-4">Seit</th>
+              <th scope="col" className="pb-2">Nächste Abbuchung</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-sage-100">
             {rows.map((row) => (
               <tr key={row.id}>
                 <td className="py-2 pr-4">
-                  <Link href={`/stores/${row.storeSlug}`} className="text-sage hover:underline">
+                  <Link href={`/stores/${row.storeSlug}`} className="text-sage dark:text-sage-300 hover:underline">
                     {row.storeName}
                   </Link>
                 </td>

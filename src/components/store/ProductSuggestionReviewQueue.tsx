@@ -60,7 +60,7 @@ export function ProductSuggestionReviewQueue({ storeSlug, suggestions }: Product
 
       <div className="mt-4 space-y-3">
         {items.map((item) => (
-          <div key={item.id} className="rounded-lg border border-sky-200/70 bg-white p-4">
+          <div key={item.id} className="rounded-lg border border-sky-200/70 bg-surface p-4">
             <p className="text-xs text-earth/50">
               Vorgeschlagen von {item.suggestedBy.name ?? item.suggestedBy.email}
             </p>

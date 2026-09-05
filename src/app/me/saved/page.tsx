@@ -21,7 +21,7 @@ export default async function SavedPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="flex items-center gap-2">
-        <Heart className="h-6 w-6 text-sage" />
+        <Heart className="h-6 w-6 text-sage dark:text-sage-300" />
         <h1 className="text-2xl font-bold text-earth">Merkliste</h1>
       </div>
       <p className="mt-1 text-sm text-earth/70">
@@ -40,7 +40,7 @@ export default async function SavedPage() {
       )}
 
       <p className="mt-8 text-center text-sm text-earth/50">
-        <Link href="/explore" className="text-sage hover:underline">
+        <Link href="/explore" className="text-sage dark:text-sage-300 hover:underline">
           Weitere Läden entdecken →
         </Link>
       </p>

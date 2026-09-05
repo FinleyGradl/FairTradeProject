@@ -31,14 +31,14 @@ export default async function ClaimStorePage({ params }: PageProps) {
       </p>
 
       {isOwnStore ? (
-        <div className="mt-8 rounded-xl border border-sage/10 bg-white p-6 text-sm text-earth/80">
+        <div className="mt-8 rounded-xl border border-sage/10 bg-surface p-6 text-sm text-earth/80">
           Du bist bereits als Inhaber:in dieses Ladens eingetragen.{" "}
-          <Link href={`/stores/${storeSlug}/edit`} className="text-sage hover:underline">
+          <Link href={`/stores/${storeSlug}/edit`} className="text-sage dark:text-sage-300 hover:underline">
             Laden bearbeiten →
           </Link>
         </div>
       ) : alreadyOwnedByOther ? (
-        <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+        <div className="mt-8 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 p-6 text-sm text-amber-800 dark:text-amber-300">
           Dieser Laden wurde bereits von einer Inhaberin bzw. einem Inhaber beansprucht. Wenn du
           denkst, das ist ein Fehler, kontaktiere uns bitte.
         </div>

@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 export default function Loading() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 py-24 text-center">
-      <Loader2 className="h-8 w-8 animate-spin text-sage" />
+      <Loader2 className="h-8 w-8 animate-spin text-sage dark:text-sage-300" />
       <p className="text-sm text-earth/60">Wird geladen …</p>
     </div>
   );

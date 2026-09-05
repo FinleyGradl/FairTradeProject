@@ -36,7 +36,7 @@ export default async function StoreInsightsPage({ params }: PageProps) {
   if (!(await canAccessInsights(store, session.user))) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <Lock className="mx-auto h-10 w-10 text-amber-500" />
+        <Lock className="mx-auto h-10 w-10 text-amber-500 dark:text-amber-400" />
         <h1 className="mt-4 text-xl font-bold text-earth">Insights sind Teil des Sponsorings</h1>
         <p className="mt-2 text-earth/70">
           Aufrufe, Herkunft und Suchanfragen zu {store.name} siehst du ab dem Plan &bdquo;Basis&ldquo;
@@ -56,7 +56,7 @@ export default async function StoreInsightsPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
-      <Link href={`/stores/${slug}`} className="mb-4 inline-flex items-center gap-1 text-sm text-sage hover:underline">
+      <Link href={`/stores/${slug}`} className="mb-4 inline-flex items-center gap-1 text-sm text-sage dark:text-sage-300 hover:underline">
         <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu {store.name}
       </Link>
       <h1 className="text-2xl font-bold text-earth">Insights für {store.name}</h1>

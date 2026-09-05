@@ -26,7 +26,7 @@ export function VerifiedBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800",
+          "inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-300",
           className
         )}
         title="Von mehreren unabhängigen Nutzer:innen bestätigt"

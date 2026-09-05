@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FormError } from "@/components/ui/FormError";
 
 export function LoginForm() {
   const router = useRouter();
@@ -62,6 +63,8 @@ export function LoginForm() {
             type="email"
             required
             autoComplete="email"
+            aria-invalid={!!error}
+            aria-describedby={error ? "login-error" : undefined}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -72,7 +75,7 @@ export function LoginForm() {
             <label htmlFor="password" className="block text-sm font-medium text-earth">
               Passwort
             </label>
-            <Link href="/forgot-password" className="text-xs text-sage hover:underline">
+            <Link href="/forgot-password" className="text-xs text-sage dark:text-sage-300 hover:underline dark:text-sage-300">
               Passwort vergessen?
             </Link>
           </div>
@@ -81,14 +84,14 @@ export function LoginForm() {
             type="password"
             required
             autoComplete="current-password"
+            aria-invalid={!!error}
+            aria-describedby={error ? "login-error" : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-        )}
+        <FormError id="login-error">{error}</FormError>
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Anmelden…" : "Anmelden"}
@@ -112,7 +115,7 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-earth/70">
         Noch kein Konto?{" "}
-        <Link href="/register" className="font-medium text-sage hover:underline">
+        <Link href="/register" className="font-medium text-sage dark:text-sage-300 hover:underline">
           Jetzt registrieren
         </Link>
       </p>

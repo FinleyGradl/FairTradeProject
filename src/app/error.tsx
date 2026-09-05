@@ -26,7 +26,7 @@ export default function GlobalError({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-      <AlertTriangle className="h-10 w-10 text-red-500" />
+      <AlertTriangle className="h-10 w-10 text-red-500 dark:text-red-400" />
       <div>
         <h1 className="text-xl font-bold text-earth">Da ist etwas schiefgelaufen</h1>
         <p className="mt-2 max-w-md text-sm text-earth/70">

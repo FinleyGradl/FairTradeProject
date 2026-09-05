@@ -98,7 +98,7 @@ export function SuggestEditForm({ storeSlug, initialValues }: SuggestEditFormPro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <section className="space-y-4 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-4 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Grunddaten</h2>
         <div>
           <label className="mb-1 block text-sm font-medium text-earth">Name</label>
@@ -115,7 +115,7 @@ export function SuggestEditForm({ storeSlug, initialValues }: SuggestEditFormPro
         </div>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-4 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Adresse</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -133,7 +133,7 @@ export function SuggestEditForm({ storeSlug, initialValues }: SuggestEditFormPro
         </div>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-4 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Kontakt</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
@@ -151,7 +151,7 @@ export function SuggestEditForm({ storeSlug, initialValues }: SuggestEditFormPro
         </div>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-3 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Öffnungszeiten</h2>
         <div className="space-y-2">
           {values.hours.map((h) => (
@@ -188,7 +188,7 @@ export function SuggestEditForm({ storeSlug, initialValues }: SuggestEditFormPro
         </div>
       </section>
 
-      <section className="space-y-2 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-2 rounded-xl border border-sage/10 bg-surface p-5">
         <label className="block text-sm font-medium text-earth">Notiz (optional)</label>
         <textarea
           value={note}
@@ -199,9 +199,9 @@ export function SuggestEditForm({ storeSlug, initialValues }: SuggestEditFormPro
         />
       </section>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {success && (
-        <p className="flex items-center gap-1.5 text-sm text-sage">
+        <p className="flex items-center gap-1.5 text-sm text-sage dark:text-sage-300">
           <CheckCircle2 className="h-4 w-4" />
           Danke! Dein Vorschlag wurde eingereicht.
         </p>

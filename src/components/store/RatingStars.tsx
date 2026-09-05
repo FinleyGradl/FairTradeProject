@@ -21,20 +21,27 @@ export function RatingStars({
   className,
 }: RatingStarsProps) {
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div
+      className={cn("flex items-center gap-1", className)}
+      role="img"
+      aria-label={`Bewertung: ${rating.toFixed(1)} von ${max} Sternen${
+        reviewCount != null ? `, ${reviewCount} Bewertungen` : ""
+      }`}
+    >
       {Array.from({ length: max }).map((_, i) => (
         <Star
           key={i}
+          aria-hidden="true"
           className={cn(
             sizeMap[size],
             i < Math.round(rating)
-              ? "fill-amber-400 text-amber-400"
-              : "fill-none text-gray-300"
+              ? "fill-amber-400 text-amber-400 dark:text-amber-300"
+              : "fill-none text-gray-300 dark:text-gray-600"
           )}
         />
       ))}
       {showValue && (
-        <span className="ml-1 text-sm font-medium text-earth">
+        <span className="ml-1 text-sm font-medium text-earth" aria-hidden="true">
           {rating.toFixed(1)}
           {reviewCount != null && (
             <span className="font-normal text-earth/60"> ({reviewCount})</span>

@@ -134,10 +134,10 @@ export function ProductManagePanel({ storeSlug, products: initial }: ProductMana
   }
 
   return (
-    <div className="rounded-xl border border-sage/10 bg-white p-5">
+    <div className="rounded-xl border border-sage/10 bg-surface p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Package className="h-4 w-4 text-sage" />
+          <Package className="h-4 w-4 text-sage dark:text-sage-300" />
           <h2 className="font-semibold text-earth">Produkte ({products.length})</h2>
         </div>
         {editing === null && (
@@ -187,7 +187,7 @@ export function ProductManagePanel({ storeSlug, products: initial }: ProductMana
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="text-earth/50 hover:text-red-600"
+                  className="text-earth/50 hover:text-red-600 hover:dark:text-red-400"
                   onClick={() => handleDelete(product)}
                   disabled={deletingId === product.id}
                 >
@@ -295,7 +295,7 @@ function ProductFormCard({
         Auf Lager
       </label>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={onSave} disabled={loading}>
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : submitLabel}

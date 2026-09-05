@@ -39,7 +39,7 @@ export default async function EditStorePage({ params }: PageProps) {
   if (!canEditStore(store, session.user)) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
-        <ShieldAlert className="mx-auto h-10 w-10 text-amber-500" />
+        <ShieldAlert className="mx-auto h-10 w-10 text-amber-500 dark:text-amber-400" />
         <h1 className="mt-4 text-xl font-bold text-earth">Keine Berechtigung</h1>
         <p className="mt-2 text-earth/70">
           Du kannst diesen Laden nicht bearbeiten. Falls dir dieser Laden gehört, kannst du ihn
@@ -113,12 +113,12 @@ export default async function EditStorePage({ params }: PageProps) {
     <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-earth">{store.name} bearbeiten</h1>
-        <Link href={`/stores/${slug}`} className="text-sm text-sage hover:underline">
+        <Link href={`/stores/${slug}`} className="text-sm text-sage dark:text-sage-300 hover:underline">
           Zum Laden →
         </Link>
       </div>
       {store.status === "pending" && (
-        <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 p-3 text-sm text-amber-800 dark:text-amber-300">
           Dieser Laden wurde von der Community gemeldet und ist aktuell nicht öffentlich
           sichtbar, bis ein Moderations-Team ihn geprüft hat.
         </p>

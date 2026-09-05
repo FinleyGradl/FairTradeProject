@@ -155,7 +155,7 @@ function SearchContent() {
     <div className="flex h-[calc(100vh-4rem)] flex-col md:flex-row overflow-hidden">
       {/* Left panel: Search, Filters, Results */}
       <div className={cn(
-        "w-full md:w-1/2 lg:w-7/12 flex-1 flex flex-col overflow-y-auto bg-white transition-transform",
+        "w-full md:w-1/2 lg:w-7/12 flex-1 flex flex-col overflow-y-auto bg-surface transition-transform",
         showMobileMap ? "hidden md:flex" : "flex"
       )}>
         <div className="p-4 md:p-6 pb-24 md:pb-6 space-y-6">
@@ -185,7 +185,7 @@ function SearchContent() {
                 className={cn(
                   "border-b-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                   tab === t.id
-                    ? "border-sage text-sage"
+                    ? "border-sage text-sage dark:text-sage-300"
                     : "border-transparent text-earth/60 hover:text-earth"
                 )}
               >
@@ -196,7 +196,7 @@ function SearchContent() {
 
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-sage" />
+              <Loader2 className="h-8 w-8 animate-spin text-sage dark:text-sage-300" />
             </div>
           ) : stores.length === 0 && products.length === 0 ? (
             <EmptyState description="Keine Ergebnisse gefunden. Passe deine Filter an oder suche in einem anderen Gebiet." />
@@ -241,12 +241,12 @@ function SearchContent() {
       {/* Right panel: Map */}
       <div className={cn(
         "w-full h-[calc(100vh-4rem)] md:h-auto md:w-1/2 lg:w-5/12 border-l border-sage/10 relative",
-        showMobileMap ? "block fixed inset-0 z-50 pt-16 bg-white" : "hidden md:block"
+        showMobileMap ? "block fixed inset-0 z-50 pt-16 bg-surface" : "hidden md:block"
       )}>
         {showMobileMap && (
           <button 
             onClick={() => setShowMobileMap(false)}
-            className="absolute top-4 right-4 z-[60] bg-white rounded-full p-2 shadow-md"
+            className="absolute top-4 right-4 z-[60] bg-surface rounded-full p-2 shadow-md"
           >
             <X className="h-5 w-5 text-earth" />
           </button>
@@ -283,7 +283,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <div className="w-full h-full bg-white">
+    <div className="w-full h-full bg-surface">
       <Suspense fallback={<div className="flex h-[calc(100vh-4rem)] items-center justify-center text-earth/60"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
         <SearchContent />
       </Suspense>

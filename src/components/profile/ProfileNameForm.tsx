@@ -51,8 +51,8 @@ export function ProfileNameForm({ initialName }: { initialName: string }) {
         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {success && <p className="text-sm text-sage">Gespeichert.</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {success && <p className="text-sm text-sage dark:text-sage-300">Gespeichert.</p>}
 
       <Button type="submit" size="sm" disabled={loading}>
         {loading ? "Wird gespeichert…" : "Speichern"}

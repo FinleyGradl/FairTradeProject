@@ -156,7 +156,7 @@ export function AuditLogViewer({
         <select
           value={action}
           onChange={(e) => setAction(e.target.value)}
-          className="h-10 rounded-lg border border-sage/20 bg-white px-3 text-sm text-earth"
+          className="h-10 rounded-lg border border-sage/20 bg-surface px-3 text-sm text-earth"
         >
           <option value="">Alle Aktionen</option>
           {actions.map((a) => (
@@ -168,7 +168,7 @@ export function AuditLogViewer({
         <select
           value={entityType}
           onChange={(e) => setEntityType(e.target.value)}
-          className="h-10 rounded-lg border border-sage/20 bg-white px-3 text-sm text-earth"
+          className="h-10 rounded-lg border border-sage/20 bg-surface px-3 text-sm text-earth"
         >
           <option value="">Alle Objekttypen</option>
           {entityTypes.map((t) => (
@@ -185,11 +185,11 @@ export function AuditLogViewer({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sage/10 text-left text-xs uppercase tracking-wide text-earth/50">
-                  <th className="px-4 py-3 font-medium">Zeitpunkt</th>
-                  <th className="px-4 py-3 font-medium">Wer</th>
-                  <th className="px-4 py-3 font-medium">Aktion</th>
-                  <th className="px-4 py-3 font-medium">Objekt</th>
-                  <th className="px-4 py-3 font-medium" />
+                  <th scope="col" className="px-4 py-3 font-medium">Zeitpunkt</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Wer</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Aktion</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Objekt</th>
+                  <th scope="col" className="px-4 py-3 font-medium"><span className="sr-only">Aktionen</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -237,7 +237,7 @@ export function AuditLogViewer({
                             </span>{" "}
                             {entry.entityLabel ?? entry.entityId ?? "—"}
                           </td>
-                          <td className="px-4 py-3 text-right text-xs text-sage-600">
+                          <td className="px-4 py-3 text-right text-xs text-sage-600 dark:text-sage-400">
                             {meta ? (isExpanded ? "Weniger" : "Details") : ""}
                           </td>
                         </tr>

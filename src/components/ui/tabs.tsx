@@ -53,7 +53,7 @@ export function Tabs({ tabs, active, onChange, className }: TabsProps) {
               <span
                 className={cn(
                   "inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none",
-                  isActive ? "bg-sage text-white" : "bg-sage-100 text-sage-700"
+                  isActive ? "bg-sage text-white" : "bg-sage-100 text-sage-700 dark:text-sage-300"
                 )}
               >
                 {tab.count}

@@ -57,18 +57,18 @@ export default async function HomePage() {
       </section>
 
       {/* Stats */}
-      <section className="border-b border-sage/10 bg-white py-8">
+      <section className="border-b border-sage/10 bg-surface py-8">
         <div className="mx-auto grid max-w-4xl grid-cols-3 gap-4 px-4 text-center">
           <div>
-            <p className="text-3xl font-bold text-sage">{storeCountLabel}</p>
+            <p className="text-3xl font-bold text-sage dark:text-sage-300">{storeCountLabel}</p>
             <p className="text-sm text-earth/70">Läden in Deutschland</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-sage">4</p>
+            <p className="text-3xl font-bold text-sage dark:text-sage-300">4</p>
             <p className="text-sm text-earth/70">Fairtrade-Zertifizierungen</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-sage">100%</p>
+            <p className="text-3xl font-bold text-sage dark:text-sage-300">100%</p>
             <p className="text-sm text-earth/70">Community-getrieben</p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold text-earth">Empfohlene Läden</h2>
             <p className="mt-1 text-earth/70">Handverlesene Weltläden und Fairtrade-Shops in ganz Deutschland</p>
           </div>
-          <Link href="/explore" className="text-sm font-medium text-sage hover:underline">
+          <Link href="/explore" className="text-sm font-medium text-sage dark:text-sage-300 hover:underline">
             Alle anzeigen →
           </Link>
         </div>
@@ -95,7 +95,7 @@ export default async function HomePage() {
       {/* CTA */}
       <section className="bg-sage-50 px-4 py-16">
         <div className="mx-auto max-w-2xl text-center">
-          <Search className="mx-auto h-10 w-10 text-sage" />
+          <Search className="mx-auto h-10 w-10 text-sage dark:text-sage-300" />
           <h2 className="mt-4 text-2xl font-bold text-earth">Kennst du einen Fairtrade-Laden?</h2>
           <p className="mt-2 text-earth/70">
             Hilf uns, die Plattform zu vergrößern, indem du nachhaltige Shops aus deiner Region hinzufügst.

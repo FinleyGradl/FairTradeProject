@@ -52,7 +52,7 @@ export default async function SuggestEditPage({ params }: PageProps) {
     <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-earth">Änderung an {store.name} vorschlagen</h1>
-        <Link href={`/stores/${slug}`} className="text-sm text-sage hover:underline">
+        <Link href={`/stores/${slug}`} className="text-sm text-sage dark:text-sage-300 hover:underline">
           Zum Laden →
         </Link>
       </div>

@@ -85,7 +85,7 @@ export function SuggestionVoteWidget({
 
       <div className="mt-4 space-y-4">
         {visible.map((s) => (
-          <div key={s.id} className="rounded-lg border border-sky-200/70 bg-white p-4">
+          <div key={s.id} className="rounded-lg border border-sky-200/70 bg-surface p-4">
             <SuggestionDiffList changes={s.changes} current={current} />
             {s.note && <p className="mt-2 text-sm text-earth/70">{s.note}</p>}
 

@@ -143,7 +143,7 @@ export function PromoCodeManager({ initialCodes }: { initialCodes: PromoCodeRow[
               </Button>
             </div>
           </form>
-          {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
         </CardContent>
       </Card>
 

@@ -50,11 +50,11 @@ export function ReviewsList({ reviews: initialReviews, isSignedIn, currentUserId
 
   return (
     <div className="space-y-4">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {reviews.map((review) => {
         const canReport = isSignedIn && !review.reportedByMe && review.user.id !== currentUserId;
         return (
-          <div key={review.id} className="rounded-lg border border-sage/10 bg-white p-4">
+          <div key={review.id} className="rounded-lg border border-sage/10 bg-surface p-4">
             <div className="flex items-start justify-between gap-2">
               <RatingStars rating={review.rating} size="sm" />
               {canReport && (
@@ -85,7 +85,7 @@ export function ReviewsList({ reviews: initialReviews, isSignedIn, currentUserId
             </p>
             {review.ownerReply && (
               <div className="mt-3 rounded bg-sage-50 p-3 text-sm">
-                <p className="font-medium text-sage">Owner reply</p>
+                <p className="font-medium text-sage dark:text-sage-300">Owner reply</p>
                 <p className="text-earth/80">{review.ownerReply}</p>
               </div>
             )}

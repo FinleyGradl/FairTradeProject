@@ -128,7 +128,7 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
               <Link
                 href={`/stores/${review.store.slug}`}
-                className="mt-1 block text-sm font-medium text-sage hover:underline"
+                className="mt-1 block text-sm font-medium text-sage dark:text-sage-300 hover:underline"
               >
                 {review.store.name}
               </Link>

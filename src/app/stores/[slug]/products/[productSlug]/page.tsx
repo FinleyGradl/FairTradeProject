@@ -47,7 +47,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <Link
         href={`/stores/${slug}`}
-        className="inline-flex items-center gap-1 text-sm text-sage hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-sage dark:text-sage-300 hover:underline"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Zurück zu {product.store.name}
@@ -79,7 +79,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             />
           )}
           {product.price != null && (
-            <p className="mt-3 text-2xl font-semibold text-sage">
+            <p className="mt-3 text-2xl font-semibold text-sage dark:text-sage-300">
               {product.price.toFixed(2)} {product.currency}
             </p>
           )}
@@ -88,7 +88,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           {canEdit && (
             <Link
               href={`/stores/${slug}/edit#produkte`}
-              className="mt-4 inline-block text-sm text-sage hover:underline"
+              className="mt-4 inline-block text-sm text-sage dark:text-sage-300 hover:underline"
             >
               Im Laden-Editor verwalten →
             </Link>

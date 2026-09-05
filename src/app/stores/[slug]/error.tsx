@@ -19,7 +19,7 @@ export default function StoreDetailError({
 
   return (
     <div className="flex flex-col items-center justify-center px-4 py-24 text-center">
-      <AlertTriangle className="mb-4 h-10 w-10 text-red-500" />
+      <AlertTriangle className="mb-4 h-10 w-10 text-red-500 dark:text-red-400" />
       <h1 className="text-2xl font-bold text-earth">Laden konnte nicht geladen werden</h1>
       <p className="mt-2 max-w-sm text-earth/70">
         Beim Laden dieses Ladens ist ein Fehler aufgetreten. Versuch es noch

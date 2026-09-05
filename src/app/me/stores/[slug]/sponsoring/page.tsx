@@ -34,7 +34,7 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <Link href={`/stores/${slug}`} className="mb-4 inline-flex items-center gap-1 text-sm text-sage hover:underline">
+      <Link href={`/stores/${slug}`} className="mb-4 inline-flex items-center gap-1 text-sm text-sage dark:text-sage-300 hover:underline">
         <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu {store.name}
       </Link>
       <h1 className="text-2xl font-bold text-earth">Sponsoring für {store.name}</h1>
@@ -67,7 +67,7 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
           <p className="mt-1 text-sm text-earth/60">
             Alle Rechnungen wurden dir zusätzlich per E-Mail zugestellt.
           </p>
-          <div className="mt-3 divide-y divide-sage/10 rounded-lg border border-sage/10 bg-white">
+          <div className="mt-3 divide-y divide-sage/10 rounded-lg border border-sage/10 bg-surface">
             {invoices.map((invoice) => (
               <div key={invoice.id} className="flex items-center justify-between px-4 py-3 text-sm">
                 <div>

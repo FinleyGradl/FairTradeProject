@@ -10,7 +10,7 @@ const StoreMapInner = dynamic(() => import("./StoreMapInner"), {
   ssr: false,
   loading: () => (
     <div className="flex h-full min-h-[300px] items-center justify-center bg-sage-50">
-      <Loader2 className="h-8 w-8 animate-spin text-sage" />
+      <Loader2 className="h-8 w-8 animate-spin text-sage dark:text-sage-300" />
     </div>
   ),
 });
@@ -77,7 +77,7 @@ export function LocationPrompt({ onLocation, className }: LocationPromptProps) {
         )}
         Use my location
       </Button>
-      {error && <p className="mt-2 text-sm text-amber-700">{error}</p>}
+      {error && <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">{error}</p>}
     </div>
   );
 }

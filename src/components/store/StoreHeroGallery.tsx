@@ -1,6 +1,5 @@
 "use client";
 // path: src/components/store/StoreHeroGallery.tsx
-"use client";
 
 import { useRef, useState } from "react";
 import Image from "next/image";
@@ -156,7 +155,7 @@ export function StoreHeroGallery({
             className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60"
             aria-label="Vorheriges Bild"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -164,10 +163,14 @@ export function StoreHeroGallery({
             className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/60"
             aria-label="Nächstes Bild"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/40 px-2.5 py-0.5 text-xs text-white">
-            {index + 1} / {slides.length}
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/40 px-2.5 py-0.5 text-xs text-white"
+          >
+            Bild {index + 1} von {slides.length}
           </div>
         </>
       )}
@@ -182,7 +185,7 @@ export function StoreHeroGallery({
             aria-label="Foto hinzufügen"
             title="Foto zur Galerie hinzufügen"
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Camera className="h-4 w-4" aria-hidden="true" />}
           </button>
         )}
         {canReportCurrent && (
@@ -194,7 +197,7 @@ export function StoreHeroGallery({
             aria-label="Foto melden"
             title="Foto melden"
           >
-            <Flag className="h-4 w-4" />
+            <Flag className="h-4 w-4" aria-hidden="true" />
           </button>
         )}
         {current?.kind === "gallery" && current.reportedByMe && (
@@ -209,7 +212,7 @@ export function StoreHeroGallery({
             aria-label="Foto entfernen"
             title="Foto entfernen"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -223,7 +226,7 @@ export function StoreHeroGallery({
       />
 
       {error && (
-        <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded bg-red-600 px-3 py-1 text-xs text-white">
+        <div role="alert" className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded bg-red-600 px-3 py-1 text-xs text-white">
           {error}
         </div>
       )}

@@ -100,9 +100,9 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {success && (
-        <p className="flex items-center gap-1 text-sm text-sage">
+        <p className="flex items-center gap-1 text-sm text-sage dark:text-sage-300">
           <CheckCircle2 className="h-4 w-4" /> Passwort gespeichert.
         </p>
       )}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { auth } from "@/auth";
 import { canModerate, getPendingModerationCount } from "@/lib/stores";
 
@@ -17,8 +18,8 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-sage/10 bg-cream/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <MapPin className="h-6 w-6 text-sage" />
+        <Link href="/" className="flex shrink-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2">
+          <MapPin className="h-6 w-6 text-sage dark:text-sage-300" aria-hidden="true" />
           <span className="text-xl font-bold text-earth">FairFind</span>
         </Link>
 
@@ -26,7 +27,7 @@ export async function Header() {
           <SearchBar />
         </div>
 
-        <nav className="ml-auto flex items-center gap-2">
+        <nav aria-label="Hauptnavigation" className="ml-auto flex items-center gap-2">
           <Link href="/explore">
             <Button variant="ghost" size="sm">
               Entdecken
@@ -42,6 +43,7 @@ export async function Header() {
               Laden hinzufügen
             </Button>
           </Link>
+          <ThemeToggle />
           <UserMenu pendingModerationCount={pendingModerationCount} />
         </nav>
       </div>

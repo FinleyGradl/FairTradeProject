@@ -31,13 +31,13 @@ export default function KategorieOverviewPage() {
           <Link
             key={k.slug}
             href={`/kategorie/${k.slug}`}
-            className="group flex items-start gap-4 rounded-xl border border-sage/20 bg-white p-5 transition-shadow hover:shadow-md hover:border-sage/40"
+            className="group flex items-start gap-4 rounded-xl border border-sage/20 bg-surface p-5 transition-shadow hover:shadow-md hover:border-sage/40"
           >
             <span className="text-3xl" role="img" aria-label={k.name}>
               {k.emoji}
             </span>
             <div>
-              <p className="font-semibold text-earth group-hover:text-sage transition-colors">
+              <p className="font-semibold text-earth group-hover:text-sage group-hover:dark:text-sage-300 transition-colors">
                 {k.name}
               </p>
               <p className="mt-0.5 text-sm text-earth/60">{k.desc}</p>

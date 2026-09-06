@@ -111,7 +111,8 @@ export function PhotoGallery({
   }
 
   const closeLightbox = () => setOpenPhoto(null);
-  useDialogA11y(!!openPhoto, closeLightbox);
+  const lightboxPanelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(!!openPhoto, closeLightbox, lightboxPanelRef);
   const dialogTitleId = "photo-lightbox-title";
 
   return (
@@ -185,6 +186,7 @@ export function PhotoGallery({
           onClick={closeLightbox}
         >
           <div
+            ref={lightboxPanelRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={dialogTitleId}

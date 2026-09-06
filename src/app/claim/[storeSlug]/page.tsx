@@ -2,7 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { getStoreForEdit } from "@/lib/stores";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { ClaimForm } from "@/components/claim/ClaimForm";
 
 interface PageProps {
@@ -47,9 +48,7 @@ export default async function ClaimStorePage({ params }: PageProps) {
       )}
 
       <div className="mt-6 text-center">
-        <Link href={`/stores/${storeSlug}`}>
-          <Button variant="outline">← Zurück zum Laden</Button>
-        </Link>
+        <Link href={`/stores/${storeSlug}`} className={buttonVariants({ variant: "outline" })}>← Zurück zum Laden</Link>
       </div>
     </div>
   );

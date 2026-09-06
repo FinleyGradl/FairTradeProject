@@ -4,7 +4,8 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { ProfileNameForm } from "@/components/profile/ProfileNameForm";
 import { ChangeEmailForm } from "@/components/profile/ChangeEmailForm";
@@ -42,11 +43,9 @@ export default async function AccountSettingsPage() {
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-earth">Mein Konto</h1>
-        <Link href={`/profile/${user.id}`}>
-          <Button variant="outline" size="sm">
+        <Link href={`/profile/${user.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
             Öffentliches Profil ansehen
-          </Button>
-        </Link>
+          </Link>
       </div>
 
       <Card className="mt-6">

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 type Status = "checking" | "success" | "error";
@@ -49,9 +50,7 @@ export function VerifyEmailStatus({ token }: { token: string | null }) {
         <CheckCircle2 className="mx-auto h-10 w-10 text-sage dark:text-sage-300" aria-hidden="true" />
         <h2 className="mt-3 font-semibold text-earth">E-Mail bestätigt!</h2>
         <p className="mt-1 text-sm text-earth/70">Du kannst dich jetzt anmelden.</p>
-        <Link href="/login">
-          <Button className="mt-4">Zum Login</Button>
-        </Link>
+        <Link href="/login" className={cn(buttonVariants(), "mt-4")}>Zum Login</Link>
       </div>
     );
   }

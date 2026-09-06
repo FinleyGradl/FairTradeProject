@@ -4,7 +4,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 export default function StoreDetailError({
   error,
@@ -27,9 +28,7 @@ export default function StoreDetailError({
       </p>
       <div className="mt-6 flex gap-2">
         <Button onClick={reset}>Erneut versuchen</Button>
-        <Link href="/explore">
-          <Button variant="outline">Alle Läden ansehen</Button>
-        </Link>
+        <Link href="/explore" className={buttonVariants({ variant: "outline" })}>Alle Läden ansehen</Link>
       </div>
     </div>
   );

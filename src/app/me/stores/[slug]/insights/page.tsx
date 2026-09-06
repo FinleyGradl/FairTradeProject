@@ -7,7 +7,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { canManageSponsorship, canAccessInsights } from "@/lib/sponsorship";
 import { InsightsCharts } from "@/components/insights/InsightsCharts";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Insights" };
 
@@ -43,12 +44,8 @@ export default async function StoreInsightsPage({ params }: PageProps) {
           — schon ohne Sponsoring-Badge oder Bevorzugung in den Ergebnissen.
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <Link href={`/me/stores/${slug}/sponsoring`}>
-            <Button>Plan ansehen</Button>
-          </Link>
-          <Link href={`/stores/${slug}`}>
-            <Button variant="outline">Zurück zum Laden</Button>
-          </Link>
+          <Link href={`/me/stores/${slug}/sponsoring`} className={buttonVariants()}>Plan ansehen</Link>
+          <Link href={`/stores/${slug}`} className={buttonVariants({ variant: "outline" })}>Zurück zum Laden</Link>
         </div>
       </div>
     );

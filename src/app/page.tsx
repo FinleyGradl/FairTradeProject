@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin, Search, Store } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/search/SearchBar";
 import { StoreCard } from "@/components/store/StoreCard";
 import { getFeaturedStores, getActiveStoreCount } from "@/lib/stores";
@@ -40,18 +41,14 @@ export default async function HomePage() {
             <SearchBar className="mx-auto max-w-lg [&_input]:border-0 [&_input]:shadow-lg" />
           </div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/explore">
-              <Button size="lg" variant="secondary" className="gap-2">
+            <Link href="/explore" className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "gap-2")}>
                 <MapPin className="h-5 w-5" />
                 Karte erkunden
-              </Button>
-            </Link>
-            <Link href="/add-store">
-              <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
+              </Link>
+            <Link href="/add-store" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "border-white/30 bg-white/10 text-white hover:bg-white/20")}>
                 <Store className="h-5 w-5" />
                 Laden hinzufügen
-              </Button>
-            </Link>
+              </Link>
           </div>
         </div>
       </section>
@@ -100,9 +97,7 @@ export default async function HomePage() {
           <p className="mt-2 text-earth/70">
             Hilf uns, die Plattform zu vergrößern, indem du nachhaltige Shops aus deiner Region hinzufügst.
           </p>
-          <Link href="/add-store" className="mt-6 inline-block">
-            <Button size="lg">Laden eintragen</Button>
-          </Link>
+          <Link href="/add-store" className={cn(buttonVariants({ size: "lg" }), "mt-6 inline-block")}>Laden eintragen</Link>
         </div>
       </section>
     </>

@@ -5,17 +5,23 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket, Users, ScrollText, Bell, Receipt } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
+import { useMenuA11y } from "@/lib/a11y";
 
 export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCount?: number }) {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const close = () => setOpen(false);
+  const { handleBlur } = useMenuA11y({ menuRef, isOpen: open, onClose: close });
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
@@ -43,16 +49,12 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
   if (!session?.user) {
     return (
       <div className="flex items-center gap-2">
-        <Link href="/login">
-          <Button variant="ghost" size="sm">
+        <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
             Anmelden
-          </Button>
-        </Link>
-        <Link href="/register">
-          <Button variant="default" size="sm">
+          </Link>
+        <Link href="/register" className={buttonVariants({ variant: "default", size: "sm" })}>
             Registrieren
-          </Button>
-        </Link>
+          </Link>
       </div>
     );
   }
@@ -62,7 +64,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
   const displayName = session.user.name ?? session.user.email ?? "Konto";
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative" ref={containerRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -82,7 +84,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
         </span>
         {canModerate && pendingCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-cream bg-red-500 dark:bg-red-600 dark:bg-red-700 dark:bg-red-800"
+            className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-cream bg-red-500 dark:bg-red-600"
             aria-hidden="true"
           />
         )}
@@ -90,14 +92,17 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
 
       {open && (
         <div
+          ref={menuRef}
           role="menu"
           aria-label={`Konto-Menü für ${displayName}`}
+          onBlur={handleBlur}
           className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-sage/10 bg-surface p-1 shadow-lg"
         >
           <p className="truncate px-3 py-2 text-xs text-earth/60">{session.user.email}</p>
           <Link
             href={`/profile/${session.user.id}`}
             role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
           >
@@ -106,6 +111,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
           <Link
             href="/me/saved"
             role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
           >
@@ -114,6 +120,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
           <Link
             href="/me/stores"
             role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
           >
@@ -122,6 +129,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
           <Link
             href="/me/settings"
             role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
           >
@@ -131,6 +139,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
             <Link
               href="/admin/moderation"
               role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
               className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
             >
@@ -138,7 +147,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
                 <ShieldCheck className="h-4 w-4" /> Moderation
               </span>
               {pendingCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 dark:bg-red-600 dark:bg-red-700 dark:bg-red-800 px-1 text-xs font-semibold text-white">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 dark:bg-red-600 px-1 text-xs font-semibold text-white">
                   {pendingCount}
                 </span>
               )}
@@ -148,6 +157,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
             <Link
               href="/admin/notification-settings"
               role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
             >
@@ -159,6 +169,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               <Link
                 href="/admin/sponsoring"
                 role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
               >
@@ -167,6 +178,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               <Link
                 href="/admin/promo-codes"
                 role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
               >
@@ -175,6 +187,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               <Link
                 href="/admin/audit-log"
                 role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
               >
@@ -187,6 +200,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               <Link
                 href="/admin/users"
                 role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
               >
@@ -195,6 +209,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
               <Link
                 href="/admin/settings/billing"
                 role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
               >
@@ -204,6 +219,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
                 <Link
                   href="/admin/audit-log"
                   role="menuitem"
+            tabIndex={-1}
             onClick={() => setOpen(false)}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
                 >
@@ -214,6 +230,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
           )}
           <button
             role="menuitem"
+            tabIndex={-1}
             onClick={() => signOut({ callbackUrl: "/" })}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-earth hover:bg-sage-50"
           >

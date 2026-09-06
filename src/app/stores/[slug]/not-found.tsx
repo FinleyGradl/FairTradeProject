@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 export default function StoreNotFound() {
   return (
@@ -8,9 +9,7 @@ export default function StoreNotFound() {
       <p className="mt-2 text-earth/70">
         This store may have been removed or the link is incorrect.
       </p>
-      <Link href="/explore" className="mt-6">
-        <Button>Browse all stores</Button>
-      </Link>
+      <Link href="/explore" className={cn(buttonVariants(), "mt-6")}>Browse all stores</Link>
     </div>
   );
 }

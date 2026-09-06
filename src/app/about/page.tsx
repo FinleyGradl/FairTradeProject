@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
@@ -57,9 +58,7 @@ export default function AboutPage() {
 
       <div className="mt-12 rounded-xl bg-sage-50 p-6 text-center">
         <p className="font-medium text-earth">Bereit zum Entdecken?</p>
-        <Link href="/explore" className="mt-4 inline-block">
-          <Button>Fairtrade-Läden in deiner Nähe finden</Button>
-        </Link>
+        <Link href="/explore" className={cn(buttonVariants(), "mt-4 inline-block")}>Fairtrade-Läden in deiner Nähe finden</Link>
       </div>
     </div>
   );

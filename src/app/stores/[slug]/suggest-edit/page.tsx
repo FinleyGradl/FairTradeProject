@@ -5,7 +5,8 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { getStoreForEdit, canEditStore } from "@/lib/stores";
 import { SuggestEditForm } from "@/components/store/SuggestEditForm";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -79,9 +80,7 @@ export default async function SuggestEditPage({ params }: PageProps) {
       </div>
 
       <div className="mt-6 text-center">
-        <Link href={`/stores/${slug}`}>
-          <Button variant="outline">← Zurück zum Laden</Button>
-        </Link>
+        <Link href={`/stores/${slug}`} className={buttonVariants({ variant: "outline" })}>← Zurück zum Laden</Link>
       </div>
     </div>
   );

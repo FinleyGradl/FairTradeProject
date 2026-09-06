@@ -4,7 +4,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 // Global error boundary. Next.js mounts this in place of the page whenever
 // a Server or Client Component further down throws during render — without
@@ -39,9 +40,7 @@ export default function GlobalError({
       </div>
       <div className="flex gap-2">
         <Button onClick={reset}>Erneut versuchen</Button>
-        <Link href="/">
-          <Button variant="outline">Zur Startseite</Button>
-        </Link>
+        <Link href="/" className={buttonVariants({ variant: "outline" })}>Zur Startseite</Link>
       </div>
     </div>
   );

@@ -28,7 +28,8 @@ import { DistanceFromYou } from "@/components/store/DistanceFromYou";
 import { SponsoredBadge } from "@/components/store/SponsoredBadge";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { getOpenStatusLabel, isOpenNow } from "@/lib/hours";
 
 interface PageProps {
@@ -216,50 +217,38 @@ export default async function StoreDetailPage({ params }: PageProps) {
           {canEdit && (
             <div className="ml-auto flex gap-2">
               {canViewInsights && (
-                <Link href={`/me/stores/${store.slug}/insights`}>
-                  <Button variant="outline" size="sm" className="gap-1">
+                <Link href={`/me/stores/${store.slug}/insights`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                     <BarChart3 className="h-3.5 w-3.5" /> Insights
-                  </Button>
-                </Link>
+                  </Link>
               )}
               {store.ownerUserId === session?.user?.id && (
-                <Link href={`/me/stores/${store.slug}/sponsoring`}>
-                  <Button variant="outline" size="sm" className="gap-1">
+                <Link href={`/me/stores/${store.slug}/sponsoring`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                     <Megaphone className="h-3.5 w-3.5" /> Sponsoring
-                  </Button>
-                </Link>
+                  </Link>
               )}
               {/* Editable but unclaimed (e.g. its own creator, or an
                   admin/moderator) — still offer claiming so this actually
                   gets a confirmed owner and unlocks Insights/Sponsoring. */}
               {!store.ownerUserId && (
-                <Link href={`/claim/${store.slug}`}>
-                  <Button variant="outline" size="sm">
+                <Link href={`/claim/${store.slug}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                     Laden beanspruchen
-                  </Button>
-                </Link>
+                  </Link>
               )}
-              <Link href={`/stores/${store.slug}/edit`}>
-                <Button variant="outline" size="sm" className="gap-1">
+              <Link href={`/stores/${store.slug}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                   <Pencil className="h-3.5 w-3.5" /> Bearbeiten
-                </Button>
-              </Link>
+                </Link>
             </div>
           )}
           {!canEdit && (
             <div className="ml-auto flex gap-2">
               {!store.ownerUserId && (
-                <Link href={`/claim/${store.slug}`}>
-                  <Button variant="outline" size="sm">
+                <Link href={`/claim/${store.slug}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                     Laden beanspruchen
-                  </Button>
-                </Link>
+                  </Link>
               )}
-              <Link href={`/stores/${store.slug}/suggest-edit`}>
-                <Button variant="outline" size="sm" className="gap-1">
+              <Link href={`/stores/${store.slug}/suggest-edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                   <Pencil className="h-3.5 w-3.5" /> Änderung vorschlagen
-                </Button>
-              </Link>
+                </Link>
             </div>
           )}
         </div>

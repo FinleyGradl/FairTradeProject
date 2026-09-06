@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { StoreCard } from "@/components/store/StoreCard";
 import { getStores } from "@/lib/stores";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 // Mapping von URL-Slug zu Anzeigename und Suchbegriff
 const KATEGORIE_CONFIG: Record<
@@ -132,9 +133,7 @@ export default async function KategoriePage({ params }: PageProps) {
           <p className="mt-2 text-earth/70">
             Kennst du einen Fairtrade-Laden aus dem Bereich {config.name}? Trag ihn ein!
           </p>
-          <Link href="/add-store" className="mt-6 inline-block">
-            <Button>Laden eintragen</Button>
-          </Link>
+          <Link href="/add-store" className={cn(buttonVariants(), "mt-6 inline-block")}>Laden eintragen</Link>
         </div>
       )}
 
@@ -145,12 +144,8 @@ export default async function KategoriePage({ params }: PageProps) {
           Nutze die interaktive Karte, um Fairtrade-Shops in deiner Nähe zu finden.
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-3">
-          <Link href="/explore">
-            <Button>Zur Karte</Button>
-          </Link>
-          <Link href="/search">
-            <Button variant="outline">Suche verfeinern</Button>
-          </Link>
+          <Link href="/explore" className={buttonVariants()}>Zur Karte</Link>
+          <Link href="/search" className={buttonVariants({ variant: "outline" })}>Suche verfeinern</Link>
         </div>
       </div>
     </div>

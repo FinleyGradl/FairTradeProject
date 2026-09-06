@@ -1,11 +1,13 @@
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { SearchBar } from "@/components/search/SearchBar";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { HeaderNavLink } from "@/components/layout/HeaderNavLink";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { auth } from "@/auth";
 import { canModerate, getPendingModerationCount } from "@/lib/stores";
+import { cn } from "@/lib/utils";
 
 export async function Header() {
   const session = await auth();
@@ -28,20 +30,14 @@ export async function Header() {
         </div>
 
         <nav aria-label="Hauptnavigation" className="ml-auto flex items-center gap-2">
-          <Link href="/explore">
-            <Button variant="ghost" size="sm">
-              Entdecken
-            </Button>
+          <HeaderNavLink href="/explore" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            Entdecken
+          </HeaderNavLink>
+          <Link href="/search" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "md:hidden")}>
+            Suche
           </Link>
-          <Link href="/search">
-            <Button variant="ghost" size="sm" className="md:hidden">
-              Suche
-            </Button>
-          </Link>
-          <Link href="/add-store">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-              Laden hinzufügen
-            </Button>
+          <Link href="/add-store" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "hidden sm:inline-flex")}>
+            Laden hinzufügen
           </Link>
           <ThemeToggle />
           <UserMenu pendingModerationCount={pendingModerationCount} />

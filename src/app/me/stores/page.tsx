@@ -8,7 +8,8 @@ import { getUserStoreOverview } from "@/lib/stores";
 import { getIncomingTransfers } from "@/lib/ownership-transfer";
 import { SPONSORSHIP_TIERS, type SponsorshipTierId } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { IncomingTransfersList } from "@/components/store/IncomingTransfersList";
 
@@ -46,9 +47,7 @@ export default async function MyStoresPage() {
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-earth">Meine Läden</h1>
-        <Link href="/add-store">
-          <Button size="sm">Laden hinzufügen</Button>
-        </Link>
+        <Link href="/add-store" className={buttonVariants({ size: "sm" })}>Laden hinzufügen</Link>
       </div>
       <p className="mt-1 text-sm text-earth/70">
         Läden, die du eingereicht hast oder als Inhaber:in verwaltest, sowie deine offenen
@@ -124,8 +123,7 @@ export default async function MyStoresPage() {
               </div>
               <div className="flex shrink-0 gap-2">
                 {store.ownerUserId === session.user.id && (
-                  <Link href={`/me/stores/${store.slug}/insights`}>
-                    <Button variant="outline" size="sm" className="gap-1">
+                  <Link href={`/me/stores/${store.slug}/insights`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                       {session.user.role === "admin" ||
                       session.user.role === "moderator" ||
                       (store.sponsorship?.status === "active" &&
@@ -136,21 +134,16 @@ export default async function MyStoresPage() {
                         <Lock className="h-3.5 w-3.5" />
                       )}
                       Insights
-                    </Button>
-                  </Link>
+                    </Link>
                 )}
                 {store.ownerUserId === session.user.id && (
-                  <Link href={`/me/stores/${store.slug}/sponsoring`}>
-                    <Button variant="outline" size="sm" className="gap-1">
+                  <Link href={`/me/stores/${store.slug}/sponsoring`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                       <Megaphone className="h-3.5 w-3.5" /> Sponsoring
-                    </Button>
-                  </Link>
+                    </Link>
                 )}
-                <Link href={`/stores/${store.slug}/edit`}>
-                  <Button variant="outline" size="sm" className="gap-1">
+                <Link href={`/stores/${store.slug}/edit`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                     <Pencil className="h-3.5 w-3.5" /> Bearbeiten
-                  </Button>
-                </Link>
+                  </Link>
               </div>
             </div>
           ))}

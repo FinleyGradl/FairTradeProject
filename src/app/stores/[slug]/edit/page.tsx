@@ -17,7 +17,8 @@ import { ProductManagePanel } from "@/components/store/ProductManagePanel";
 import { ProductSuggestionReviewQueue } from "@/components/store/ProductSuggestionReviewQueue";
 import { TransferStoreCard } from "@/components/store/TransferStoreCard";
 import { DeleteStoreCard } from "@/components/store/DeleteStoreCard";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -46,12 +47,8 @@ export default async function EditStorePage({ params }: PageProps) {
           beanspruchen.
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <Link href={`/claim/${slug}`}>
-            <Button>Laden beanspruchen</Button>
-          </Link>
-          <Link href={`/stores/${slug}`}>
-            <Button variant="outline">Zurück zum Laden</Button>
-          </Link>
+          <Link href={`/claim/${slug}`} className={buttonVariants()}>Laden beanspruchen</Link>
+          <Link href={`/stores/${slug}`} className={buttonVariants({ variant: "outline" })}>Zurück zum Laden</Link>
         </div>
       </div>
     );

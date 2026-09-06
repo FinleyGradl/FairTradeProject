@@ -106,7 +106,13 @@
     }
   },
   "legal": {
-    "bindingNotice": "This page is also available in German. Only the German version is legally binding."
+    "bindingNotice": "Only the German version of this page is legally binding."
+  },
+  "legalTitles": {
+    "impressum": "Legal Notice",
+    "datenschutz": "Privacy Policy",
+    "nutzungsbedingungen": "Terms of Use",
+    "barrierefreiheit": "Accessibility Statement"
   },
   "sponsoringPlans": {
     "currentPlan": "Current plan: {plan}",
@@ -137,6 +143,23 @@
   "storeForm": {
     "categoriesLabel": "Categories",
     "badgesLabel": "Fair trade seals"
+  },
+  "aboutPage": {
+    "metaTitle": "About FairFind – Our mission for sustainable consumption",
+    "metaDescription": "FairFind is the community directory for fair-trade stores and world shops in Germany. Learn what fair trade means and how our platform works.",
+    "title": "About FairFind",
+    "intro": "FairFind is a location-based directory of fair-trade stores and world shops. We help conscious consumers discover ethical businesses, browse products, and support companies that prioritize fair wages and sustainable practices.",
+    "fairTradeHeading": "What is fair trade?",
+    "fairTradeBody": "Fair trade is a trading partnership based on dialogue, transparency, and respect that seeks greater equity in international trade. It contributes to sustainable development by offering better trading conditions to, and securing the rights of, marginalized producers and workers.",
+    "howItWorksHeading": "How FairFind works",
+    "step1Title": "Discover",
+    "step1Body": "Browse stores on the map or search by name, category, or product.",
+    "step2Title": "Save & share",
+    "step2Body": "Save your favorite stores and share them with friends.",
+    "step3Title": "Contribute",
+    "step3Body": "Add new stores or take ownership of a listing to help keep the directory up to date.",
+    "ctaHeading": "Ready to explore?",
+    "ctaButton": "Find fair-trade stores near you"
   },
   "home": {
     "heroTitle": "Discover fair trade stores & world shops near you",

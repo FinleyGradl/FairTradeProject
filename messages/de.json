@@ -106,7 +106,13 @@
     }
   },
   "legal": {
-    "bindingNotice": "Diese Seite ist auch auf Englisch verfügbar. Rechtlich maßgeblich ist ausschließlich die deutsche Fassung."
+    "bindingNotice": "Rechtlich maßgeblich ist ausschließlich die deutsche Fassung dieser Seite."
+  },
+  "legalTitles": {
+    "impressum": "Impressum",
+    "datenschutz": "Datenschutzerklärung",
+    "nutzungsbedingungen": "Nutzungsbedingungen",
+    "barrierefreiheit": "Erklärung zur Barrierefreiheit"
   },
   "sponsoringPlans": {
     "currentPlan": "Aktueller Plan: {plan}",
@@ -137,6 +143,23 @@
   "storeForm": {
     "categoriesLabel": "Kategorien",
     "badgesLabel": "Fair-Trade-Siegel"
+  },
+  "aboutPage": {
+    "metaTitle": "Über FairFind – Unsere Mission für nachhaltigen Konsum",
+    "metaDescription": "FairFind ist das Community-Verzeichnis für Fairtrade-Läden und Weltläden in Deutschland. Erfahre, was Fairtrade bedeutet und wie unsere Plattform funktioniert.",
+    "title": "Über FairFind",
+    "intro": "FairFind ist ein standortbasiertes Verzeichnis für Fairtrade-Läden und Weltläden. Wir helfen bewussten Konsumentinnen und Konsumenten dabei, ethische Geschäfte zu entdecken, Produkte zu stöbern und Unternehmen zu unterstützen, die faire Löhne und nachhaltige Praktiken in den Vordergrund stellen.",
+    "fairTradeHeading": "Was ist Fairtrade?",
+    "fairTradeBody": "Fairtrade ist eine Handelspartnerschaft, die auf Dialog, Transparenz und Respekt basiert und mehr Gerechtigkeit im internationalen Handel anstrebt. Sie trägt zur nachhaltigen Entwicklung bei, indem sie benachteiligten Produzentinnen und Produzenten sowie Arbeitnehmerinnen und Arbeitnehmern bessere Handelsbedingungen bietet und ihre Rechte sichert.",
+    "howItWorksHeading": "So funktioniert FairFind",
+    "step1Title": "Entdecken",
+    "step1Body": "Durchsuche Läden auf der Karte oder suche nach Name, Kategorie oder Produkt.",
+    "step2Title": "Speichern & teilen",
+    "step2Body": "Merke dir deine Lieblings-Läden und teile sie mit Freunden.",
+    "step3Title": "Beitragen",
+    "step3Body": "Füge neue Läden hinzu oder übernimm die Verantwortung für einen Eintrag, damit das Verzeichnis aktuell bleibt.",
+    "ctaHeading": "Bereit zum Entdecken?",
+    "ctaButton": "Fairtrade-Läden in deiner Nähe finden"
   },
   "home": {
     "heroTitle": "Entdecke Fairtrade Läden & Weltläden in deiner Nähe",

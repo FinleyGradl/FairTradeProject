@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { FormEvent, useId, useState } from "react";

@@ -1,7 +1,7 @@
 "use client";
 // path: src/components/store/SuggestEditForm.tsx
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useState, FormEvent } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";

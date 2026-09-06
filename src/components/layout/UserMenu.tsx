@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket, Users, ScrollText, Bell, Receipt } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button"; 

@@ -1,15 +1,17 @@
 "use client";
 // src/components/store/StoreForm.tsx
 
-import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "@/i18n/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/store/LocationPicker";
 import { CoverImageUploader } from "@/components/store/CoverImageUploader";
 import { SocialLinkIcon } from "@/components/store/SocialLinkIcon";
 import { CATEGORIES, FAIR_BADGE_LABELS, SOCIAL_PLATFORMS, type SocialPlatform } from "@/lib/constants";
+import { categoryTranslationKey } from "@/lib/category-labels";
 import { getDayName } from "@/lib/hours";
 import { DEFAULT_CENTER } from "@/lib/geo";
 import { cn } from "@/lib/utils";
@@ -79,6 +81,10 @@ interface StoreFormProps {
 
 export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
   const router = useRouter();
+  const t = useTranslations("storeForm");
+  const tCategories = useTranslations("categories");
+  const tBadges = useTranslations("fairBadges");
+  const tSocial = useTranslations("socialPlatforms");
   const [values, setValues] = useState<StoreFormValues>(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -202,7 +208,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-earth">Kategorien</p>
+          <p className="mb-2 text-sm font-medium text-earth">{t("categoriesLabel")}</p>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
               <button
@@ -216,16 +222,16 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                     : "border-sage/30 text-earth/70 hover:bg-sage-50"
                 )}
               >
-                {c}
+                {tCategories(categoryTranslationKey(c))}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-earth">Fair-Trade-Siegel</p>
+          <p className="mb-2 text-sm font-medium text-earth">{t("badgesLabel")}</p>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(FAIR_BADGE_LABELS).map(([key, label]) => (
+            {Object.keys(FAIR_BADGE_LABELS).map((key) => (
               <button
                 key={key}
                 type="button"
@@ -237,7 +243,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                     : "border-sage/30 text-earth/70 hover:bg-sage-50"
                 )}
               >
-                {label}
+                {tBadges(key)}
               </button>
             ))}
           </div>
@@ -343,7 +349,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                 >
                   {SOCIAL_PLATFORMS.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.label}
+                      {tSocial(p.id)}
                     </option>
                   ))}
                 </select>

@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ComponentProps } from "react";
+import { Link, usePathname } from "@/i18n/navigation";
 
 /**
- * Same as next/link, but sets aria-current="page" when the current route
- * matches (WCAG 2.4.8 Location) — kept as its own tiny client component
- * so Header itself can stay a server component.
+ * Same as next/link (via next-intl's locale-aware Link), but sets
+ * aria-current="page" when the current route matches (WCAG 2.4.8
+ * Location) — kept as its own tiny client component so Header itself can
+ * stay a server component.
  */
 export function HeaderNavLink({ href, children, ...props }: ComponentProps<typeof Link>) {
   const pathname = usePathname();

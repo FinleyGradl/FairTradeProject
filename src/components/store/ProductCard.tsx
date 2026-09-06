@@ -1,7 +1,7 @@
 "use client";
 // path: src/components/store/ProductCard.tsx
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

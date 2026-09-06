@@ -1,0 +1,58 @@
+import { notFound } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
+import { auth } from "@/auth";
+import { getStoreForEdit } from "@/lib/stores";
+import { buttonVariants } from "@/components/ui/button"; 
+import { cn } from "@/lib/utils";
+import { ClaimForm } from "@/components/claim/ClaimForm";
+import { getLocale } from "next-intl/server";
+
+interface PageProps {
+  params: Promise<{ storeSlug: string }>;
+}
+
+export default async function ClaimStorePage({ params }: PageProps) {
+  const locale = await getLocale();
+  const { storeSlug } = await params;
+  const session = await auth();
+  const store = await getStoreForEdit(storeSlug);
+
+  if (!store) notFound();
+
+  if (!session?.user) {
+    return redirect({ href: `/login?callbackUrl=/claim/${storeSlug}`, locale });
+  }
+
+  const alreadyOwnedByOther = Boolean(store.ownerUserId) && store.ownerUserId !== session.user.id;
+  const isOwnStore = store.ownerUserId === session.user.id;
+
+  return (
+    <div className="mx-auto max-w-xl px-4 py-12">
+      <h1 className="text-2xl font-bold text-earth">{store.name} beanspruchen</h1>
+      <p className="mt-2 text-earth/70">
+        Betreibst du diesen Laden? Reiche eine Anfrage ein, um Bearbeitungsrechte zu erhalten.
+      </p>
+
+      {isOwnStore ? (
+        <div className="mt-8 rounded-xl border border-sage/10 bg-surface p-6 text-sm text-earth/80">
+          Du bist bereits als Inhaber:in dieses Ladens eingetragen.{" "}
+          <Link href={`/stores/${storeSlug}/edit`} className="text-sage dark:text-sage-300 hover:underline">
+            Laden bearbeiten →
+          </Link>
+        </div>
+      ) : alreadyOwnedByOther ? (
+        <div className="mt-8 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 p-6 text-sm text-amber-800 dark:text-amber-300">
+          Dieser Laden wurde bereits von einer Inhaberin bzw. einem Inhaber beansprucht. Wenn du
+          denkst, das ist ein Fehler, kontaktiere uns bitte.
+        </div>
+      ) : (
+        <ClaimForm storeSlug={storeSlug} />
+      )}
+
+      <div className="mt-6 text-center">
+        <Link href={`/stores/${storeSlug}`} className={buttonVariants({ variant: "outline" })}>← Zurück zum Laden</Link>
+      </div>
+    </div>
+  );
+}

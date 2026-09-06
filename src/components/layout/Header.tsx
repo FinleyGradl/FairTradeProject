@@ -1,16 +1,18 @@
 import { MapPin } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { SearchBar } from "@/components/search/SearchBar";
 import { buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { HeaderNavLink } from "@/components/layout/HeaderNavLink";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { auth } from "@/auth";
 import { canModerate, getPendingModerationCount } from "@/lib/stores";
 import { cn } from "@/lib/utils";
 
 export async function Header() {
-  const session = await auth();
+  const [session, t] = await Promise.all([auth(), getTranslations("nav")]);
   // Only bother querying counts for admins/moderators — everyone else
   // never sees the badge, no need to hit the DB on every page for them.
   const pendingModerationCount = canModerate(session?.user)
@@ -29,16 +31,17 @@ export async function Header() {
           <SearchBar />
         </div>
 
-        <nav aria-label="Hauptnavigation" className="ml-auto flex items-center gap-2">
+        <nav aria-label={t("ariaMain")} className="ml-auto flex items-center gap-2">
           <HeaderNavLink href="/explore" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-            Entdecken
+            {t("explore")}
           </HeaderNavLink>
           <Link href="/search" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "md:hidden")}>
-            Suche
+            {t("search")}
           </Link>
           <Link href="/add-store" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "hidden sm:inline-flex")}>
-            Laden hinzufügen
+            {t("addStore")}
           </Link>
+          <LanguageSwitcher />
           <ThemeToggle />
           <UserMenu pendingModerationCount={pendingModerationCount} />
         </nav>

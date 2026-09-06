@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 import L from "leaflet";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import "leaflet/dist/leaflet.css";
 import type { MapStore } from "./StoreMap";
 

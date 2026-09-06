@@ -2,7 +2,7 @@
 // path: src/components/store/SuggestionReviewQueue.tsx
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Loader2, Check, X, MessageSquareText, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SuggestionDiffList } from "@/components/store/SuggestionDiffList";

@@ -2,7 +2,7 @@
 // path: src/components/store/PhotoGallery.tsx
 
 import { useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Camera, Flag, Loader2, Trash2, X, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDialogA11y } from "@/lib/a11y";

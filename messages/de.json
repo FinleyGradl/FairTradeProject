@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "siteName": "FairFind",
+    "defaultTitle": "FairFind — Faire Läden entdecken",
+    "defaultDescription": "Finde Fairtrade-Läden in deiner Nähe. Entdecke faire Shops, Produkte und Bewertungen in ganz Deutschland."
+  },
+  "common": {
+    "skipToContent": "Zum Hauptinhalt springen",
+    "loading": "Lädt …",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen"
+  },
+  "nav": {
+    "ariaMain": "Hauptnavigation",
+    "explore": "Entdecken",
+    "search": "Suche",
+    "addStore": "Laden hinzufügen"
+  },
+  "mobileNav": {
+    "ariaLabel": "Mobile Navigation",
+    "explore": "Entdecken",
+    "search": "Suche",
+    "saved": "Gespeichert",
+    "about": "Über uns"
+  },
+  "footer": {
+    "ariaLabel": "Footer-Navigation",
+    "tagline": "Fairtrade Läden und Weltläden in deiner Nähe entdecken. Nachhaltiges Einkaufen in ganz Deutschland.",
+    "discoverHeading": "Entdecken",
+    "exploreStores": "Läden erkunden",
+    "search": "Suche",
+    "addStore": "Laden hinzufügen",
+    "categoriesHeading": "Kategorien",
+    "categoryFashion": "Mode & Kleidung",
+    "categoryGrocery": "Lebensmittel",
+    "categoryCoffee": "Kaffee & Tee",
+    "aboutHeading": "Über uns",
+    "ourMission": "Unsere Mission",
+    "whatIsFairTrade": "Was ist Fairtrade?",
+    "legalHeading": "Rechtliches",
+    "impressum": "Impressum",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen",
+    "accessibility": "Barrierefreiheit",
+    "copyright": "© {year} FairFind — Prototype"
+  },
+  "languageSwitcher": {
+    "label": "Sprache wechseln",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "categories": {
+    "grocery": "Lebensmittel",
+    "coffeeTea": "Kaffee & Tee",
+    "clothing": "Mode",
+    "gifts": "Geschenke",
+    "zeroWaste": "Zero Waste",
+    "chocolate": "Schokolade",
+    "homeLiving": "Wohnen & Leben"
+  },
+  "fairBadges": {
+    "fairtrade": "Fairtrade",
+    "wfto": "WFTO",
+    "bcorp": "B Corp",
+    "organic": "Bio / Organic"
+  },
+  "socialPlatforms": {
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "twitter": "X (Twitter)",
+    "linkedin": "LinkedIn",
+    "pinterest": "Pinterest",
+    "other": "Andere"
+  },
+  "sponsorship": {
+    "basic": {
+      "label": "Basis",
+      "description": "Analysen & Einblicke zu deinem Laden — ganz ohne Sponsoring.",
+      "features": [
+        "Zugriff auf die Insights-Übersicht",
+        "Aufrufe, Herkunft & Suchanfragen im Blick",
+        "Kein Sponsoring: kein Badge, keine Bevorzugung in Ergebnislisten"
+      ]
+    },
+    "plus": {
+      "label": "Plus",
+      "description": "Insights plus spürbar bessere Platzierung für aktive Läden.",
+      "features": [
+        "Alles aus Basis",
+        "\"Gesponsert\"-Badge auf deinem Eintrag",
+        "Deutlich höhere Platzierung in Ergebnislisten",
+        "Bevorzugte Anzeige auf der Startseite"
+      ]
+    },
+    "top": {
+      "label": "Top",
+      "description": "Maximale Sichtbarkeit für dein Geschäft.",
+      "features": [
+        "Alles aus Plus",
+        "Höchste Priorität in Ergebnislisten",
+        "Detaillierte Herkunfts- & Suchanfragen-Insights"
+      ]
+    }
+  },
+  "legal": {
+    "bindingNotice": "Diese Seite ist auch auf Englisch verfügbar. Rechtlich maßgeblich ist ausschließlich die deutsche Fassung."
+  },
+  "sponsoringPlans": {
+    "currentPlan": "Aktueller Plan: {plan}",
+    "status": "Status: {status}",
+    "nextCharge": "nächste Abbuchung: {date}",
+    "cancel": "Kündigen",
+    "cancelConfirm": "Sponsoring wirklich kündigen? Die Bevorzugung entfällt sofort.",
+    "cancelFailed": "Kündigung fehlgeschlagen.",
+    "unknownError": "Unbekannter Fehler.",
+    "startError": "Fehler beim Starten des Sponsorings.",
+    "noCheckoutLink": "Kein Bezahllink erhalten. Bitte später erneut versuchen.",
+    "promoCodeLabel": "Rabattcode (optional)",
+    "promoCodePlaceholder": "z. B. SOMMER25",
+    "perMonth": "/ Monat",
+    "currentPlanBadge": "Aktueller Plan",
+    "switchFirst": "Erst kündigen zum Wechseln",
+    "subscribe": "Abo abschließen",
+    "status_incomplete": "Zahlung ausstehend",
+    "status_active": "Aktiv",
+    "status_past_due": "Zahlung fehlgeschlagen – wird erneut versucht",
+    "status_canceled": "Gekündigt"
+  },
+  "filterPanel": {
+    "radiusLabel": "Radius: {radius} km",
+    "categoryLabel": "Kategorie",
+    "badgesLabel": "Zertifizierungen"
+  },
+  "storeForm": {
+    "categoriesLabel": "Kategorien",
+    "badgesLabel": "Fair-Trade-Siegel"
+  },
+  "home": {
+    "heroTitle": "Entdecke Fairtrade Läden & Weltläden in deiner Nähe",
+    "heroSubtitle": "Nachhaltiger Konsum leicht gemacht. Finde zertifizierte Fairtrade-Geschäfte, stöbere in lokalen Produkten und lies echte Bewertungen aus der Community.",
+    "exploreMap": "Karte erkunden",
+    "addStore": "Laden hinzufügen",
+    "statsStoresLabel": "Läden in Deutschland",
+    "statsCertificationsLabel": "Fairtrade-Zertifizierungen",
+    "statsCommunityLabel": "Community-getrieben",
+    "featuredHeading": "Empfohlene Läden",
+    "featuredSubheading": "Handverlesene Weltläden und Fairtrade-Shops in ganz Deutschland",
+    "showAll": "Alle anzeigen →",
+    "ctaHeading": "Kennst du einen Fairtrade-Laden?",
+    "ctaBody": "Hilf uns, die Plattform zu vergrößern, indem du nachhaltige Shops aus deiner Region hinzufügst.",
+    "ctaButton": "Laden eintragen"
+  },
+  "admin": {
+    "nav": {
+      "users": "Nutzer",
+      "moderation": "Moderation",
+      "auditLog": "Audit-Log",
+      "settings": "Einstellungen",
+      "billing": "Abrechnung",
+      "sponsoring": "Sponsoring",
+      "promoCodes": "Aktionscodes",
+      "notificationSettings": "Benachrichtigungen"
+    },
+    "titles": {
+      "users": "Nutzerverwaltung",
+      "moderation": "Moderation",
+      "auditLog": "Audit-Log",
+      "billing": "Abrechnungseinstellungen",
+      "sponsoring": "Sponsoring-Verwaltung",
+      "promoCodes": "Aktionscodes",
+      "notificationSettings": "Benachrichtigungseinstellungen"
+    }
+  }
+}

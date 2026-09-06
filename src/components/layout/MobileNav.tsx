@@ -1,22 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Compass, Heart, Search, User } from "lucide-react";
+import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
-const links = [
-  { href: "/explore", icon: Compass, label: "Entdecken" },
-  { href: "/search", icon: Search, label: "Suche" },
-  { href: "/me/saved", icon: Heart, label: "Gespeichert" },
-  { href: "/about", icon: User, label: "Über uns" },
-];
-
 export function MobileNav() {
+  const t = useTranslations("mobileNav");
   const pathname = usePathname();
 
+  const links = [
+    { href: "/explore", icon: Compass, label: t("explore") },
+    { href: "/search", icon: Search, label: t("search") },
+    { href: "/me/saved", icon: Heart, label: t("saved") },
+    { href: "/about", icon: User, label: t("about") },
+  ] as const;
+
   return (
-    <nav aria-label="Mobile Navigation" className="fixed bottom-0 left-0 right-0 z-50 border-t border-sage/10 bg-surface md:hidden">
+    <nav aria-label={t("ariaLabel")} className="fixed bottom-0 left-0 right-0 z-50 border-t border-sage/10 bg-surface md:hidden">
       <div className="flex justify-around py-2">
         {links.map(({ href, icon: Icon, label }) => {
           const isActive = pathname === href || pathname?.startsWith(`${href}/`);

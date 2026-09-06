@@ -2,7 +2,7 @@
 // path: src/components/store/ProductManagePanel.tsx
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Loader2, Pencil, Trash2, PlusCircle, Package, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

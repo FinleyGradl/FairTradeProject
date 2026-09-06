@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import Image from "next/image";
 import { Check, Loader2, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

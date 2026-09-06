@@ -2,7 +2,7 @@
 // path: src/components/store/ProductSuggestionVoteWidget.tsx
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { ThumbsUp, Flag, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductSuggestionDiffList } from "@/components/store/ProductSuggestionDiffList";

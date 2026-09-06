@@ -23,7 +23,7 @@ export function ProductSuggestionDiffList({
 }: ProductSuggestionDiffListProps) {
   if (type === "delete") {
     return (
-      <p className="flex items-center gap-2 text-sm text-red-700">
+      <p className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
         <Trash2 className="h-3.5 w-3.5 shrink-0" />
         Vorschlag: <span className="font-medium">„{productName}“</span> entfernen
       </p>

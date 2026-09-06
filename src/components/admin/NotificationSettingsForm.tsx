@@ -68,7 +68,7 @@ export function NotificationSettingsForm({
 
   return (
     <div className="space-y-6">
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">{error}</p>}
 
       {GROUPS.filter((g) => !g.adminOnly || isAdmin).map((group) => (
         <Card key={group.title}>
@@ -102,7 +102,7 @@ export function NotificationSettingsForm({
         )}
         {!saving && saved && (
           <>
-            <Check className="h-4 w-4 text-sage-600" /> Gespeichert
+            <Check className="h-4 w-4 text-sage-600 dark:text-sage-400" /> Gespeichert
           </>
         )}
       </div>

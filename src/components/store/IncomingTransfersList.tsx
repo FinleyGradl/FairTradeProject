@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -46,7 +46,7 @@ export function IncomingTransfersList({ transfers }: { transfers: IncomingTransf
 
   return (
     <div className="space-y-3">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {items.map((t) => (
         <div
           key={t.token}

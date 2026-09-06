@@ -119,10 +119,10 @@ export function InsightsCharts({ storeSlug }: { storeSlug: string }) {
         ))}
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-400">{error}</p>}
 
       {!data && !error && (
-        <div className="flex justify-center py-16 text-sage">
+        <div className="flex justify-center py-16 text-sage dark:text-sage-300">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       )}
@@ -133,7 +133,7 @@ export function InsightsCharts({ storeSlug }: { storeSlug: string }) {
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sage-100">
-                  <Eye className="h-5 w-5 text-sage" />
+                  <Eye className="h-5 w-5 text-sage dark:text-sage-300" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-earth">{data.totalViews}</p>
@@ -144,7 +144,7 @@ export function InsightsCharts({ storeSlug }: { storeSlug: string }) {
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sage-100">
-                  <Users className="h-5 w-5 text-sage" />
+                  <Users className="h-5 w-5 text-sage dark:text-sage-300" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-earth">{data.uniqueVisitors}</p>
@@ -194,7 +194,7 @@ export function InsightsCharts({ storeSlug }: { storeSlug: string }) {
           <Card>
             <CardHeader>
               <CardTitle className={cn("flex items-center gap-2 text-base")}>
-                <Search className="h-4 w-4 text-sage" /> Suchanfragen
+                <Search className="h-4 w-4 text-sage dark:text-sage-300" /> Suchanfragen
               </CardTitle>
             </CardHeader>
             <CardContent>

@@ -112,7 +112,7 @@ export function CoverImageUploader({
         )}
       </div>
       <p className="mt-1 text-xs text-earth/50">JPG, PNG oder WebP, max. 5 MB.</p>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

@@ -17,7 +17,7 @@ export function OpeningHoursTable({ hours, className }: OpeningHoursTableProps) 
             key={row.day}
             className={cn(
               "border-b border-sage/10 last:border-0",
-              row.isToday && "font-semibold text-sage"
+              row.isToday && "font-semibold text-sage dark:text-sage-300"
             )}
           >
             <td className="py-2 pr-4">{row.day}</td>

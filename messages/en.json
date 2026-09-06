@@ -1,0 +1,200 @@
+{
+  "metadata": {
+    "siteName": "FairFind",
+    "defaultTitle": "FairFind — Discover Fair Trade Stores",
+    "defaultDescription": "Find fair-trade stores near you. Browse ethical shops, products, and reviews across Germany."
+  },
+  "common": {
+    "skipToContent": "Skip to main content",
+    "loading": "Loading …",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "nav": {
+    "ariaMain": "Main navigation",
+    "explore": "Explore",
+    "search": "Search",
+    "addStore": "Add store"
+  },
+  "mobileNav": {
+    "ariaLabel": "Mobile navigation",
+    "explore": "Explore",
+    "search": "Search",
+    "saved": "Saved",
+    "about": "About"
+  },
+  "footer": {
+    "ariaLabel": "Footer navigation",
+    "tagline": "Discover fair-trade stores and world shops near you. Sustainable shopping across Germany.",
+    "discoverHeading": "Explore",
+    "exploreStores": "Browse stores",
+    "search": "Search",
+    "addStore": "Add store",
+    "categoriesHeading": "Categories",
+    "categoryFashion": "Fashion & Clothing",
+    "categoryGrocery": "Grocery",
+    "categoryCoffee": "Coffee & Tea",
+    "aboutHeading": "About",
+    "ourMission": "Our mission",
+    "whatIsFairTrade": "What is fair trade?",
+    "legalHeading": "Legal",
+    "impressum": "Legal notice",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "accessibility": "Accessibility",
+    "copyright": "© {year} FairFind — Prototype"
+  },
+  "languageSwitcher": {
+    "label": "Change language",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "categories": {
+    "grocery": "Grocery",
+    "coffeeTea": "Coffee & Tea",
+    "clothing": "Clothing",
+    "gifts": "Gifts",
+    "zeroWaste": "Zero Waste",
+    "chocolate": "Chocolate",
+    "homeLiving": "Home & Living"
+  },
+  "fairBadges": {
+    "fairtrade": "Fairtrade",
+    "wfto": "WFTO",
+    "bcorp": "B Corp",
+    "organic": "Organic"
+  },
+  "socialPlatforms": {
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "twitter": "X (Twitter)",
+    "linkedin": "LinkedIn",
+    "pinterest": "Pinterest",
+    "other": "Other"
+  },
+  "sponsorship": {
+    "basic": {
+      "label": "Basic",
+      "description": "Analytics & insights for your store — no sponsoring included.",
+      "features": [
+        "Access to the insights overview",
+        "Track views, origin & search queries",
+        "No sponsoring: no badge, no boost in results"
+      ]
+    },
+    "plus": {
+      "label": "Plus",
+      "description": "Insights plus a noticeably better placement for active stores.",
+      "features": [
+        "Everything in Basic",
+        "\"Sponsored\" badge on your listing",
+        "Significantly higher placement in results",
+        "Featured placement on the homepage"
+      ]
+    },
+    "top": {
+      "label": "Top",
+      "description": "Maximum visibility for your business.",
+      "features": [
+        "Everything in Plus",
+        "Highest priority in results",
+        "Detailed origin & search-query insights"
+      ]
+    }
+  },
+  "legal": {
+    "bindingNotice": "Only the German version of this page is legally binding."
+  },
+  "legalTitles": {
+    "impressum": "Legal Notice",
+    "datenschutz": "Privacy Policy",
+    "nutzungsbedingungen": "Terms of Use",
+    "barrierefreiheit": "Accessibility Statement"
+  },
+  "sponsoringPlans": {
+    "currentPlan": "Current plan: {plan}",
+    "status": "Status: {status}",
+    "nextCharge": "next charge: {date}",
+    "cancel": "Cancel",
+    "cancelConfirm": "Really cancel sponsoring? The boost will end immediately.",
+    "cancelFailed": "Cancellation failed.",
+    "unknownError": "Unknown error.",
+    "startError": "Error starting the sponsoring.",
+    "noCheckoutLink": "No checkout link received. Please try again later.",
+    "promoCodeLabel": "Promo code (optional)",
+    "promoCodePlaceholder": "e.g. SUMMER25",
+    "perMonth": "/ month",
+    "currentPlanBadge": "Current plan",
+    "switchFirst": "Cancel first to switch",
+    "subscribe": "Subscribe",
+    "status_incomplete": "Payment pending",
+    "status_active": "Active",
+    "status_past_due": "Payment failed – retrying",
+    "status_canceled": "Canceled"
+  },
+  "filterPanel": {
+    "radiusLabel": "Radius: {radius} km",
+    "categoryLabel": "Category",
+    "badgesLabel": "Certifications"
+  },
+  "storeForm": {
+    "categoriesLabel": "Categories",
+    "badgesLabel": "Fair trade seals"
+  },
+  "aboutPage": {
+    "metaTitle": "About FairFind – Our mission for sustainable consumption",
+    "metaDescription": "FairFind is the community directory for fair-trade stores and world shops in Germany. Learn what fair trade means and how our platform works.",
+    "title": "About FairFind",
+    "intro": "FairFind is a location-based directory of fair-trade stores and world shops. We help conscious consumers discover ethical businesses, browse products, and support companies that prioritize fair wages and sustainable practices.",
+    "fairTradeHeading": "What is fair trade?",
+    "fairTradeBody": "Fair trade is a trading partnership based on dialogue, transparency, and respect that seeks greater equity in international trade. It contributes to sustainable development by offering better trading conditions to, and securing the rights of, marginalized producers and workers.",
+    "howItWorksHeading": "How FairFind works",
+    "step1Title": "Discover",
+    "step1Body": "Browse stores on the map or search by name, category, or product.",
+    "step2Title": "Save & share",
+    "step2Body": "Save your favorite stores and share them with friends.",
+    "step3Title": "Contribute",
+    "step3Body": "Add new stores or take ownership of a listing to help keep the directory up to date.",
+    "ctaHeading": "Ready to explore?",
+    "ctaButton": "Find fair-trade stores near you"
+  },
+  "home": {
+    "heroTitle": "Discover fair trade stores & world shops near you",
+    "heroSubtitle": "Sustainable shopping made easy. Find certified fair-trade stores, browse local products, and read genuine reviews from the community.",
+    "exploreMap": "Explore the map",
+    "addStore": "Add store",
+    "statsStoresLabel": "Stores across Germany",
+    "statsCertificationsLabel": "Fair-trade certifications",
+    "statsCommunityLabel": "Community-driven",
+    "featuredHeading": "Featured stores",
+    "featuredSubheading": "Hand-picked world shops and fair-trade stores across Germany",
+    "showAll": "Show all →",
+    "ctaHeading": "Know a fair trade store?",
+    "ctaBody": "Help us grow the platform by adding sustainable shops from your area.",
+    "ctaButton": "Add a store"
+  },
+  "admin": {
+    "nav": {
+      "users": "Users",
+      "moderation": "Moderation",
+      "auditLog": "Audit log",
+      "settings": "Settings",
+      "billing": "Billing",
+      "sponsoring": "Sponsoring",
+      "promoCodes": "Promo codes",
+      "notificationSettings": "Notifications"
+    },
+    "titles": {
+      "users": "User management",
+      "moderation": "Moderation",
+      "auditLog": "Audit log",
+      "billing": "Billing settings",
+      "sponsoring": "Sponsoring management",
+      "promoCodes": "Promo codes",
+      "notificationSettings": "Notification settings"
+    }
+  }
+}

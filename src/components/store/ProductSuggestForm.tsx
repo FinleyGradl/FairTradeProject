@@ -2,7 +2,7 @@
 // path: src/components/store/ProductSuggestForm.tsx
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Loader2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -112,7 +112,7 @@ export function ProductSuggestForm({ storeSlug, isSignedIn, existingProducts }: 
   ];
 
   return (
-    <div className="space-y-3 rounded-xl border border-sage/10 bg-white p-4">
+    <div className="space-y-3 rounded-xl border border-sage/10 bg-surface p-4">
       <div className="flex gap-2">
         {typeOptions.map((opt) => (
           <button
@@ -214,7 +214,7 @@ export function ProductSuggestForm({ storeSlug, isSignedIn, existingProducts }: 
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={handleSubmit} disabled={loading}>
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Vorschlag absenden"}

@@ -2,7 +2,7 @@
 // path: src/components/store/DeleteStoreCard.tsx
 
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -52,9 +52,9 @@ export function DeleteStoreCard({ storeSlug, storeName, isModerator }: DeleteSto
   }
 
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50/50">
+    <div className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/30">
       <div className="p-4">
-        <div className="flex items-center gap-2 text-red-700">
+        <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <h3 className="text-lg font-semibold">Danger Zone</h3>
         </div>
@@ -75,7 +75,7 @@ export function DeleteStoreCard({ storeSlug, storeName, isModerator }: DeleteSto
             Laden löschen
           </Button>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-red-200 pt-4">
+          <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-red-200 dark:border-red-800/40 pt-4">
             <div>
               <label htmlFor="confirmStoreName" className="mb-1 block text-sm font-medium text-earth">
                 Gib zur Bestätigung <strong>{storeName}</strong> ein
@@ -90,7 +90,7 @@ export function DeleteStoreCard({ storeSlug, storeName, isModerator }: DeleteSto
               />
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
             <div className="flex gap-2">
               <Button type="submit" variant="destructive" size="sm" disabled={!canSubmit}>

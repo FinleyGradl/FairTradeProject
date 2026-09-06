@@ -46,7 +46,7 @@ export function ChangeEmailForm({ hasPassword, currentEmail }: { hasPassword: bo
   if (sent) {
     return (
       <div className="flex items-start gap-3 rounded-lg bg-sage-50 p-4 text-sm text-earth">
-        <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-sage" />
+        <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-sage dark:text-sage-300" />
         <p>
           Bestätigungslink an <strong>{newEmail}</strong> gesendet. Deine E-Mail-Adresse ändert
           sich erst, sobald du den Link angeklickt hast.
@@ -85,7 +85,7 @@ export function ChangeEmailForm({ hasPassword, currentEmail }: { hasPassword: bo
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <Button type="submit" size="sm" disabled={loading}>
         {loading ? "Wird gesendet…" : "Bestätigungslink senden"}

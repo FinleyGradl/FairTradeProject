@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { ThumbsUp, Flag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
@@ -81,7 +81,7 @@ export function AttestationWidget({
   if (isOwnStore) return null;
 
   return (
-    <div className="rounded-xl border border-sage/10 bg-white p-5">
+    <div className="rounded-xl border border-sage/10 bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-medium text-earth">Ist dieser Laden aktuell &amp; legit?</p>
@@ -138,7 +138,7 @@ export function AttestationWidget({
         </div>
       )}
 
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

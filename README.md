@@ -13,18 +13,16 @@ up end to end — this is well past "read-only directory."
 
 ```bash
 # Install dependencies
-pnpm install   # or: npm install
+npm install   # or: npm install
 
 # Set up database and seed 10 Berlin stores
 cp .env.example .env   # see "Environment variables" below for what to fill in
-pnpm db:push
-pnpm db:seed
+npx prisma db push
 
-# Start dev server
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) — redirects to `/de` by
+default (see "Internationalization" below).
 
 ## What's included
 
@@ -43,20 +41,23 @@ Open [http://localhost:3000](http://localhost:3000).
 | | Community attestation (confirm/dispute → verification level) | ✅ |
 | **Engagement** | Reviews with owner replies, ratings, report/flag flow | ✅ |
 | | Save stores (server-side, per-account) | ✅ |
-| | Save individual products | 🔲 schema exists (`SavedProduct`), no API/UI yet |
+| | Save individual products (separate from browsing/managing store products, which is ✅ above) | 🔲 schema exists (`SavedProduct`), no API/UI yet |
 | **Monetization** | Sponsoring tiers via Mollie (subscriptions, webhooks, promo codes) | ✅ |
 | | Owner insights dashboard (page views, search impressions) | ✅ |
 | **Trust & Safety** | Moderation queues (stores, claims, reviews, photos, suggested edits) | ✅ |
 | | Trust score system, audit log | ✅ |
 | **Admin** | User management (roles), promo codes, audit log viewer, bulk store import | ✅ |
-| **Notifications** | Owner notified of new reviews / claim decisions / suggestion outcomes | 🔲 not built (see "Known gaps") |
-| **i18n / a11y** | Multi-language support, dark mode | 🔲 not built |
+| **Notifications** | Email notifications: claim & suggested-edit decisions, sponsorship events (started/canceled/payment failed, incl. invoices), moderation actions, report thresholds — admin-configurable opt-out settings | 🚧 partial — see "Known gaps" (no "new review on your store" email, no in-app notification center) |
+| **Dark mode** | System preference + manual toggle, SSR-safe (no flash) | ✅ |
+| **i18n** | German + English, `/de` and `/en` URL-prefixed routing via next-intl | 🚧 partial — see "Internationalization" |
+| **Accessibility** | WCAG 2.1 AA — see the published accessibility statement (`/barrierefreiheit`) | 🚧 partial — a handful of known issues tracked there |
 | **Ops** | Automated tests, CI pipeline, error tracking (Sentry etc.) | 🔲 not built |
 
 ## Tech stack
 
 - **Next.js 15** (App Router) + TypeScript, React 19
-- **Tailwind CSS** — sage green / cream design system
+- **Tailwind CSS** — sage green / cream design system, light + dark mode
+- **next-intl 4** — routing, translations, and locale-aware navigation for DE/EN
 - **Prisma 7** + SQLite (local) / PostgreSQL (production, via Docker)
 - **NextAuth 5 (beta)** — Credentials + Google OAuth, JWT sessions
 - **Leaflet** + OpenStreetMap — no API key required
@@ -67,29 +68,68 @@ Open [http://localhost:3000](http://localhost:3000).
 No test runner, CI config, or error-tracking SDK is set up yet — see "Known
 gaps" below.
 
+## Internationalization
+
+The UI is available in German (default) and English, URL-prefixed as `/de/...`
+and `/en/...` (next-intl, `localePrefix: "always"`). `/` redirects to the
+detected/stored locale.
+
+**Done:** routing & middleware (merged with the existing auth guard on
+`/me/*`), root layout & metadata per locale, header/footer/mobile nav,
+language switcher, categories/fair-trade badges/social platform names/
+sponsoring tiers wherever they're displayed, the homepage, the about page,
+and the legal pages (Impressum, Datenschutz, Nutzungsbedingungen,
+Barrierefreiheitserklärung — the German version stays the legally binding
+one, per a notice banner on both language versions).
+
+**Not yet done:** auth forms (login/register/forgot-password/reset-password/
+verify-email), the admin section's page bodies (user manager, audit log,
+promo codes, billing/sponsoring settings), store detail/search/explore/
+profile pages, and the `/me/*` account pages. `/kategorie/*` still uses
+German-only SEO slugs (`/mode`, `/lebensmittel`, …) — giving those localized
+slugs too would need next-intl's `pathnames` config, which is a separate SEO
+decision (one URL per language vs. a shared route) rather than a pure
+translation task.
+
+Translation strings live in `messages/de.json` / `messages/en.json`; the
+legal pages are the one exception, kept as separate
+`src/components/legal/*ContentDe.tsx` / `*ContentEn.tsx` components instead
+of JSON, since that much formatted prose is easier to maintain as JSX than
+as escaped JSON strings.
+
 ## Project structure
 
 ```
 src/
+├── i18n/
+│   ├── routing.ts                  # next-intl locale config (de/en, default de)
+│   ├── navigation.ts               # locale-aware Link/useRouter/usePathname/redirect
+│   └── request.ts                  # loads messages/*.json per request
+├── middleware.ts                   # next-intl locale resolution + existing auth guard
 ├── app/
-│   ├── page.tsx                    # Landing
-│   ├── explore/                    # List + map
-│   ├── search/                     # Unified search
-│   ├── kategorie/[slug]/           # Category landing pages
-│   ├── stores/[slug]/              # Store detail, edit, suggest-edit
-│   ├── add-store/                  # Add-store wizard
-│   ├── claim/[storeSlug]/          # Claim flow
-│   ├── transfers/[token]/          # Ownership transfer accept/decline
-│   ├── me/                         # Account area: saved, own stores, settings,
-│   │                                # per-store insights & sponsoring
-│   ├── admin/                      # Users, moderation, promo codes, audit log
-│   └── api/
+│   └── [locale]/
+│       ├── page.tsx                 # Landing
+│       ├── explore/                 # List + map
+│       ├── search/                  # Unified search
+│       ├── kategorie/[slug]/        # Category landing pages (German-only slugs)
+│       ├── stores/[slug]/           # Store detail, edit, suggest-edit
+│       ├── add-store/               # Add-store wizard
+│       ├── claim/[storeSlug]/       # Claim flow
+│       ├── transfers/[token]/       # Ownership transfer accept/decline
+│       ├── me/                      # Account area: saved, own stores, settings,
+│       │                            # per-store insights & sponsoring
+│       ├── admin/                   # Users, moderation, promo codes, audit log
+│       ├── impressum/, datenschutz/, nutzungsbedingungen/, barrierefreiheit/
+│       └── about/
+│   └── api/                        # NOT locale-prefixed
 │       ├── auth/                   # Register, verify-email, forgot/reset password
 │       ├── v1/                     # REST API (stores, reviews, photos, claims, ...)
 │       ├── admin/                  # Admin-only endpoints
 │       └── webhooks/mollie/        # Sponsorship payment webhooks
 ├── components/
 │   ├── store/                      # StoreCard, forms, galleries, badges, ...
+│   ├── legal/                      # Impressum/Datenschutz/Nutzungsbedingungen/
+│   │                                # Barrierefreiheit content (DE + EN) + binding-notice banner
 │   ├── moderation/                 # Moderation queues
 │   ├── admin/                      # Admin dashboards
 │   ├── map/, search/, auth/, profile/, insights/, sponsoring/, claim/
@@ -97,9 +137,13 @@ src/
 └── lib/
     ├── stores.ts, edit-suggestions.ts, ownership-transfer.ts, sponsorship.ts
     ├── trust.ts, audit.ts, promo-codes.ts
+    ├── category-labels.ts          # maps stored category values to translation keys
     ├── auth/, email/, validators/
-    ├── geo.ts, hours.ts, uploads.ts, rate-limit.ts
+    ├── geo.ts, hours.ts, uploads.ts, rate-limit.ts, theme.ts
     └── db.ts, utils.ts, constants.ts
+messages/
+├── de.json
+└── en.json
 ```
 
 ## Environment variables
@@ -119,6 +163,9 @@ this list drifts):
 | `IMPORT_API_TOKEN` | for bulk import | Protects `/api/v1/admin/import/stores` |
 | `ENABLE_PROMO_CODES` | optional | Enables the hardcoded dev promo code at checkout |
 | `DISABLE_EXTERNAL_GEOIP` | optional | Skips the external GeoIP lookup in `lib/geo-ip.ts` |
+
+No i18n-specific environment variables are needed — locale detection and
+storage are handled entirely by next-intl's middleware/cookie.
 
 ## Database
 
@@ -152,36 +199,53 @@ sync across processes.
 Routes that do server-side data fetching (store detail, category pages,
 saved stores, my stores, public profile) have route-level `loading.tsx`
 skeletons and `error.tsx` boundaries; everything else falls back to the
-global ones in `src/app/loading.tsx` / `src/app/error.tsx`.
+global ones in `src/app/[locale]/loading.tsx` / `src/app/[locale]/error.tsx`.
 
 ## Design
 
 - **Colors:** Sage green `#4A7C59`, cream `#FAF7F2`, earth brown `#5C4033`
 - **Font:** DM Sans
 - **Mobile:** Bottom navigation bar
-- No dark mode yet — `globals.css` only defines the light-mode tokens.
+- **Theme:** Light and dark mode, system preference by default, manual
+  toggle in the header, preference stored in a cookie (SSR-safe, no flash of
+  the wrong theme on load).
 
 ## Known gaps
 
 Things that are either half-built or not started, roughly in the order
 they're worth tackling:
 
-- **Notifications** — no `Notification` model and no emails for "new review
-  on your store", "your claim was approved/rejected", or "your suggested
-  edit was approved/rejected". Owners currently have to check the dashboard
-  manually to find out anything happened.
+- **Notifications** — a real email notification system exists
+  (`src/lib/notify.ts`, wired into 16 API routes): store owners get emailed
+  on claim and suggested-edit decisions and on sponsorship events (started,
+  canceled, payment failed — including invoice emails); admins/moderators
+  get emailed on new claims, new suggestions, and reports crossing a
+  threshold, with per-admin opt-out via the notification settings page.
+  What's genuinely missing: no email when someone leaves a new review on
+  your store, and no in-app notification center/bell — everything is
+  email-only today.
 - **Saved products** — `SavedProduct` exists in the Prisma schema but has no
-  API route or UI; only whole stores can be saved right now. Either finish
-  the feature or drop the model.
+  API route or UI; only whole stores can be saved right now (this is
+  distinct from browsing/managing a store's own products, which is fully
+  built). Either finish the feature or drop the model.
+- **i18n coverage** — core routing/navigation and several key surfaces
+  (nav, homepage, about, legal pages, categories/badges/sponsoring labels)
+  are translated; auth forms, admin page bodies, store detail/search/explore/
+  profile, and the `/me/*` account pages are still German-only. See
+  "Internationalization" above for the exact list.
+- **Accessibility** — per the published statement at `/barrierefreiheit`,
+  still open: the location-search results list isn't a proper combobox for
+  screen readers, the account/theme dropdown menus lack arrow-key navigation
+  and auto-close-on-tab-out, the fullscreen photo gallery lacks a complete
+  focus trap, user-generated content (photos, descriptions, reviews) isn't
+  guaranteed to have alt text, and dark-mode contrast hasn't been verified
+  with a contrast-checking tool yet.
 - **Tests** — no Jest/Vitest/Playwright setup, despite non-trivial business
   logic in `sponsorship.ts`, `ownership-transfer.ts`, `edit-suggestions.ts`,
   and `trust.ts` that would benefit from regression coverage.
 - **CI** — no `.github/workflows`; lint/typecheck/build only run locally.
 - **Error tracking** — no Sentry (or equivalent); `console.error` is the
-  only signal today, including in the new global `error.tsx`.
-- **Accessibility** — sparse `aria-*` coverage outside a handful of
-  components; worth an audit pass.
-- **i18n / dark mode** — German-only UI, light-mode-only design tokens.
+  only signal today, including in the global `error.tsx`.
 
 ## Production Deployment & Hosting
 

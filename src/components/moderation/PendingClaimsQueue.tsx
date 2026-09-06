@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ export function PendingClaimsQueue({ claims }: { claims: PendingClaim[] }) {
   return (
     <div className="space-y-4">
       {claims.map((claim) => (
-        <div key={claim.id} className="rounded-xl border border-sage/10 bg-white p-4">
+        <div key={claim.id} className="rounded-xl border border-sage/10 bg-surface p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <Link href={`/stores/${claim.store.slug}`} className="font-medium text-earth hover:underline">
@@ -51,7 +51,7 @@ export function PendingClaimsQueue({ claims }: { claims: PendingClaim[] }) {
               </p>
             </div>
             {claim.store.ownerUserId && (
-              <Badge variant="outline" className="border-amber-400 text-amber-700">
+              <Badge variant="outline" className="border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300">
                 Laden hat bereits Inhaber:in
               </Badge>
             )}

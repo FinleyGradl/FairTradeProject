@@ -54,9 +54,9 @@ export function DeleteAccountSection({ userEmail, hasPassword }: DeleteAccountSe
   }
 
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50/50">
+    <div className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50/50 dark:bg-red-950/30">
       <div className="p-4">
-        <div className="flex items-center gap-2 text-red-700">
+        <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <h3 className="text-lg font-semibold">Danger Zone</h3>
         </div>
@@ -77,7 +77,7 @@ export function DeleteAccountSection({ userEmail, hasPassword }: DeleteAccountSe
             Konto löschen
           </Button>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-red-200 pt-4">
+          <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-red-200 dark:border-red-800/40 pt-4">
             {hasPassword && (
               <div>
                 <label htmlFor="deletePassword" className="mb-1 block text-sm font-medium text-earth">
@@ -107,7 +107,7 @@ export function DeleteAccountSection({ userEmail, hasPassword }: DeleteAccountSe
               />
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
             <div className="flex gap-2">
               <Button type="submit" variant="destructive" size="sm" disabled={!canSubmit}>

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Star, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -119,7 +119,7 @@ export function ReviewForm({ storeSlug, isSignedIn, existingReview = null }: Rev
             type="button"
             variant="ghost"
             size="sm"
-            className="gap-1 text-earth/50 hover:text-red-600"
+            className="gap-1 text-earth/50 hover:text-red-600 hover:dark:text-red-400"
             onClick={handleDelete}
             disabled={deleting}
           >
@@ -132,7 +132,7 @@ export function ReviewForm({ storeSlug, isSignedIn, existingReview = null }: Rev
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-sage/10 bg-white p-4">
+    <div className="space-y-3 rounded-xl border border-sage/10 bg-surface p-4">
       <div>
         <p className="mb-1 text-sm font-medium text-earth">Deine Bewertung</p>
         <div className="flex gap-1">
@@ -149,7 +149,7 @@ export function ReviewForm({ storeSlug, isSignedIn, existingReview = null }: Rev
                 className={cn(
                   "h-6 w-6",
                   n <= (hoverRating || rating)
-                    ? "fill-amber-400 text-amber-400"
+                    ? "fill-amber-400 text-amber-400 dark:text-amber-300"
                     : "fill-none text-gray-300"
                 )}
               />
@@ -179,7 +179,7 @@ export function ReviewForm({ storeSlug, isSignedIn, existingReview = null }: Rev
           placeholder="Wie war dein Einkauf? Sortiment, Beratung, Preise…"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={handleSubmit} disabled={loading}>
           {loading ? (
@@ -198,7 +198,7 @@ export function ReviewForm({ storeSlug, isSignedIn, existingReview = null }: Rev
             type="button"
             size="sm"
             variant="ghost"
-            className="ml-auto gap-1 text-earth/50 hover:text-red-600"
+            className="ml-auto gap-1 text-earth/50 hover:text-red-600 hover:dark:text-red-400"
             onClick={handleDelete}
             disabled={deleting}
           >

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 import L from "leaflet";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import "leaflet/dist/leaflet.css";
 import type { MapStore } from "./StoreMap";
 
@@ -103,7 +103,7 @@ export default function StoreMapInner({
                 )}
                 <Link
                   href={`/stores/${store.slug}`}
-                  className="mt-1 inline-block text-sm text-sage underline"
+                  className="mt-1 inline-block text-sm text-sage dark:text-sage-300 underline"
                 >
                   View store →
                 </Link>

@@ -2,9 +2,10 @@
 // path: src/components/store/PhotoGallery.tsx
 
 import { useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Camera, Flag, Loader2, Trash2, X, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDialogA11y } from "@/lib/a11y";
 
 export interface GalleryPhoto {
   id: string;
@@ -109,11 +110,16 @@ export function PhotoGallery({
     return canManageStore || (Boolean(currentUserId) && photo.uploadedBy?.id === currentUserId);
   }
 
+  const closeLightbox = () => setOpenPhoto(null);
+  const lightboxPanelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(!!openPhoto, closeLightbox, lightboxPanelRef);
+  const dialogTitleId = "photo-lightbox-title";
+
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-xl font-semibold text-earth">
-          <Images className="h-5 w-5 text-sage" />
+          <Images className="h-5 w-5 text-sage dark:text-sage-300" />
           Galerie {photos.length > 0 ? `(${photos.length})` : ""}
         </h2>
         {isSignedIn ? (
@@ -133,7 +139,7 @@ export function PhotoGallery({
             Foto hinzufügen
           </Button>
         ) : (
-          <Link href="/login" className="text-sm text-sage hover:underline">
+          <Link href="/login" className="text-sm text-sage dark:text-sage-300 hover:underline">
             Anmelden, um Fotos hinzuzufügen
           </Link>
         )}
@@ -147,7 +153,7 @@ export function PhotoGallery({
         onChange={handleFileChange}
       />
 
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {photos.length === 0 ? (
         <p className="text-sm text-earth/60">
@@ -166,6 +172,7 @@ export function PhotoGallery({
               <img
                 src={photo.url}
                 alt={photo.caption ?? ""}
+                loading="lazy"
                 className="h-full w-full object-cover transition group-hover:scale-105"
               />
             </button>
@@ -176,15 +183,20 @@ export function PhotoGallery({
       {openPhoto && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setOpenPhoto(null)}
+          onClick={closeLightbox}
         >
           <div
-            className="relative max-h-full max-w-2xl overflow-hidden rounded-xl bg-white"
+            ref={lightboxPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={dialogTitleId}
+            className="relative max-h-full max-w-2xl overflow-hidden rounded-xl bg-surface"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
-              onClick={() => setOpenPhoto(null)}
+              onClick={closeLightbox}
+              autoFocus
               className="absolute right-2 top-2 z-10 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
               aria-label="Schließen"
             >
@@ -193,7 +205,7 @@ export function PhotoGallery({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={openPhoto.url} alt={openPhoto.caption ?? ""} className="max-h-[70vh] w-full object-contain" />
             <div className="flex items-center justify-between gap-2 p-3">
-              <div className="text-xs text-earth/60">
+              <div id={dialogTitleId} className="text-xs text-earth/60">
                 {openPhoto.caption && <p className="mb-0.5 text-sm text-earth/80">{openPhoto.caption}</p>}
                 Hochgeladen von {openPhoto.uploadedBy?.name ?? "Nutzer:in"}
               </div>

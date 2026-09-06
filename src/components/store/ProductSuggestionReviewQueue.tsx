@@ -2,7 +2,7 @@
 // path: src/components/store/ProductSuggestionReviewQueue.tsx
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Loader2, Check, X, MessageSquareText, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductSuggestionDiffList } from "@/components/store/ProductSuggestionDiffList";
@@ -60,7 +60,7 @@ export function ProductSuggestionReviewQueue({ storeSlug, suggestions }: Product
 
       <div className="mt-4 space-y-3">
         {items.map((item) => (
-          <div key={item.id} className="rounded-lg border border-sky-200/70 bg-white p-4">
+          <div key={item.id} className="rounded-lg border border-sky-200/70 bg-surface p-4">
             <p className="text-xs text-earth/50">
               Vorgeschlagen von {item.suggestedBy.name ?? item.suggestedBy.email}
             </p>

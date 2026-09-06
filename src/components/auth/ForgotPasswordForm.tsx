@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { MailCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,8 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
-        <MailCheck className="mx-auto h-10 w-10 text-sage" />
+      <div role="status" aria-live="polite" className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
+        <MailCheck className="mx-auto h-10 w-10 text-sage dark:text-sage-300" aria-hidden="true" />
         <h2 className="mt-3 font-semibold text-earth">E-Mail unterwegs</h2>
         <p className="mt-1 text-sm text-earth/70">
           Falls für <strong>{email}</strong> ein Konto existiert, erhältst du in Kürze einen
@@ -57,7 +57,7 @@ export function ForgotPasswordForm() {
       </Button>
 
       <p className="text-center text-sm text-earth/70">
-        <Link href="/login" className="font-medium text-sage hover:underline">
+        <Link href="/login" className="font-medium text-sage dark:text-sage-300 hover:underline">
           Zurück zum Login
         </Link>
       </p>

@@ -2,10 +2,11 @@
 
 import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FormError } from "@/components/ui/FormError";
 import { registerSchema } from "@/lib/validators/auth";
 
 export function RegisterForm() {
@@ -47,8 +48,8 @@ export function RegisterForm() {
 
   if (done) {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-sage" />
+      <div role="status" aria-live="polite" className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
+        <CheckCircle2 className="mx-auto h-10 w-10 text-sage dark:text-sage-300" aria-hidden="true" />
         <h2 className="mt-3 font-semibold text-earth">Fast geschafft!</h2>
         <p className="mt-1 text-sm text-earth/70">
           Wir haben dir eine Bestätigungs-E-Mail an <strong>{email}</strong> geschickt. Klicke
@@ -65,8 +66,19 @@ export function RegisterForm() {
           <label htmlFor="name" className="mb-1 block text-sm font-medium text-earth">
             Name
           </label>
-          <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-          {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name[0]}</p>}
+          <Input
+            id="name"
+            required
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "name-error" : undefined}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          {errors.name && (
+            <p id="name-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+              {errors.name[0]}
+            </p>
+          )}
         </div>
 
         <div>
@@ -78,10 +90,16 @@ export function RegisterForm() {
             type="email"
             required
             autoComplete="email"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email[0]}</p>}
+          {errors.email && (
+            <p id="email-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+              {errors.email[0]}
+            </p>
+          )}
         </div>
 
         <div>
@@ -93,21 +111,23 @@ export function RegisterForm() {
             type="password"
             required
             autoComplete="new-password"
+            aria-invalid={!!errors.password}
+            aria-describedby={errors.password ? "password-error" : "password-hint"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           {errors.password ? (
-            <p className="mt-1 text-xs text-red-600">{errors.password[0]}</p>
+            <p id="password-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+              {errors.password[0]}
+            </p>
           ) : (
-            <p className="mt-1 text-xs text-earth/50">
+            <p id="password-hint" className="mt-1 text-xs text-earth/50">
               Mind. 8 Zeichen, Groß- &amp; Kleinbuchstaben und eine Zahl.
             </p>
           )}
         </div>
 
-        {formError && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>
-        )}
+        <FormError>{formError}</FormError>
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Konto wird erstellt…" : "Konto erstellen"}
@@ -131,7 +151,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-earth/70">
         Schon ein Konto?{" "}
-        <Link href="/login" className="font-medium text-sage hover:underline">
+        <Link href="/login" className="font-medium text-sage dark:text-sage-300 hover:underline">
           Anmelden
         </Link>
       </p>

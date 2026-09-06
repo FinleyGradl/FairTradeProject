@@ -30,7 +30,7 @@ export function SavedStoresGrid({ initialStores }: { initialStores: StoreCardDat
             onClick={() => unsave(store.slug, store.id)}
             aria-label="Von der Merkliste entfernen"
             title="Von der Merkliste entfernen"
-            className="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-white text-red-500 shadow-sm hover:bg-red-50"
+            className="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-surface text-red-500 shadow-sm hover:bg-red-50 dark:border-red-800/40 dark:text-red-400 dark:hover:bg-red-950/40"
           >
             <Heart className="h-4 w-4 fill-current" />
           </button>

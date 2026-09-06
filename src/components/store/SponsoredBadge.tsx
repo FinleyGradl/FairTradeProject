@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  */
 export function SponsoredBadge({ className }: { className?: string }) {
   return (
-    <Badge variant="secondary" className={cn("gap-1 bg-amber-100 text-amber-800", className)}>
+    <Badge variant="secondary" className={cn("gap-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300", className)}>
       <Sparkles className="h-3 w-3" /> Gesponsert
     </Badge>
   );

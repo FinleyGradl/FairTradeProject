@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { FormEvent, useState } from "react";
+import { FormEvent, useId, useState } from "react";
 
 interface SearchBarProps {
   defaultValue?: string;
@@ -20,6 +20,7 @@ export function SearchBar({
 }: SearchBarProps) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
+  const inputId = useId();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -29,10 +30,14 @@ export function SearchBar({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={className}>
+    <form onSubmit={handleSubmit} className={className} role="search">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-earth/40" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-earth/40" aria-hidden="true" />
+        <label htmlFor={inputId} className="sr-only">
+          Suche
+        </label>
         <Input
+          id={inputId}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}

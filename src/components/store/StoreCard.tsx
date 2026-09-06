@@ -1,6 +1,7 @@
 // path: src/components/store/StoreCard.tsx
-import Link from "next/link";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "./RatingStars";
@@ -9,6 +10,7 @@ import { DistanceBadge } from "./DistanceBadge";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { SponsoredBadge } from "./SponsoredBadge";
 import { getOpenStatusLabel, isOpenNow, type StoreHourRow } from "@/lib/hours";
+import { categoryTranslationKey } from "@/lib/category-labels";
 import { cn } from "@/lib/utils";
 
 export interface StoreCardData {
@@ -35,9 +37,10 @@ interface StoreCardProps {
   className?: string;
 }
 
-export function StoreCard({ store, className }: StoreCardProps) {
+export async function StoreCard({ store, className }: StoreCardProps) {
   const open = store.hours ? isOpenNow(store.hours) : false;
   const statusLabel = store.hours ? getOpenStatusLabel(store.hours) : null;
+  const tCategories = await getTranslations("categories");
 
   return (
     <Link href={`/stores/${store.slug}`}>
@@ -89,7 +92,10 @@ export function StoreCard({ store, className }: StoreCardProps) {
           <FairBadges badges={store.fairBadges} />
           {store.categories.length > 0 && (
             <p className="mt-2 text-xs text-earth/50">
-              {store.categories.slice(0, 2).join(" · ")}
+              {store.categories
+                .slice(0, 2)
+                .map((c) => tCategories(categoryTranslationKey(c)))
+                .join(" · ")}
             </p>
           )}
         </CardContent>

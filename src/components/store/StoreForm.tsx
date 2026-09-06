@@ -1,15 +1,17 @@
 "use client";
 // src/components/store/StoreForm.tsx
 
-import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "@/i18n/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/store/LocationPicker";
 import { CoverImageUploader } from "@/components/store/CoverImageUploader";
 import { SocialLinkIcon } from "@/components/store/SocialLinkIcon";
 import { CATEGORIES, FAIR_BADGE_LABELS, SOCIAL_PLATFORMS, type SocialPlatform } from "@/lib/constants";
+import { categoryTranslationKey } from "@/lib/category-labels";
 import { getDayName } from "@/lib/hours";
 import { DEFAULT_CENTER } from "@/lib/geo";
 import { cn } from "@/lib/utils";
@@ -79,6 +81,10 @@ interface StoreFormProps {
 
 export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
   const router = useRouter();
+  const t = useTranslations("storeForm");
+  const tCategories = useTranslations("categories");
+  const tBadges = useTranslations("fairBadges");
+  const tSocial = useTranslations("socialPlatforms");
   const [values, setValues] = useState<StoreFormValues>(initialValues);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -172,7 +178,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <section className="space-y-4 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-4 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Grunddaten</h2>
 
         <div>
@@ -183,7 +189,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
             placeholder="Weltladen Musterstadt"
             required
           />
-          {fieldError("name") && <p className="mt-1 text-xs text-red-600">{fieldError("name")}</p>}
+          {fieldError("name") && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldError("name")}</p>}
         </div>
 
         <div>
@@ -197,12 +203,12 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
             placeholder="Was macht diesen Laden besonders? Sortiment, Herkunft der Produkte, Besonderheiten…"
           />
           {fieldError("description") && (
-            <p className="mt-1 text-xs text-red-600">{fieldError("description")}</p>
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldError("description")}</p>
           )}
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-earth">Kategorien</p>
+          <p className="mb-2 text-sm font-medium text-earth">{t("categoriesLabel")}</p>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
               <button
@@ -216,16 +222,16 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                     : "border-sage/30 text-earth/70 hover:bg-sage-50"
                 )}
               >
-                {c}
+                {tCategories(categoryTranslationKey(c))}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium text-earth">Fair-Trade-Siegel</p>
+          <p className="mb-2 text-sm font-medium text-earth">{t("badgesLabel")}</p>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(FAIR_BADGE_LABELS).map(([key, label]) => (
+            {Object.keys(FAIR_BADGE_LABELS).map((key) => (
               <button
                 key={key}
                 type="button"
@@ -237,7 +243,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                     : "border-sage/30 text-earth/70 hover:bg-sage-50"
                 )}
               >
-                {label}
+                {tBadges(key)}
               </button>
             ))}
           </div>
@@ -268,7 +274,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
         </div>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-4 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Adresse &amp; Standort</h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -280,7 +286,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
               required
             />
             {fieldError("addressLine") && (
-              <p className="mt-1 text-xs text-red-600">{fieldError("addressLine")}</p>
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldError("addressLine")}</p>
             )}
           </div>
           <div>
@@ -306,7 +312,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
         />
       </section>
 
-      <section className="space-y-4 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-4 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Kontakt</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
@@ -321,12 +327,12 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
               type="url"
               placeholder="https://…"
             />
-            {fieldError("website") && <p className="mt-1 text-xs text-red-600">{fieldError("website")}</p>}
+            {fieldError("website") && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldError("website")}</p>}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-earth">E-Mail</label>
             <Input value={values.email} onChange={(e) => update("email", e.target.value)} type="email" />
-            {fieldError("email") && <p className="mt-1 text-xs text-red-600">{fieldError("email")}</p>}
+            {fieldError("email") && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldError("email")}</p>}
           </div>
         </div>
 
@@ -335,7 +341,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
           <div className="space-y-2">
             {values.socialLinks.map((link, i) => (
               <div key={i} className="flex items-center gap-2">
-                <SocialLinkIcon platform={link.platform} className="h-4 w-4 shrink-0 text-sage" />
+                <SocialLinkIcon platform={link.platform} className="h-4 w-4 shrink-0 text-sage dark:text-sage-300" />
                 <select
                   value={link.platform}
                   onChange={(e) => updateSocialLink(i, { platform: e.target.value as SocialPlatform })}
@@ -343,7 +349,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                 >
                   {SOCIAL_PLATFORMS.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.label}
+                      {tSocial(p.id)}
                     </option>
                   ))}
                 </select>
@@ -357,7 +363,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
                 <button
                   type="button"
                   onClick={() => removeSocialLink(i)}
-                  className="shrink-0 rounded-lg p-2 text-earth/40 hover:bg-red-50 hover:text-red-600"
+                  className="shrink-0 rounded-lg p-2 text-earth/40 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                   aria-label="Profil entfernen"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -365,13 +371,13 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
               </div>
             ))}
             {fieldError("socialLinks") && (
-              <p className="text-xs text-red-600">{fieldError("socialLinks")}</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{fieldError("socialLinks")}</p>
             )}
             {values.socialLinks.length < 8 && (
               <button
                 type="button"
                 onClick={addSocialLink}
-                className="inline-flex items-center gap-1 rounded-lg border border-dashed border-sage/40 px-3 py-1.5 text-xs font-medium text-sage hover:bg-sage-50"
+                className="inline-flex items-center gap-1 rounded-lg border border-dashed border-sage/40 px-3 py-1.5 text-xs font-medium text-sage dark:text-sage-300 hover:bg-sage-50"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Profil hinzufügen
@@ -381,7 +387,7 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
         </div>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-sage/10 bg-white p-5">
+      <section className="space-y-3 rounded-xl border border-sage/10 bg-surface p-5">
         <h2 className="font-semibold text-earth">Öffnungszeiten</h2>
         <div className="space-y-2">
           {values.hours.map((h) => (
@@ -418,9 +424,9 @@ export function StoreForm({ mode, initialValues, storeSlug }: StoreFormProps) {
         </div>
       </section>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {success && (
-        <p className="flex items-center gap-1.5 text-sm text-sage">
+        <p className="flex items-center gap-1.5 text-sm text-sage dark:text-sage-300">
           <CheckCircle2 className="h-4 w-4" />
           {mode === "create" ? "Laden veröffentlicht — er ist jetzt im Verzeichnis sichtbar." : "Änderungen gespeichert."}
         </p>

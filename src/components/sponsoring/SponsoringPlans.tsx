@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,13 +19,6 @@ interface CurrentSponsorship {
   currentPeriodEnd: string | null;
 }
 
-const STATUS_LABEL: Record<SponsorshipStatus, string> = {
-  incomplete: "Zahlung ausstehend",
-  active: "Aktiv",
-  past_due: "Zahlung fehlgeschlagen – wird erneut versucht",
-  canceled: "Gekündigt",
-};
-
 export function SponsoringPlans({
   storeSlug,
   initialSponsorship,
@@ -32,6 +26,9 @@ export function SponsoringPlans({
   storeSlug: string;
   initialSponsorship: CurrentSponsorship | null;
 }) {
+  const t = useTranslations("sponsoringPlans");
+  const tSponsorship = useTranslations("sponsorship");
+  const locale = useLocale();
   const [sponsorship, setSponsorship] = useState(initialSponsorship);
   const [loadingTier, setLoadingTier] = useState<SponsorshipTierId | null>(null);
   const [canceling, setCanceling] = useState(false);
@@ -50,7 +47,7 @@ export function SponsoringPlans({
         body: JSON.stringify({ tier, promoCode: promoCode.trim() || undefined }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Fehler beim Starten des Sponsorings.");
+      if (!res.ok) throw new Error(data.error ?? t("startError"));
       if (data.redeemedPromo) {
         // 100%-off code: activated immediately, no Mollie checkout to redirect to.
         window.location.reload();
@@ -59,25 +56,25 @@ export function SponsoringPlans({
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
-        setError("Kein Bezahllink erhalten. Bitte später erneut versuchen.");
+        setError(t("noCheckoutLink"));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unbekannter Fehler.");
+      setError(e instanceof Error ? e.message : t("unknownError"));
       setLoadingTier(null);
     }
   }
 
   async function cancel() {
-    if (!confirm("Sponsoring wirklich kündigen? Die Bevorzugung entfällt sofort.")) return;
+    if (!confirm(t("cancelConfirm"))) return;
     setError(null);
     setCanceling(true);
     try {
       const res = await fetch(`/api/v1/stores/${storeSlug}/sponsoring`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Kündigung fehlgeschlagen.");
+      if (!res.ok) throw new Error(data.error ?? t("cancelFailed"));
       setSponsorship(data.sponsorship);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unbekannter Fehler.");
+      setError(e instanceof Error ? e.message : t("unknownError"));
     } finally {
       setCanceling(false);
     }
@@ -86,40 +83,47 @@ export function SponsoringPlans({
   return (
     <div>
       {sponsorship && sponsorship.status !== "canceled" && (
-        <Card className="mb-6 border-amber-200 bg-amber-50">
+        <Card className="mb-6 border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <p className="font-medium text-earth">
-                Aktueller Plan: {SPONSORSHIP_TIERS[sponsorship.tier].label}
+                {t("currentPlan", { plan: tSponsorship(`${sponsorship.tier}.label`) })}
               </p>
               <p className="text-sm text-earth/70">
-                Status: {STATUS_LABEL[sponsorship.status]}
+                {t("status", { status: t(`status_${sponsorship.status}`) })}
                 {sponsorship.currentPeriodEnd && sponsorship.status === "active" && (
-                  <> · nächste Abbuchung: {new Date(sponsorship.currentPeriodEnd).toLocaleDateString("de-DE")}</>
+                  <>
+                    {" · "}
+                    {t("nextCharge", {
+                      date: new Date(sponsorship.currentPeriodEnd).toLocaleDateString(
+                        locale === "de" ? "de-DE" : "en-US"
+                      ),
+                    })}
+                  </>
                 )}
               </p>
             </div>
             <Button variant="destructiveOutline" size="sm" onClick={cancel} disabled={canceling}>
-              {canceling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Kündigen"}
+              {canceling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("cancel")}
             </Button>
           </CardContent>
         </Card>
       )}
 
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
+        <p className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-400">{error}</p>
       )}
 
       {!hasActiveLike && (
         <div className="mb-4 max-w-xs">
           <label htmlFor="promo-code" className="mb-1 block text-xs text-earth/60">
-            Rabattcode (optional)
+            {t("promoCodeLabel")}
           </label>
           <Input
             id="promo-code"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
-            placeholder="z. B. SOMMER25"
+            placeholder={t("promoCodePlaceholder")}
           />
         </div>
       )}
@@ -132,25 +136,25 @@ export function SponsoringPlans({
             <Card key={tierId} className={cn(isCurrent && "border-sage ring-1 ring-sage")}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {tier.label}
-                  {tierId === "top" && <Sparkles className="h-4 w-4 text-amber-500" />}
+                  {tSponsorship(`${tierId}.label`)}
+                  {tierId === "top" && <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />}
                 </CardTitle>
-                <CardDescription>{tier.description}</CardDescription>
+                <CardDescription>{tSponsorship(`${tierId}.description`)}</CardDescription>
                 <p className="pt-2 text-2xl font-bold text-earth">
                   {tier.priceEuros.toFixed(2).replace(".", ",")} €
-                  <span className="text-sm font-normal text-earth/60"> / Monat</span>
+                  <span className="text-sm font-normal text-earth/60"> {t("perMonth")}</span>
                 </p>
               </CardHeader>
               <CardContent>
                 <ul className="mb-4 space-y-1.5 text-sm text-earth/80">
-                  {tier.features.map((f) => (
+                  {tSponsorship.raw(`${tierId}.features`).map((f: string) => (
                     <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sage" /> {f}
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sage dark:text-sage-300" /> {f}
                     </li>
                   ))}
                 </ul>
                 {isCurrent ? (
-                  <Badge variant="success">Aktueller Plan</Badge>
+                  <Badge variant="success">{t("currentPlanBadge")}</Badge>
                 ) : (
                   <Button
                     className="w-full"
@@ -161,9 +165,9 @@ export function SponsoringPlans({
                     {loadingTier === tierId ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : hasActiveLike ? (
-                      "Erst kündigen zum Wechseln"
+                      t("switchFirst")
                     ) : (
-                      "Abo abschließen"
+                      t("subscribe")
                     )}
                   </Button>
                 )}

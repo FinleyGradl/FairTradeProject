@@ -80,7 +80,7 @@ export function BillingSettingsForm({ initial }: { initial: BillingSettingsValue
 
   return (
     <div className="space-y-6">
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">{error}</p>}
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -168,7 +168,7 @@ export function BillingSettingsForm({ initial }: { initial: BillingSettingsValue
               value={values.invoiceFooterNote ?? ""}
               onChange={(e) => set("invoiceFooterNote", e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-sage/20 bg-white px-3 py-2 text-sm text-earth"
+              className="w-full rounded-lg border border-sage/20 bg-surface px-3 py-2 text-sm text-earth"
               placeholder="Erscheint klein unter jeder Rechnung."
             />
           </label>
@@ -180,7 +180,7 @@ export function BillingSettingsForm({ initial }: { initial: BillingSettingsValue
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Speichern"}
         </Button>
         {saved && !saving && (
-          <span className="flex items-center gap-1 text-sm text-sage-600">
+          <span className="flex items-center gap-1 text-sm text-sage-600 dark:text-sage-400">
             <Check className="h-4 w-4" /> Gespeichert
           </span>
         )}

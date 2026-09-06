@@ -1,6 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CATEGORIES, FAIR_BADGE_LABELS } from "@/lib/constants";
+import { categoryTranslationKey } from "@/lib/category-labels";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +25,15 @@ export function FilterPanel({
   onRadiusChange,
   className,
 }: FilterPanelProps) {
+  const t = useTranslations("filterPanel");
+  const tCategories = useTranslations("categories");
+  const tBadges = useTranslations("fairBadges");
+
   return (
     <div className={cn("space-y-4", className)}>
       <div>
         <label className="mb-2 block text-sm font-medium text-earth">
-          Radius: {radius} km
+          {t("radiusLabel", { radius })}
         </label>
         <input
           type="range"
@@ -40,42 +46,31 @@ export function FilterPanel({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-earth">Kategorie</p>
+        <p className="mb-2 text-sm font-medium text-earth">{t("categoryLabel")}</p>
         <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.map((cat) => {
-            const displayCat = {
-              "Grocery": "Lebensmittel",
-              "Coffee & Tea": "Kaffee & Tee",
-              "Clothing": "Mode",
-              "Gifts": "Geschenke",
-              "Zero Waste": "Zero Waste",
-              "Chocolate": "Schokolade",
-              "Home & Living": "Wohnen & Leben",
-            }[cat] || cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() =>
-                  onCategoryChange(selectedCategory === cat ? undefined : cat)
-                }
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() =>
+                onCategoryChange(selectedCategory === cat ? undefined : cat)
+              }
+            >
+              <Badge
+                variant={selectedCategory === cat ? "default" : "outline"}
+                className="cursor-pointer"
               >
-                <Badge
-                  variant={selectedCategory === cat ? "default" : "outline"}
-                  className="cursor-pointer"
-                >
-                  {displayCat}
-                </Badge>
-              </button>
-            );
-          })}
+                {tCategories(categoryTranslationKey(cat))}
+              </Badge>
+            </button>
+          ))}
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-earth">Zertifizierungen</p>
+        <p className="mb-2 text-sm font-medium text-earth">{t("badgesLabel")}</p>
         <div className="flex flex-wrap gap-1.5">
-          {Object.entries(FAIR_BADGE_LABELS).map(([key, label]) => (
+          {Object.keys(FAIR_BADGE_LABELS).map((key) => (
             <button
               key={key}
               type="button"
@@ -85,7 +80,7 @@ export function FilterPanel({
                 variant={selectedBadge === key ? "default" : "outline"}
                 className="cursor-pointer"
               >
-                {label}
+                {tBadges(key)}
               </Badge>
             </button>
           ))}

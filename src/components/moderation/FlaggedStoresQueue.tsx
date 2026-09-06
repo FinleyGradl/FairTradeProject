@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Check, X, Loader2, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,7 @@ export function FlaggedStoresQueue({ stores }: { stores: FlaggedStore[] }) {
   return (
     <div className="space-y-4">
       {stores.map((store) => (
-        <div key={store.id} className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+        <div key={store.id} className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-950/20 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <Link href={`/stores/${store.slug}`} className="font-medium text-earth hover:underline">
@@ -54,17 +54,17 @@ export function FlaggedStoresQueue({ stores }: { stores: FlaggedStore[] }) {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{store.confirmCount} Bestätigungen</Badge>
-              <Badge variant="outline" className="border-amber-400 text-amber-700">
+              <Badge variant="outline" className="border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300">
                 {store.disputeCount} Meldungen
               </Badge>
             </div>
           </div>
 
           {store.disputes.length > 0 && (
-            <ul className="mt-3 space-y-1.5 border-t border-amber-200/60 pt-3">
+            <ul className="mt-3 space-y-1.5 border-t border-amber-200/60 dark:border-amber-800/40 pt-3">
               {store.disputes.map((d, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-earth/80">
-                  <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                  <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                   <span>
                     <span className="font-medium">{d.userName ?? "Anonym"}:</span> {d.reason}
                   </span>

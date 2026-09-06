@@ -114,7 +114,7 @@ export function UserManager({
       </div>
 
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="mt-3 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">{error}</p>
       )}
 
       <Card className="mt-4">
@@ -123,10 +123,10 @@ export function UserManager({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sage/10 text-left text-xs uppercase tracking-wide text-earth/50">
-                  <th className="px-4 py-3 font-medium">Nutzer:in</th>
-                  <th className="px-4 py-3 font-medium">Rolle</th>
-                  <th className="px-4 py-3 font-medium">Superuser</th>
-                  <th className="px-4 py-3 font-medium">Registriert</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Nutzer:in</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Rolle</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Superuser</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Registriert</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,7 +160,7 @@ export function UserManager({
                             value={u.role}
                             disabled={savingId === u.id}
                             onChange={(e) => updateUser(u.id, { role: e.target.value })}
-                            className="h-9 rounded-lg border border-sage/20 bg-white px-2 text-sm text-earth disabled:opacity-50"
+                            className="h-9 rounded-lg border border-sage/20 bg-surface px-2 text-sm text-earth disabled:opacity-50"
                           >
                             {roles.map((r) => (
                               <option key={r} value={r}>

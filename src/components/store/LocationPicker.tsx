@@ -11,7 +11,7 @@ const LocationPickerInner = dynamic(() => import("./LocationPickerInner"), {
   ssr: false,
   loading: () => (
     <div className="flex h-full min-h-[280px] items-center justify-center rounded-xl bg-sage-50">
-      <Loader2 className="h-8 w-8 animate-spin text-sage" />
+      <Loader2 className="h-8 w-8 animate-spin text-sage dark:text-sage-300" />
     </div>
   ),
 });
@@ -101,7 +101,7 @@ export function LocationPicker({ value, onChange, className }: LocationPickerPro
       </div>
 
       {results.length > 0 && (
-        <ul className="mt-2 max-h-48 overflow-auto rounded-lg border border-sage/20 bg-white text-sm shadow-sm">
+        <ul className="mt-2 max-h-48 overflow-auto rounded-lg border border-sage/20 bg-surface text-sm shadow-sm">
           {results.map((r, i) => (
             <li key={i}>
               <button

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import Image from "next/image";
 import { Check, Loader2, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,8 +53,8 @@ export function TransferResponseCard({
 
   if (result === "accepted") {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
-        <Check className="mx-auto h-10 w-10 text-sage" />
+      <div className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
+        <Check className="mx-auto h-10 w-10 text-sage dark:text-sage-300" />
         <h1 className="mt-4 text-xl font-bold text-earth">Übertragung angenommen</h1>
         <p className="mt-2 text-earth/70">
           <span className="font-medium">{store.name}</span> gehört jetzt dir. Ein eventuell
@@ -73,7 +73,7 @@ export function TransferResponseCard({
 
   if (result === "declined") {
     return (
-      <div className="rounded-xl border border-sage/10 bg-white p-6 text-center">
+      <div className="rounded-xl border border-sage/10 bg-surface p-6 text-center">
         <h1 className="text-xl font-bold text-earth">Anfrage abgelehnt</h1>
         <p className="mt-2 text-earth/70">
           Du hast die Übertragung von <span className="font-medium">{store.name}</span> abgelehnt.
@@ -84,7 +84,7 @@ export function TransferResponseCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-sage/10 bg-white">
+    <div className="overflow-hidden rounded-xl border border-sage/10 bg-surface">
       <div className="relative h-36 bg-sage-100">
         {store.coverImage && (
           <Image src={store.coverImage} alt={store.name} fill className="object-cover" sizes="480px" />
@@ -110,7 +110,7 @@ export function TransferResponseCard({
           gekündigt.
         </p>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <div className="mt-5 flex gap-3">
           <Button onClick={() => respond("accept")} disabled={busy !== null} className="flex-1 gap-1">

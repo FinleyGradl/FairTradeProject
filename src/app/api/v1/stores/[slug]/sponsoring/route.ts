@@ -132,14 +132,24 @@ export async function DELETE(
   });
   if (owner) {
     await notifyUser(
-      owner.email,
+      { id: canceled.ownerUserId, email: owner.email },
       sponsorshipCanceledOwnerTemplate({
         storeName: store.name,
         tierLabel,
         activeUntil: canceled.currentPeriodEnd
           ? canceled.currentPeriodEnd.toLocaleDateString("de-DE")
           : null,
-      })
+      }),
+      {
+        inApp: {
+          type: "sponsorship_canceled",
+          title: `Sponsoring für „${store.name}“ gekündigt`,
+          body: canceled.currentPeriodEnd
+            ? `Bleibt aktiv bis ${canceled.currentPeriodEnd.toLocaleDateString("de-DE")}.`
+            : "Es wird nicht mehr verlängert.",
+          url: `/me/stores/${store.slug}/sponsoring`,
+        },
+      }
     );
   }
   await notifyModerators(
@@ -153,7 +163,13 @@ export async function DELETE(
       }.`,
       detailText: `Das ${tierLabel}-Sponsoring von „${store.name}“ wurde gekündigt.`,
       dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/sponsoring`,
-    })
+    }),
+    {
+      type: "moderation_alert",
+      title: `Sponsoring gekündigt: „${store.name}“`,
+      body: `Das ${tierLabel}-Sponsoring wurde gekündigt.`,
+      url: "/admin/sponsoring",
+    }
   );
 
   return NextResponse.json({ success: true, sponsorship: canceled });

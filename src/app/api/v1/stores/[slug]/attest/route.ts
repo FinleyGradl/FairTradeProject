@@ -48,7 +48,13 @@ export async function POST(
         detailHtml: `<strong>„${result.store.name}“</strong> hat genug Community-Disputes gesammelt und wurde aus der öffentlichen Liste genommen, bis ein:e Moderator:in entscheidet.`,
         detailText: `„${result.store.name}“ wurde per Community-Dispute zur Prüfung markiert.`,
         dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
-      })
+      }),
+      {
+        type: "moderation_alert",
+        title: `„${result.store.name}“ zur Prüfung gemeldet`,
+        body: "Per Community-Dispute zur Prüfung markiert und aus der öffentlichen Liste genommen.",
+        url: "/admin/moderation",
+      }
     );
   }
 

@@ -53,7 +53,13 @@ export async function POST(
           detailHtml: `Eine Bewertung zu <strong>„${review.product.name}“</strong> (${review.product.store.name}) hat die Melde-Schwelle (${PRODUCT_REVIEW_REPORT_THRESHOLD} Meldungen) erreicht und wartet auf Prüfung.`,
           detailText: `Eine Bewertung zu „${review.product.name}“ (${review.product.store.name}) hat die Melde-Schwelle erreicht.`,
           dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
-        })
+        }),
+        {
+          type: "moderation_alert",
+          title: `Produktbewertung bei „${review.product.store.name}“ mehrfach gemeldet`,
+          body: `Eine Bewertung zu „${review.product.name}“ hat die Melde-Schwelle erreicht.`,
+          url: "/admin/moderation",
+        }
       );
     }
   }

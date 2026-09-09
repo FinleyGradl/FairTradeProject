@@ -49,12 +49,15 @@ export async function PATCH(
 
   const suggestion = await prisma.productSuggestion.findUnique({
     where: { id },
-    include: { store: { select: { name: true, ownerUserId: true } }, suggestedBy: { select: { email: true } } },
+    include: {
+      store: { select: { name: true, slug: true, ownerUserId: true } },
+      suggestedBy: { select: { email: true } },
+    },
   });
   if (suggestion && suggestion.store.ownerUserId !== session.user.id && suggestion.suggestedBy) {
     const approved = parsed.data.action === "approve";
     await notifyUser(
-      suggestion.suggestedBy.email,
+      { id: suggestion.suggestedByUserId, email: suggestion.suggestedBy.email },
       contentModeratedTemplate({
         headline: approved
           ? `Dein Produktvorschlag für „${suggestion.store.name}“ wurde übernommen`
@@ -65,7 +68,19 @@ export async function PATCH(
         detailText: approved
           ? `Dein Produktvorschlag für „${suggestion.store.name}“ wurde übernommen.`
           : `Dein Produktvorschlag für „${suggestion.store.name}“ wurde abgelehnt.`,
-      })
+      }),
+      {
+        inApp: {
+          type: "suggestion_reviewed",
+          title: approved
+            ? `Dein Produktvorschlag für „${suggestion.store.name}“ wurde übernommen`
+            : `Dein Produktvorschlag für „${suggestion.store.name}“ wurde abgelehnt`,
+          body: approved
+            ? `Dein Vorschlag wurde geprüft und übernommen.`
+            : `Dein Vorschlag wurde geprüft und abgelehnt.`,
+          url: `/stores/${suggestion.store.slug}`,
+        },
+      }
     );
   }
 

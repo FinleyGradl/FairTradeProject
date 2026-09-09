@@ -17,6 +17,24 @@ enum UserRole {
   admin
 }
 
+// --- In-app notification center --------------------------------------------
+// One type per distinct "something happened" event a user can see in their
+// notification center (see lib/notifications.ts + NotificationBell.tsx).
+// Kept separate from NotificationCategory (lib/notification-categories.ts),
+// which governs admin/moderator *email opt-out* only — every in-app
+// notification is always recorded regardless of email preference.
+enum NotificationType {
+  new_review
+  content_hidden
+  suggestion_reviewed
+  claim_reviewed
+  store_moderated
+  sponsorship_canceled
+  sponsorship_payment_failed
+  invoice_issued
+  moderation_alert
+}
+
 enum StoreStatus {
   pending
   active
@@ -130,6 +148,7 @@ model User {
   transfersReceived OwnershipTransfer[] @relation("TransferRecipient")
   auditLogs         AuditLog[]          @relation("AuditActor")
   notificationPreference NotificationPreference?
+  notifications     Notification[]
 
   accounts             Account[]
   sessions             Session[]
@@ -729,8 +748,34 @@ model NotificationPreference {
   notifySponsorshipCanceled      Boolean @default(true)
   notifySponsorshipPaymentFailed Boolean @default(true)
 
+  // Not admin/moderator-only — any store owner can opt out of the "new
+  // review on your store" email via /me/settings. In-app notifications are
+  // unaffected by this (see lib/stores.ts upsertReview()).
+  notifyNewReviewOnStore Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// --- In-app notification center --------------------------------------------
+// A denormalized, pre-rendered feed row per user per event — title/body are
+// snapshotted at creation time (not re-derived from live data), so a
+// notification still reads correctly even if the underlying store/review/etc.
+// changes or is deleted later. See lib/notifications.ts.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  url       String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 // --- Billing / invoice settings (singleton) -------------------------------

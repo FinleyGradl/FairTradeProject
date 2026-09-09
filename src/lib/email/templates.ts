@@ -111,6 +111,34 @@ export function transferDeclinedTemplate(params: { storeName: string; toName: st
   return { html, text };
 }
 
+// --- New review on your store -----------------------------------------------
+// Sent to the store's owner (or, while unclaimed, its creator) the first
+// time someone reviews it — not on later edits of that same review, see
+// upsertReview() in lib/stores.ts. Gated by notifyNewReviewOnStore, set via
+// /me/settings (unlike the admin/moderator categories, this isn't
+// moderation — any store owner can opt out of it).
+export function newReviewOnStoreTemplate(params: {
+  storeName: string;
+  storeUrl: string;
+  reviewerName: string;
+  rating: number;
+  body: string;
+}) {
+  const { storeName, storeUrl, reviewerName, rating, body } = params;
+  const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+  const excerpt = body.length > 240 ? `${body.slice(0, 240)}…` : body;
+  const subject = `Neue Bewertung für „${storeName}“`;
+  const html = wrapper(
+    "Neue Bewertung erhalten",
+    `<p style="line-height:1.6;"><strong>${reviewerName}</strong> hat <strong>„${storeName}“</strong> mit <strong>${stars} (${rating}/5)</strong> bewertet.</p>
+     <p style="line-height:1.6;background:#FAF7F2;border-radius:8px;padding:12px;font-style:italic;">„${excerpt}“</p>
+     ${buttonHtml(storeUrl, "Bewertung ansehen")}
+     <p style="font-size:12px;color:#5C4033a0;margin-top:24px;">Du kannst öffentlich antworten oder, falls nötig, die Bewertung melden. Diese E-Mail lässt sich unter „Mein Konto“ abschalten.</p>`
+  );
+  const text = `${reviewerName} hat „${storeName}“ mit ${rating}/5 Sternen bewertet: „${excerpt}“ ${storeUrl}`;
+  return { subject, html, text };
+}
+
 // --- Moderation / admin notification emails --------------------------------
 // Sent to admins/moderators who opted in — see lib/notify.ts +
 // lib/notification-preferences.ts. Deliberately generic (one function for

@@ -4,11 +4,13 @@ import { Link } from "@/i18n/navigation";
 import { SearchBar } from "@/components/search/SearchBar";
 import { buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { HeaderNavLink } from "@/components/layout/HeaderNavLink";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { auth } from "@/auth";
 import { canModerate, getPendingModerationCount } from "@/lib/stores";
+import { getRecentNotifications } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 
 export async function Header() {
@@ -18,6 +20,15 @@ export async function Header() {
   const pendingModerationCount = canModerate(session?.user)
     ? await getPendingModerationCount()
     : 0;
+  // Rendered server-side so the bell shows the right badge immediately,
+  // instead of a flash of "0" before the client's first poll lands.
+  const { notifications: recentNotifications, unreadCount: initialUnreadCount } = session?.user
+    ? await getRecentNotifications(session.user.id)
+    : { notifications: [], unreadCount: 0 };
+  const initialNotifications = recentNotifications.map((n) => ({
+    ...n,
+    createdAt: n.createdAt.toISOString(),
+  }));
 
   return (
     <header className="sticky top-0 z-50 border-b border-sage/10 bg-cream/95 backdrop-blur">
@@ -43,6 +54,10 @@ export async function Header() {
           </Link>
           <LanguageSwitcher />
           <ThemeToggle />
+          <NotificationBell
+            initialNotifications={initialNotifications}
+            initialUnreadCount={initialUnreadCount}
+          />
           <UserMenu pendingModerationCount={pendingModerationCount} />
         </nav>
       </div>

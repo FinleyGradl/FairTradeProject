@@ -22,7 +22,7 @@ export default async function AdminPromoCodesPage() {
   const codes = await listPromoCodes();
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <>
       <h1 className="text-2xl font-bold text-earth">Promo-Codes</h1>
       <p className="mt-1 text-sm text-earth/70">
         Rabattcodes für Sponsoring-Abos. Ein Code mit 100% Rabatt aktiviert ein Sponsoring sofort,
@@ -39,6 +39,6 @@ export default async function AdminPromoCodesPage() {
           }))}
         />
       </div>
-    </div>
+    </>
   );
 }

@@ -23,7 +23,10 @@ export async function DELETE(
   const { reviewId } = await params;
   const review = await prisma.productReview.findUnique({
     where: { id: reviewId },
-    include: { product: { select: { name: true, store: { select: { name: true } } } }, user: { select: { email: true } } },
+    include: {
+      product: { select: { name: true, slug: true, store: { select: { name: true, slug: true } } } },
+      user: { select: { email: true } },
+    },
   });
   if (!review) {
     return NextResponse.json({ error: "Bewertung nicht gefunden." }, { status: 404 });
@@ -61,12 +64,20 @@ export async function DELETE(
   });
 
   await notifyUser(
-    review.user.email,
+    { id: review.userId, email: review.user.email },
     contentModeratedTemplate({
       headline: `Deine Bewertung zu „${review.product.name}“ wurde ausgeblendet`,
       detailHtml: `Ein:e Moderator:in hat deine Bewertung zu <strong>„${review.product.name}“</strong> (${review.product.store.name}) ausgeblendet, da sie gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.`,
       detailText: `Deine Bewertung zu „${review.product.name}“ wurde von der Moderation ausgeblendet.`,
-    })
+    }),
+    {
+      inApp: {
+        type: "content_hidden",
+        title: `Deine Bewertung zu „${review.product.name}“ wurde ausgeblendet`,
+        body: `Ein:e Moderator:in hat deine Bewertung ausgeblendet, da sie gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.`,
+        url: `/stores/${review.product.store.slug}/products/${review.product.slug}`,
+      },
+    }
   );
 
   return NextResponse.json({ success: true });

@@ -50,7 +50,13 @@ export async function POST(
           detailHtml: `Ein Foto bei <strong>„${photo.store.name}“</strong> hat die Melde-Schwelle (${PHOTO_REPORT_THRESHOLD} Meldungen) erreicht und wartet auf Prüfung.`,
           detailText: `Ein Foto bei „${photo.store.name}“ hat die Melde-Schwelle (${PHOTO_REPORT_THRESHOLD} Meldungen) erreicht.`,
           dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
-        })
+        }),
+        {
+          type: "moderation_alert",
+          title: `Foto bei „${photo.store.name}“ mehrfach gemeldet`,
+          body: `Hat die Melde-Schwelle (${PHOTO_REPORT_THRESHOLD} Meldungen) erreicht.`,
+          url: "/admin/moderation",
+        }
       );
     }
   }

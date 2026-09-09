@@ -48,7 +48,7 @@ export default async function ModerationPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <>
       <h1 className="text-2xl font-bold text-earth">Moderation</h1>
 
       <ModerationDashboard
@@ -138,6 +138,6 @@ export default async function ModerationPage() {
           })),
         }))}
       />
-    </div>
+    </>
   );
 }

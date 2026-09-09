@@ -50,7 +50,13 @@ export async function POST(
       detailHtml: `${session.user.name ?? session.user.email} hat einen Produktvorschlag für <strong>„${slug}“</strong> eingereicht, der auf Prüfung wartet.`,
       detailText: `${session.user.name ?? session.user.email} hat einen Produktvorschlag für „${slug}“ eingereicht.`,
       dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
-    })
+    }),
+    {
+      type: "moderation_alert",
+      title: `Neuer Produktvorschlag für „${slug}“`,
+      body: `${session.user.name ?? session.user.email} hat einen Produktvorschlag eingereicht.`,
+      url: "/admin/moderation",
+    }
   );
 
   return NextResponse.json({ success: true, suggestion: result.suggestion }, { status: 201 });

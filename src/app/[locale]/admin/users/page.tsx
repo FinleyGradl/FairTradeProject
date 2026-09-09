@@ -22,7 +22,7 @@ export default async function AdminUsersPage() {
   const { users, pagination } = await listUsers({ page: 1, limit: 25 });
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <>
       <h1 className="text-2xl font-bold text-earth">Nutzerverwaltung</h1>
       <p className="mt-1 text-sm text-earth/70">
         Rollen vergeben und Admins/Moderator:innen ernennen. Nur für Superuser sichtbar — der
@@ -41,6 +41,6 @@ export default async function AdminUsersPage() {
           currentUserId={session.user.id}
         />
       </div>
-    </div>
+    </>
   );
 }

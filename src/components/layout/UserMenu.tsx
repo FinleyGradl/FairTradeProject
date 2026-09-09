@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Heart, Settings, Store, ShieldCheck, Megaphone, Ticket, Users, ScrollText, Bell, Receipt } from "lucide-react";
+import { LogOut, User as UserIcon, Heart, Settings, Store, LayoutDashboard, Bell } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button"; 
 import { cn } from "@/lib/utils";
 import { useMenuA11y } from "@/lib/a11y";
@@ -40,6 +40,7 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
   }, [open]);
 
   const canModerate = session?.user?.role === "admin" || session?.user?.role === "moderator";
+  const hasAdminAccess = canModerate || session?.user?.isSuperuser === true;
   const pendingCount = canModerate ? pendingModerationCount : 0;
 
   if (status === "loading") {
@@ -127,6 +128,15 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
             <Store className="h-4 w-4" /> Meine Läden
           </Link>
           <Link
+            href="/me/notifications"
+            role="menuitem"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
+          >
+            <Bell className="h-4 w-4" /> Benachrichtigungen
+          </Link>
+          <Link
             href="/me/settings"
             role="menuitem"
             tabIndex={-1}
@@ -135,16 +145,16 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
           >
             <Settings className="h-4 w-4" /> Konto
           </Link>
-          {canModerate && (
+          {hasAdminAccess && (
             <Link
-              href="/admin/moderation"
+              href="/admin"
               role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
+              tabIndex={-1}
+              onClick={() => setOpen(false)}
               className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
             >
               <span className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" /> Moderation
+                <LayoutDashboard className="h-4 w-4" /> Admin-Dashboard
               </span>
               {pendingCount > 0 && (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 dark:bg-red-600 px-1 text-xs font-semibold text-white">
@@ -152,81 +162,6 @@ export function UserMenu({ pendingModerationCount = 0 }: { pendingModerationCoun
                 </span>
               )}
             </Link>
-          )}
-          {canModerate && (
-            <Link
-              href="/admin/notification-settings"
-              role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-            >
-              <Bell className="h-4 w-4" /> Benachrichtigungen
-            </Link>
-          )}
-          {session.user.role === "admin" && (
-            <>
-              <Link
-                href="/admin/sponsoring"
-                role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-              >
-                <Megaphone className="h-4 w-4" /> Sponsoring-Übersicht
-              </Link>
-              <Link
-                href="/admin/promo-codes"
-                role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-              >
-                <Ticket className="h-4 w-4" /> Promo-Codes
-              </Link>
-              <Link
-                href="/admin/audit-log"
-                role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-              >
-                <ScrollText className="h-4 w-4" /> Audit-Log
-              </Link>
-            </>
-          )}
-          {session.user.isSuperuser && (
-            <>
-              <Link
-                href="/admin/users"
-                role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-              >
-                <Users className="h-4 w-4" /> Nutzerverwaltung
-              </Link>
-              <Link
-                href="/admin/settings/billing"
-                role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-              >
-                <Receipt className="h-4 w-4" /> Rechnungs-Einstellungen
-              </Link>
-              {session.user.role !== "admin" && (
-                <Link
-                  href="/admin/audit-log"
-                  role="menuitem"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-earth hover:bg-sage-50"
-                >
-                  <ScrollText className="h-4 w-4" /> Audit-Log
-                </Link>
-              )}
-            </>
           )}
           <button
             role="menuitem"

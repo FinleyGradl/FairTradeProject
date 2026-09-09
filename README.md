@@ -47,7 +47,8 @@ default (see "Internationalization" below).
 | **Trust & Safety** | Moderation queues (stores, claims, reviews, photos, suggested edits) | ✅ |
 | | Trust score system, audit log | ✅ |
 | **Admin** | User management (roles), promo codes, audit log viewer, bulk store import | ✅ |
-| **Notifications** | Email notifications: claim & suggested-edit decisions, sponsorship events (started/canceled/payment failed, incl. invoices), moderation actions, report thresholds — admin-configurable opt-out settings | 🚧 partial — see "Known gaps" (no "new review on your store" email, no in-app notification center) |
+| **Notifications** | Email notifications: claim & suggested-edit decisions, new reviews on your store, sponsorship events (started/canceled/payment failed, incl. invoices), moderation actions, report thresholds — user- and admin-configurable opt-outs | ✅ |
+| | In-app notification center: header bell with unread badge, dropdown, full history at `/me/notifications` | ✅ |
 | **Dark mode** | System preference + manual toggle, SSR-safe (no flash) | ✅ |
 | **i18n** | German + English, `/de` and `/en` URL-prefixed routing via next-intl | 🚧 partial — see "Internationalization" |
 | **Accessibility** | WCAG 2.1 AA — see the published accessibility statement (`/barrierefreiheit`) | 🚧 partial — a handful of known issues tracked there |
@@ -136,6 +137,7 @@ src/
 │   └── ui/                         # Button, Card, Badge, Input, Skeleton, ...
 └── lib/
     ├── stores.ts, edit-suggestions.ts, ownership-transfer.ts, sponsorship.ts
+    ├── notify.ts, notifications.ts, notification-preferences.ts
     ├── trust.ts, audit.ts, promo-codes.ts
     ├── category-labels.ts          # maps stored category values to translation keys
     ├── auth/, email/, validators/
@@ -185,6 +187,27 @@ pnpm db:push && pnpm db:seed
 10 fair-trade stores across Berlin neighborhoods with products, reviews, and
 opening hours. Run `pnpm db:seed` to reset.
 
+## Notifications
+
+Two channels, sharing one call site (`src/lib/notify.ts`):
+
+- **Email** — store owners get emailed on claim/suggested-edit decisions, a
+  new review on their store (opt-out per user via `/me/settings`), and
+  sponsorship events (started/canceled/payment failed, incl. invoices);
+  admins/moderators get emailed on new claims, new suggestions, and reports
+  crossing a threshold (opt-out per admin via the notification settings
+  page).
+- **In-app** — every one of the above also writes a row to the
+  `Notification` table (`src/lib/notifications.ts`), surfaced via the bell
+  in the header (`NotificationBell.tsx`, polls every 45s) and the full
+  history at `/me/notifications`. `notifyUser`/`notifyModerators` take an
+  optional third `inApp` payload, so a single call site drives both
+  channels — email and in-app can be gated independently (e.g. the new-
+  review email respects the user's opt-out, the in-app row doesn't).
+
+No websocket/SSE — the bell is poll-based, which is fine at this scale but
+worth swapping for something push-based if usage grows.
+
 ## Rate limiting
 
 Auth endpoints (register, login, forgot-password, resend-verification,
@@ -215,15 +238,6 @@ global ones in `src/app/[locale]/loading.tsx` / `src/app/[locale]/error.tsx`.
 Things that are either half-built or not started, roughly in the order
 they're worth tackling:
 
-- **Notifications** — a real email notification system exists
-  (`src/lib/notify.ts`, wired into 16 API routes): store owners get emailed
-  on claim and suggested-edit decisions and on sponsorship events (started,
-  canceled, payment failed — including invoice emails); admins/moderators
-  get emailed on new claims, new suggestions, and reports crossing a
-  threshold, with per-admin opt-out via the notification settings page.
-  What's genuinely missing: no email when someone leaves a new review on
-  your store, and no in-app notification center/bell — everything is
-  email-only today.
 - **Saved products** — `SavedProduct` exists in the Prisma schema but has no
   API route or UI; only whole stores can be saved right now (this is
   distinct from browsing/managing a store's own products, which is fully

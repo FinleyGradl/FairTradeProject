@@ -62,16 +62,24 @@ export async function DELETE(
 
   const reviewAuthor = await prisma.review.findUnique({
     where: { id: reviewId },
-    include: { store: { select: { name: true } }, user: { select: { email: true } } },
+    include: { store: { select: { name: true, slug: true } }, user: { select: { email: true } } },
   });
   if (reviewAuthor) {
     await notifyUser(
-      reviewAuthor.user.email,
+      { id: reviewAuthor.userId, email: reviewAuthor.user.email },
       contentModeratedTemplate({
         headline: `Deine Bewertung zu „${reviewAuthor.store.name}“ wurde ausgeblendet`,
         detailHtml: `Ein:e Moderator:in hat deine Bewertung zu <strong>„${reviewAuthor.store.name}“</strong> ausgeblendet, da sie gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.`,
         detailText: `Deine Bewertung zu „${reviewAuthor.store.name}“ wurde von der Moderation ausgeblendet.`,
-      })
+      }),
+      {
+        inApp: {
+          type: "content_hidden",
+          title: `Deine Bewertung zu „${reviewAuthor.store.name}“ wurde ausgeblendet`,
+          body: "Ein:e Moderator:in hat deine Bewertung ausgeblendet, da sie gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.",
+          url: `/stores/${reviewAuthor.store.slug}`,
+        },
+      }
     );
   }
 

@@ -6,6 +6,9 @@ import { TRUST_SCORE_DELTAS, ATTESTATION_THRESHOLDS } from "@/lib/trust";
 import { computeRankingScore, cancelSponsorship, getActiveSponsorship } from "@/lib/sponsorship";
 import { deleteStoreCoverFileIfLocal, deleteStorePhotoFileIfLocal } from "@/lib/uploads";
 import { recordSearchImpressions } from "@/lib/analytics";
+import { notifyUser } from "@/lib/notify";
+import { newReviewOnStoreTemplate } from "@/lib/email/templates";
+import { shouldNotifyNewReview } from "@/lib/notification-preferences";
 import {
   SPONSORSHIP_TIERS,
   SPONSORSHIP_TIER_ORDER,
@@ -912,6 +915,11 @@ export async function upsertReview(
     return { error: "OWN_STORE" };
   }
 
+  const existing = await prisma.review.findUnique({
+    where: { storeId_userId: { storeId: store.id, userId } },
+    select: { id: true },
+  });
+
   const review = await prisma.review.upsert({
     where: { storeId_userId: { storeId: store.id, userId } },
     create: {
@@ -930,6 +938,43 @@ export async function upsertReview(
       status: "published",
     },
   });
+
+  // Only on the first submission — an edit of an existing review shouldn't
+  // re-notify the owner every time. "Responsible" mirrors isResponsible
+  // above: the confirmed owner, or the creator while still unclaimed.
+  if (!existing) {
+    const responsibleUserId = store.ownerUserId ?? store.createdById;
+    if (responsibleUserId) {
+      const [responsible, author] = await Promise.all([
+        prisma.user.findUnique({ where: { id: responsibleUserId }, select: { id: true, email: true } }),
+        prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+      ]);
+      if (responsible) {
+        const reviewerName = author?.name || "Ein:e Nutzer:in";
+        const storeUrl = `${process.env.NEXTAUTH_URL ?? ""}/stores/${store.slug}`;
+        const sendEmail = await shouldNotifyNewReview(responsible.id);
+        await notifyUser(
+          responsible,
+          newReviewOnStoreTemplate({
+            storeName: store.name,
+            storeUrl,
+            reviewerName,
+            rating: data.rating,
+            body: data.body,
+          }),
+          {
+            sendEmail,
+            inApp: {
+              type: "new_review",
+              title: `Neue Bewertung für „${store.name}“`,
+              body: `${reviewerName} hat ${data.rating}/5 Sternen vergeben.`,
+              url: `/stores/${store.slug}`,
+            },
+          }
+        );
+      }
+    }
+  }
 
   return { review };
 }
@@ -1187,7 +1232,7 @@ export async function listFlaggedStores() {
 export async function reviewFlaggedStore(
   storeId: string,
   action: "approve" | "reject",
-  adminUserId: string
+  _adminUserId: string
 ) {
   const store = await prisma.store.findUnique({ where: { id: storeId } });
   if (!store) return null;

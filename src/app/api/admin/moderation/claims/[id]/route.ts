@@ -39,13 +39,13 @@ export async function POST(
   });
 
   const [store, claimant] = await Promise.all([
-    prisma.store.findUnique({ where: { id: updated.storeId }, select: { name: true } }),
+    prisma.store.findUnique({ where: { id: updated.storeId }, select: { name: true, slug: true } }),
     prisma.user.findUnique({ where: { id: updated.userId }, select: { email: true } }),
   ]);
   if (store && claimant) {
     const approved = parsed.data.action === "approve";
     await notifyUser(
-      claimant.email,
+      { id: updated.userId, email: claimant.email },
       contentModeratedTemplate({
         headline: approved
           ? `Du bist jetzt Inhaber:in von „${store.name}“`
@@ -56,7 +56,19 @@ export async function POST(
         detailText: approved
           ? `Deine Anfrage für „${store.name}“ wurde bestätigt.`
           : `Deine Anfrage für „${store.name}“ wurde abgelehnt.`,
-      })
+      }),
+      {
+        inApp: {
+          type: "claim_reviewed",
+          title: approved
+            ? `Du bist jetzt Inhaber:in von „${store.name}“`
+            : `Deine Inhaberschafts-Anfrage für „${store.name}“ wurde abgelehnt`,
+          body: approved
+            ? "Deine Anfrage wurde bestätigt. Du kannst den Eintrag jetzt bearbeiten."
+            : "Deine Anfrage wurde abgelehnt.",
+          url: `/stores/${store.slug}`,
+        },
+      }
     );
   }
 

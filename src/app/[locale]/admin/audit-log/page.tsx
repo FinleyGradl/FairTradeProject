@@ -26,7 +26,7 @@ export default async function AuditLogPage() {
   const { entries, pagination } = await searchAuditLogs({ page: 1, limit: 25 });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <>
       <h1 className="text-2xl font-bold text-earth">Audit-Log</h1>
       <p className="mt-1 text-sm text-earth/70">
         Wer hat was bearbeitet, gelöscht oder moderiert — inklusive Sponsoring-Abschlüssen und
@@ -53,6 +53,6 @@ export default async function AuditLogPage() {
           entityTypes={[...AUDIT_ENTITY_TYPES]}
         />
       </div>
-    </div>
+    </>
   );
 }

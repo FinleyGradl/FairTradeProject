@@ -10,7 +10,9 @@ import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { ProfileNameForm } from "@/components/profile/ProfileNameForm";
 import { ChangeEmailForm } from "@/components/profile/ChangeEmailForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
+import { NewReviewEmailToggle } from "@/components/profile/NewReviewEmailToggle";
 import { DeleteAccountSection } from "@/components/profile/DeleteAccountSection";
+import { shouldNotifyNewReview } from "@/lib/notification-preferences";
 import { getLocale } from "next-intl/server";
 
 export const metadata: Metadata = { title: "Mein Konto" };
@@ -38,6 +40,8 @@ export default async function AccountSettingsPage() {
   if (!user) {
     return redirect({ href: "/login", locale });
   }
+
+  const notifyNewReview = await shouldNotifyNewReview(session.user.id);
 
   const fallbackInitial = (user.name ?? user.email).charAt(0).toUpperCase();
 
@@ -81,6 +85,15 @@ export default async function AccountSettingsPage() {
         </CardHeader>
         <CardContent>
           <ChangePasswordForm hasPassword={Boolean(user.password)} />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Benachrichtigungen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NewReviewEmailToggle initialEnabled={notifyNewReview} />
         </CardContent>
       </Card>
 

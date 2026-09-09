@@ -59,7 +59,13 @@ export async function POST(
           detailHtml: `Eine Bewertung bei <strong>„${review.store.name}“</strong> hat die Melde-Schwelle (${REVIEW_REPORT_THRESHOLD} Meldungen) erreicht und wartet auf Prüfung.`,
           detailText: `Eine Bewertung bei „${review.store.name}“ hat die Melde-Schwelle (${REVIEW_REPORT_THRESHOLD} Meldungen) erreicht.`,
           dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
-        })
+        }),
+        {
+          type: "moderation_alert",
+          title: `Bewertung bei „${review.store.name}“ mehrfach gemeldet`,
+          body: `Hat die Melde-Schwelle (${REVIEW_REPORT_THRESHOLD} Meldungen) erreicht.`,
+          url: "/admin/moderation",
+        }
       );
     }
   }

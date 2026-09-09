@@ -39,7 +39,7 @@ export default async function AdminSponsoringPage() {
   const { rows, stats } = await getAdminSponsorshipOverview();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <>
       <h1 className="text-2xl font-bold text-earth">Sponsoring-Übersicht</h1>
       <p className="mt-1 text-sm text-earth/70">
         Wer aktuell für welchen Laden ein Sponsoring-Abo hat, plus eine grobe
@@ -137,6 +137,6 @@ export default async function AdminSponsoringPage() {
           <p className="py-8 text-center text-sm text-earth/50">Noch keine Sponsorings.</p>
         )}
       </div>
-    </div>
+    </>
   );
 }

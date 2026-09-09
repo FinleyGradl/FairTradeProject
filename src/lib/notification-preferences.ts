@@ -43,3 +43,25 @@ export async function getRecipientsForCategory(category: NotificationCategory) {
     .filter((u) => (u.notificationPreference ? u.notificationPreference[category] : true))
     .map((u) => ({ id: u.id, email: u.email, name: u.name }));
 }
+
+/**
+ * Same opt-out-by-default shape as getRecipientsForCategory, but for a
+ * single ordinary user rather than the admin/moderator pool — e.g. whether
+ * a store owner wants the "new review on your store" email. A missing row
+ * means "on", same as everywhere else in this file.
+ */
+export async function shouldNotifyNewReview(userId: string): Promise<boolean> {
+  const pref = await prisma.notificationPreference.findUnique({
+    where: { userId },
+    select: { notifyNewReviewOnStore: true },
+  });
+  return pref ? pref.notifyNewReviewOnStore : true;
+}
+
+export async function setNotifyNewReview(userId: string, value: boolean) {
+  return prisma.notificationPreference.upsert({
+    where: { userId },
+    create: { userId, notifyNewReviewOnStore: value },
+    update: { notifyNewReviewOnStore: value },
+  });
+}

@@ -23,7 +23,7 @@ export default async function BillingSettingsPage() {
   const settings = await getPlatformSettings();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
+    <>
       <h1 className="text-2xl font-bold text-earth">Rechnungs-Einstellungen</h1>
       <p className="mt-1 text-sm text-earth/70">
         Diese Angaben erscheinen auf jeder Sponsoring-Rechnung. Nur für Superuser sichtbar. Eine
@@ -49,6 +49,6 @@ export default async function BillingSettingsPage() {
           }}
         />
       </div>
-    </div>
+    </>
   );
 }

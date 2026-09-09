@@ -43,7 +43,13 @@ export async function POST(
       detailHtml: `${session.user.name ?? session.user.email} möchte Inhaber:in von <strong>„${slug}“</strong> werden und wartet auf Prüfung.`,
       detailText: `${session.user.name ?? session.user.email} möchte Inhaber:in von „${slug}“ werden.`,
       dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
-    })
+    }),
+    {
+      type: "moderation_alert",
+      title: `Neue Inhaberschafts-Anfrage für „${slug}“`,
+      body: `${session.user.name ?? session.user.email} möchte Inhaber:in werden.`,
+      url: "/admin/moderation",
+    }
   );
 
   return NextResponse.json({ success: true, claim: result.claim }, { status: 201 });

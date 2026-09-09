@@ -20,7 +20,7 @@ export async function DELETE(
   const { slug, photoId } = await params;
   const store = await prisma.store.findUnique({
     where: { slug },
-    select: { id: true, name: true, ownerUserId: true, createdById: true },
+    select: { id: true, name: true, slug: true, ownerUserId: true, createdById: true },
   });
   if (!store) {
     return NextResponse.json({ error: "Laden nicht gefunden." }, { status: 404 });
@@ -60,12 +60,20 @@ export async function DELETE(
     });
     if (uploader) {
       await notifyUser(
-        uploader.email,
+        { id: photo.uploadedByUserId, email: uploader.email },
         contentModeratedTemplate({
           headline: `Dein Foto bei „${store.name}“ wurde entfernt`,
           detailHtml: `Ein:e Moderator:in hat ein von dir hochgeladenes Foto bei <strong>„${store.name}“</strong> entfernt, da es gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.`,
           detailText: `Dein Foto bei „${store.name}“ wurde von der Moderation entfernt.`,
-        })
+        }),
+        {
+          inApp: {
+            type: "content_hidden",
+            title: `Dein Foto bei „${store.name}“ wurde entfernt`,
+            body: "Ein:e Moderator:in hat das Foto entfernt, da es gegen unsere Richtlinien verstößt oder mehrfach gemeldet wurde.",
+            url: `/stores/${store.slug}`,
+          },
+        }
       );
     }
   }

@@ -47,7 +47,7 @@ export async function POST(
     if (responsible) {
       const approved = parsed.data.action === "approve";
       await notifyUser(
-        responsible.email,
+        { id: responsibleUserId, email: responsible.email },
         contentModeratedTemplate({
           headline: approved
             ? `„${updated.name}“ ist wieder öffentlich gelistet`
@@ -58,7 +58,19 @@ export async function POST(
           detailText: approved
             ? `„${updated.name}“ ist wieder öffentlich gelistet.`
             : `„${updated.name}“ wurde abgelehnt.`,
-        })
+        }),
+        {
+          inApp: {
+            type: "store_moderated",
+            title: approved
+              ? `„${updated.name}“ ist wieder öffentlich gelistet`
+              : `„${updated.name}“ wurde abgelehnt`,
+            body: approved
+              ? "Nach Prüfung durch ein:e Moderator:in ist der Laden wieder öffentlich gelistet."
+              : "Nach Prüfung durch ein:e Moderator:in wurde der Laden abgelehnt.",
+            url: `/stores/${updated.slug}`,
+          },
+        }
       );
     }
   }

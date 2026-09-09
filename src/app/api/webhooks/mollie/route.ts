@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       });
       const issuer = parseIssuerSnapshot(invoice.issuerSnapshot);
       await notifyUser(
-        owner.email,
+        { id: sub.ownerUserId, email: owner.email },
         invoiceEmailTemplate({
           invoiceNumber: formatInvoiceNumber(invoice),
           invoiceDate: invoice.createdAt.toLocaleDateString("de-DE"),
@@ -112,7 +112,15 @@ export async function POST(request: NextRequest) {
           amountGross: formatCents(invoice.amountGrossCents),
           isKleinunternehmer: invoice.isKleinunternehmer,
           issuer,
-        })
+        }),
+        {
+          inApp: {
+            type: "invoice_issued",
+            title: `Rechnung ${formatInvoiceNumber(invoice)} — ${store.name}`,
+            body: `${tierDefLabel}-Sponsoring, Zeitraum ${periodStart.toLocaleDateString("de-DE")} – ${periodEnd.toLocaleDateString("de-DE")}: ${formatCents(invoice.amountGrossCents)}.`,
+            url: `/me/stores/${store.slug}/sponsoring`,
+          },
+        }
       );
     }
 
@@ -169,7 +177,13 @@ export async function POST(request: NextRequest) {
               detailHtml: `<strong>„${store.name}“</strong> hat soeben ein <strong>${tierDefLabel}</strong>-Sponsoring abgeschlossen.`,
               detailText: `„${store.name}“ hat ein ${tierDefLabel}-Sponsoring abgeschlossen.`,
               dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/sponsoring`,
-            })
+            }),
+            {
+              type: "moderation_alert",
+              title: `Neues Sponsoring: „${store.name}“ (${tierDefLabel})`,
+              body: `„${store.name}“ hat ein ${tierDefLabel}-Sponsoring abgeschlossen.`,
+              url: "/admin/sponsoring",
+            }
           );
         }
       } else if (payment.sequenceType === "recurring") {
@@ -235,8 +249,16 @@ export async function POST(request: NextRequest) {
 
       if (store && owner) {
         await notifyUser(
-          owner.email,
-          sponsorshipPaymentFailedOwnerTemplate({ storeName: store.name, tierLabel: tierDefLabel })
+          { id: record.ownerUserId, email: owner.email },
+          sponsorshipPaymentFailedOwnerTemplate({ storeName: store.name, tierLabel: tierDefLabel }),
+          {
+            inApp: {
+              type: "sponsorship_payment_failed",
+              title: `Zahlung für „${store.name}“ fehlgeschlagen`,
+              body: `Bitte prüfe deine Zahlungsmethode, damit dein ${tierDefLabel}-Sponsoring aktiv bleibt.`,
+              url: `/me/stores/${store.slug}/sponsoring`,
+            },
+          }
         );
       }
       await notifyModerators(
@@ -246,7 +268,13 @@ export async function POST(request: NextRequest) {
           detailHtml: `Eine Zahlung für das <strong>${tierDefLabel}</strong>-Sponsoring von <strong>„${store?.name ?? record.storeId}“</strong> ist fehlgeschlagen (${payment.status}).`,
           detailText: `Zahlung für „${store?.name ?? record.storeId}“ (${tierDefLabel}) fehlgeschlagen: ${payment.status}.`,
           dashboardUrl: `${process.env.NEXTAUTH_URL ?? ""}/admin/sponsoring`,
-        })
+        }),
+        {
+          type: "moderation_alert",
+          title: `Zahlung fehlgeschlagen: „${store?.name ?? record.storeId}“`,
+          body: `Zahlung für das ${tierDefLabel}-Sponsoring fehlgeschlagen (${payment.status}).`,
+          url: "/admin/sponsoring",
+        }
       );
     }
 

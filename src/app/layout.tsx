@@ -32,6 +32,9 @@ export const metadata: Metadata = {
     description:
       "Finde zertifizierte Fairtrade-Shops und Weltläden in deiner Nähe.",
   },
+  verification: {
+    google: "zUPcoW-SBrWaUoxVd2hSyXt6z8ft9U986dl-pSiBcaE",
+  },
 };
 
 export default function RootLayout({

@@ -14,6 +14,9 @@ export const CATEGORY_TRANSLATION_KEYS: Record<(typeof CATEGORIES)[number], stri
   "Zero Waste": "zeroWaste",
   "Chocolate": "chocolate",
   "Home & Living": "homeLiving",
+  "Farm & Dairy": "farmDairy",
+  "Bakery": "bakery",
+  "Drinks & Spirits": "drinksSpirits",
 };
 
 /**

@@ -57,7 +57,10 @@
     "gifts": "Gifts",
     "zeroWaste": "Zero Waste",
     "chocolate": "Chocolate",
-    "homeLiving": "Home & Living"
+    "homeLiving": "Home & Living",
+    "farmDairy": "Farm & Dairy",
+    "bakery": "Bakery",
+    "drinksSpirits": "Drinks & Spirits"
   },
   "fairBadges": {
     "fairtrade": "Fairtrade",

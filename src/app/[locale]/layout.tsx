@@ -13,6 +13,7 @@ import { ThemeScript } from "@/components/providers/ThemeScript";
 import { THEME_COOKIE, isTheme } from "@/lib/theme";
 import { routing, type AppLocale } from "@/i18n/routing";
 import "../globals.css";
+import Script from "next/script";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -131,6 +132,10 @@ export default async function RootLayout({
     <html lang={locale} className={initialClassIsDark ? "dark" : undefined} suppressHydrationWarning>
       <head>
         <ThemeScript />
+        <Script
+          src="https://tally.so/widgets/embed.js"
+          strategy="afterInteractive"
+        />
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
         <a href="#main-content" className="skip-link">
@@ -149,6 +154,15 @@ export default async function RootLayout({
               </main>
               <Footer />
               <MobileNav />
+              <button
+                type="button"
+                data-tally-open="jaRrpQ"
+                data-tally-emoji-text="👋"
+                data-tally-emoji-animation="wave"
+                className="fixed bottom-24 right-4 z-50 rounded-full bg-emerald-700 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 md:bottom-6 md:right-6"
+              >
+                Feedback geben [Beta]
+              </button>
             </AuthProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

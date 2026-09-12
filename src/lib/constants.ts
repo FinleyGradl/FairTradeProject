@@ -63,6 +63,9 @@ export const CATEGORIES = [
   "Zero Waste",
   "Chocolate",
   "Home & Living",
+  "Farm & Dairy",
+  "Bakery",
+  "Drinks & Spirits",
 ];
 
 // --- Sponsoring ---------------------------------------------------------

@@ -1,0 +1,25 @@
+FairFind - SEO-Strategie & Umsetzung
+====================================
+
+1. Technisches SEO
+------------------
+- Sitemap (sitemap.xml): Eine dynamische Sitemap wurde erstellt. Sie kombiniert statische Routen, alle aktiven Store-Slugs direkt aus der Datenbank sowie die neuen Kategorie-Seiten.
+- Robots.txt: Wurde konfiguriert, um Suchmaschinen-Crawlern alle oeffentlichen Seiten freizugeben und interne Pfade (z. B. /admin, /api, User-Profile) zu blockieren.
+- Metadaten & URLs: In der zentralen layout.tsx wurde metadataBase auf die korrekte Domain 'https://traceable.ddns.net' gesetzt, wodurch fehlerhafte relative Pfade bei OpenGraph vermieden werden.
+- Strukturierte Daten (Schema.org): Auf der Store-Detailseite wurde das 'LocalBusiness' JSON-LD Markup optimiert. Es enthaelt jetzt nur vorhandene Attribute wie Image und Telephone, ohne kaputte leere Felder.
+
+2. On-Page Optimierung & Content
+--------------------------------
+- Lokalisierung: Das gesamte UI wurde rigoros auf Deutsch lokalisiert. Dies inkludiert Header, Footer, Meta-Titles, H1-Ueberschriften und Buttons. Englische Hardcoded-Strings ('Open now', 'Category', 'Login') wurden ebenfalls vollstaendig beseitigt.
+- Alt-Texte: Cover-Bilder von Fairtrade-Laeden haben nun einheitliche, SEO-relevante Alt-Texte wie 'Fairtrade Laden [Name] in [Stadt]', was die Bilder-SEO verbessert.
+- H1-Tags: Die H1 auf der Startseite wurde keyword-fokussiert ('Entdecke Fairtrade Laeden & Weltlaeden in deiner Naehe') und Doppelungen entfernt.
+
+3. Seitenstruktur & Routing (Kategorien)
+----------------------------------------
+- Cluster-Seiten: Ein komplett neues Routing-System (/kategorie/[slug]) wurde implementiert.
+- Dies deckt 7 Hauptbereiche (Mode, Lebensmittel, Kaffee, Geschenke, etc.) ab, wodurch wir gezielte Landingpages fuer wichtige Suchbegriffe wie 'Fairtrade Kaffee kaufen' geschaffen haben.
+- Diese Seiten nutzen ISR (Incremental Static Regeneration), laden extrem schnell und bieten Suchmaschinen fokussierten Themen-Content.
+
+Fazit
+-----
+Mit dieser technischen Basis ist FairFind hervorragend fuers Crawling optimiert. Wenn nun Google Search Console aktiviert und die Sitemap eingereicht wird, steht einer guten Indexierung nichts im Weg.

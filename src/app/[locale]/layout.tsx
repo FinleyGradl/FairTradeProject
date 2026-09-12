@@ -88,6 +88,9 @@ export async function generateMetadata({
       title: defaultTitle,
       description: defaultDescription,
     },
+    verification: {
+      google: "zUPcoW-SBrWaUoxVd2hSyXt6z8ft9U986dl-pSiBcaE",
+    },
   };
 }
 

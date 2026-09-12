@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { FAIR_BADGE_LABELS } from "@/lib/constants";
 
@@ -7,9 +7,9 @@ interface FairBadgesProps {
   className?: string;
 }
 
-export async function FairBadges({ badges, className }: FairBadgesProps) {
+export function FairBadges({ badges, className }: FairBadgesProps) {
+  const t = useTranslations("fairBadges");
   if (badges.length === 0) return null;
-  const t = await getTranslations("fairBadges");
 
   return (
     <div className={className}>

@@ -1,6 +1,6 @@
 // path: src/components/store/StoreCard.tsx
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,10 +37,10 @@ interface StoreCardProps {
   className?: string;
 }
 
-export async function StoreCard({ store, className }: StoreCardProps) {
+export function StoreCard({ store, className }: StoreCardProps) {
   const open = store.hours ? isOpenNow(store.hours) : false;
   const statusLabel = store.hours ? getOpenStatusLabel(store.hours) : null;
-  const tCategories = await getTranslations("categories");
+  const tCategories = useTranslations("categories");
 
   return (
     <Link href={`/stores/${store.slug}`}>

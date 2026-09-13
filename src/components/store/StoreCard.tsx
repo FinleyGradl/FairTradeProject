@@ -94,7 +94,10 @@ export function StoreCard({ store, className }: StoreCardProps) {
             <p className="mt-2 text-xs text-earth/50">
               {store.categories
                 .slice(0, 2)
-                .map((c) => tCategories(categoryTranslationKey(c)))
+                .map((c) => {
+                  const key = categoryTranslationKey(c);
+                  return tCategories.has(key) ? tCategories(key) : c;
+                })
                 .join(" · ")}
             </p>
           )}

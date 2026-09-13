@@ -48,22 +48,25 @@ export function FilterPanel({
       <div>
         <p className="mb-2 text-sm font-medium text-earth">{t("categoryLabel")}</p>
         <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() =>
-                onCategoryChange(selectedCategory === cat ? undefined : cat)
-              }
-            >
-              <Badge
-                variant={selectedCategory === cat ? "default" : "outline"}
-                className="cursor-pointer"
+          {CATEGORIES.map((cat) => {
+            const key = categoryTranslationKey(cat);
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() =>
+                  onCategoryChange(selectedCategory === cat ? undefined : cat)
+                }
               >
-                {tCategories(categoryTranslationKey(cat))}
-              </Badge>
-            </button>
-          ))}
+                <Badge
+                  variant={selectedCategory === cat ? "default" : "outline"}
+                  className="cursor-pointer"
+                >
+                  {tCategories.has(key) ? tCategories(key) : cat}
+                </Badge>
+              </button>
+            );
+          })}
         </div>
       </div>
 

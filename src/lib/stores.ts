@@ -1270,6 +1270,35 @@ export async function verifyStoreByAdmin(slug: string) {
   return updated;
 }
 
+/**
+ * Reverses an admin verification — used when a moderator decides a
+ * previously admin-verified store shouldn't carry the badge anymore.
+ * Falls back to "community" instead of straight to "unverified" if the
+ * store still has enough net attestations to earn that badge on its
+ * own, mirroring the threshold castAttestation() uses when granting it.
+ */
+export async function removeAdminVerification(storeId: string) {
+  const store = await prisma.store.findUnique({ where: { id: storeId } });
+  if (!store) return null;
+  if (store.verificationLevel !== "admin") return store;
+
+  const net = store.confirmCount - store.disputeCount;
+  const nextVerification =
+    net >= ATTESTATION_THRESHOLDS.communityVerify ? "community" : "unverified";
+
+  const updated = await prisma.store.update({
+    where: { id: storeId },
+    data: { verificationLevel: nextVerification },
+  });
+
+  await adjustTrustScore(
+    store.ownerUserId ?? store.createdById,
+    -TRUST_SCORE_DELTAS.storeAdminVerified
+  );
+
+  return updated;
+}
+
 export async function listPendingClaims() {
   return prisma.storeClaim.findMany({
     where: { status: "pending" },

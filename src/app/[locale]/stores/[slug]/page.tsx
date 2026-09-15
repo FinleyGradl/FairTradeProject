@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import type { Metadata } from "next";
 import { MapPin, Phone, Globe, Mail, ExternalLink, Pencil, BarChart3, Megaphone } from "lucide-react";
 import { auth } from "@/auth";
-import { getStoreBySlug, canEditStore, isStoreSaved } from "@/lib/stores";
+import { getStoreBySlug, canEditStore, canModerate, isStoreSaved } from "@/lib/stores";
 import { listPublicSuggestionsForStore } from "@/lib/edit-suggestions";
 import { listPublicProductSuggestionsForStore } from "@/lib/products";
 import { canManageSponsorship } from "@/lib/sponsorship";
@@ -18,6 +18,7 @@ import { SaveButton, ShareButton } from "@/components/store/SaveShareButtons";
 import { ProductCard } from "@/components/store/ProductCard";
 import { StoreHeroGallery } from "@/components/store/StoreHeroGallery";
 import { VerifiedBadge } from "@/components/store/VerifiedBadge";
+import { RemoveVerificationButton } from "@/components/store/RemoveVerificationButton";
 import { AttestationWidget } from "@/components/store/AttestationWidget";
 import { SuggestionVoteWidget } from "@/components/store/SuggestionVoteWidget";
 import { ProductSuggestionVoteWidget } from "@/components/store/ProductSuggestionVoteWidget";
@@ -75,6 +76,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
   if (!store) notFound();
 
   const canEdit = canEditStore(store, session?.user);
+  const canRemoveVerification = canModerate(session?.user) && store.verificationLevel === "admin";
   // Owner (real, confirmed) or admin/moderator — mirrors the access check
   // the /insights page and API route enforce, so we don't show a button
   // that then 403s. Sponsoring itself (billing) stays owner-only below.
@@ -214,6 +216,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             isLoggedIn={Boolean(session?.user)}
           />
           <ShareButton title={store.name} />
+          {canRemoveVerification && <RemoveVerificationButton storeId={store.id} />}
           {canEdit && (
             <div className="ml-auto flex gap-2">
               {canViewInsights && (

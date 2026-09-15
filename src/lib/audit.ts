@@ -14,6 +14,7 @@ export const AUDIT_ACTIONS = [
   "store.update",
   "store.delete",
   "store.moderate",
+  "store.unverify",
   "claim.review",
   "suggestion.review",
   "review.delete",

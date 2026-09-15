@@ -36,6 +36,7 @@ function actionLabel(action: string): string {
     "store.update": "Laden bearbeitet",
     "store.delete": "Laden gelöscht",
     "store.moderate": "Laden moderiert",
+    "store.unverify": "Admin-Verifizierung entfernt",
     "claim.review": "Inhaberschafts-Anfrage bearbeitet",
     "suggestion.review": "Änderungsvorschlag bearbeitet",
     "review.delete": "Bewertung gelöscht (eigene)",

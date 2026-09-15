@@ -42,13 +42,13 @@ export async function Header() {
           <SearchBar />
         </div>
 
-        <nav aria-label={t("ariaMain")} className="ml-auto flex items-center gap-2">
-          <HeaderNavLink href="/explore" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+        <nav aria-label={t("ariaMain")} className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          {/* Explore/Search live in the bottom tab bar on mobile already —
+              no need to duplicate them here, and dropping them is what
+              keeps this row from overflowing on narrow screens. */}
+          <HeaderNavLink href="/explore" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden md:inline-flex")}>
             {t("explore")}
           </HeaderNavLink>
-          <Link href="/search" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "md:hidden")}>
-            {t("search")}
-          </Link>
           <Link href="/add-store" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "hidden sm:inline-flex")}>
             {t("addStore")}
           </Link>

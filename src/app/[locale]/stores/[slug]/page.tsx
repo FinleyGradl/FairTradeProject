@@ -209,7 +209,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
       </div>
 
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-6 flex gap-2">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <SaveButton
             storeSlug={store.slug}
             initialSaved={initialSaved}
@@ -218,7 +218,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
           <ShareButton title={store.name} />
           {canRemoveVerification && <RemoveVerificationButton storeId={store.id} />}
           {canEdit && (
-            <div className="ml-auto flex gap-2">
+            <div className="flex flex-wrap gap-2 sm:ml-auto">
               {canViewInsights && (
                 <Link href={`/me/stores/${store.slug}/insights`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                     <BarChart3 className="h-3.5 w-3.5" /> Insights
@@ -243,7 +243,7 @@ export default async function StoreDetailPage({ params }: PageProps) {
             </div>
           )}
           {!canEdit && (
-            <div className="ml-auto flex gap-2">
+            <div className="flex flex-wrap gap-2 sm:ml-auto">
               {!store.ownerUserId && (
                 <Link href={`/claim/${store.slug}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                     Laden beanspruchen

@@ -12,7 +12,9 @@ export async function Footer() {
             <p className="font-bold text-earth">FairFind</p>
             <p className="mt-1 max-w-sm text-sm text-earth/70">{t("tagline")}</p>
           </div>
-          <nav aria-label={t("ariaLabel")} className="flex gap-8 text-sm">
+
+          {/* Desktop: all 4 columns side by side, original order. */}
+          <nav aria-label={t("ariaLabel")} className="hidden gap-8 text-sm md:flex">
             <div>
               <p className="font-medium text-earth">{t("discoverHeading")}</p>
               <ul className="mt-2 space-y-1 text-earth/70">
@@ -46,6 +48,40 @@ export async function Footer() {
               </ul>
             </div>
           </nav>
+
+          {/* Mobile: Kategorien/Entdecken side by side — "Über uns" is
+              dropped (one tap away from the homepage anyway), Rechtliches
+              moves into its own row below so its 4 links get full width
+              instead of being squeezed into a third column. */}
+          <div className="text-sm md:hidden">
+            <nav aria-label={t("ariaLabel")} className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="font-medium text-earth">{t("categoriesHeading")}</p>
+                <ul className="mt-2 space-y-1 text-earth/70">
+                  <li><Link href="/kategorie/mode" className="hover:text-sage hover:dark:text-sage-300">{t("categoryFashion")}</Link></li>
+                  <li><Link href="/kategorie/lebensmittel" className="hover:text-sage hover:dark:text-sage-300">{t("categoryGrocery")}</Link></li>
+                  <li><Link href="/kategorie/kaffee-tee" className="hover:text-sage hover:dark:text-sage-300">{t("categoryCoffee")}</Link></li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-earth">{t("discoverHeading")}</p>
+                <ul className="mt-2 space-y-1 text-earth/70">
+                  <li><Link href="/explore" className="hover:text-sage hover:dark:text-sage-300">{t("exploreStores")}</Link></li>
+                  <li><Link href="/search" className="hover:text-sage hover:dark:text-sage-300">{t("search")}</Link></li>
+                  <li><Link href="/add-store" className="hover:text-sage hover:dark:text-sage-300">{t("addStore")}</Link></li>
+                </ul>
+              </div>
+            </nav>
+            <div className="mt-6 border-t border-sage/10 pt-4">
+              <p className="font-medium text-earth">{t("legalHeading")}</p>
+              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-earth/70">
+                <li><Link href="/impressum" className="hover:text-sage hover:dark:text-sage-300">{t("impressum")}</Link></li>
+                <li><Link href="/datenschutz" className="hover:text-sage hover:dark:text-sage-300">{t("privacy")}</Link></li>
+                <li><Link href="/nutzungsbedingungen" className="hover:text-sage hover:dark:text-sage-300">{t("terms")}</Link></li>
+                <li><Link href="/barrierefreiheit" className="hover:text-sage hover:dark:text-sage-300">{t("accessibility")}</Link></li>
+              </ul>
+            </div>
+          </div>
         </div>
         <p className="mt-8 text-center text-xs text-earth/50">
           {t("copyright", { year: new Date().getFullYear() })}

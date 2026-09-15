@@ -87,43 +87,45 @@ export default async function MyStoresPage() {
           {stores.map((store) => (
             <div
               key={store.id}
-              className="flex items-center gap-3 rounded-xl border border-sage/10 bg-surface p-4"
+              className="flex flex-col gap-3 rounded-xl border border-sage/10 bg-surface p-4 sm:flex-row sm:items-center"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sage-100">
-                <StoreIcon className="h-5 w-5 text-sage dark:text-sage-300" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/stores/${store.slug}`} className="font-medium text-earth hover:underline">
-                    {store.name}
-                  </Link>
-                  <Badge variant={store.status === "active" ? "success" : "secondary"}>
-                    {STATUS_LABEL[store.status] ?? store.status}
-                  </Badge>
-                  {store.ownerUserId === session.user.id && (
-                    <Badge variant="outline">Inhaber:in</Badge>
-                  )}
-                  {store.sponsorship && (
-                    <Badge variant={store.sponsorship.status === "active" ? "success" : "secondary"}>
-                      {store.sponsorship.status === "active"
-                        ? SPONSORSHIP_TIERS[store.sponsorship.tier as SponsorshipTierId].includesSponsoredBadge
-                          ? "Gesponsert"
-                          : "Insights aktiv"
-                        : SPONSORSHIP_STATUS_LABEL[store.sponsorship.status] ?? store.sponsorship.status}
-                    </Badge>
-                  )}
-                  {store.pendingTransfer && (
-                    <Badge variant="outline" className="border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300">
-                      Übertragung ausstehend an{" "}
-                      {store.pendingTransfer.toUser.name ?? store.pendingTransfer.toUser.email}
-                    </Badge>
-                  )}
+              <div className="flex items-start gap-3 sm:min-w-0 sm:flex-1 sm:items-center">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sage-100">
+                  <StoreIcon className="h-5 w-5 text-sage dark:text-sage-300" />
                 </div>
-                <p className="truncate text-sm text-earth/60">
-                  {store.addressLine}, {store.city}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/stores/${store.slug}`} className="font-medium text-earth hover:underline">
+                      {store.name}
+                    </Link>
+                    <Badge variant={store.status === "active" ? "success" : "secondary"}>
+                      {STATUS_LABEL[store.status] ?? store.status}
+                    </Badge>
+                    {store.ownerUserId === session.user.id && (
+                      <Badge variant="outline">Inhaber:in</Badge>
+                    )}
+                    {store.sponsorship && (
+                      <Badge variant={store.sponsorship.status === "active" ? "success" : "secondary"}>
+                        {store.sponsorship.status === "active"
+                          ? SPONSORSHIP_TIERS[store.sponsorship.tier as SponsorshipTierId].includesSponsoredBadge
+                            ? "Gesponsert"
+                            : "Insights aktiv"
+                          : SPONSORSHIP_STATUS_LABEL[store.sponsorship.status] ?? store.sponsorship.status}
+                      </Badge>
+                    )}
+                    {store.pendingTransfer && (
+                      <Badge variant="outline" className="border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300">
+                        Übertragung ausstehend an{" "}
+                        {store.pendingTransfer.toUser.name ?? store.pendingTransfer.toUser.email}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="truncate text-sm text-earth/60">
+                    {store.addressLine}, {store.city}
+                  </p>
+                </div>
               </div>
-              <div className="flex shrink-0 gap-2">
+              <div className="flex flex-wrap gap-2 sm:shrink-0">
                 {store.ownerUserId === session.user.id && (
                   <Link href={`/me/stores/${store.slug}/insights`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1")}>
                       {session.user.role === "admin" ||

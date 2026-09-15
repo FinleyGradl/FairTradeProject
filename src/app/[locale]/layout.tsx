@@ -151,7 +151,7 @@ export default async function RootLayout({
               <main
                 id="main-content"
                 tabIndex={-1}
-                className="min-h-[calc(100vh-8rem)] pb-20 outline-none md:pb-0"
+                className="min-h-[calc(100vh-8rem)] pb-24 outline-none md:pb-0"
               >
                 {children}
               </main>

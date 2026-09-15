@@ -17,7 +17,11 @@ export function MobileNav() {
   ] as const;
 
   return (
-    <nav aria-label={t("ariaLabel")} className="fixed bottom-0 left-0 right-0 z-50 border-t border-sage/10 bg-surface md:hidden">
+    <nav
+      aria-label={t("ariaLabel")}
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-sage/10 bg-surface md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="flex justify-around py-2">
         {links.map(({ href, icon: Icon, label }) => {
           const isActive = pathname === href || pathname?.startsWith(`${href}/`);

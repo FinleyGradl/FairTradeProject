@@ -27,12 +27,32 @@ export interface PlatformSettingsInput {
   invoiceIssuerIban: string | null;
   invoiceIssuerBankName: string | null;
   invoiceFooterNote: string | null;
+  sponsoringEnabled: boolean;
+  // undefined = leave the stored key untouched (the form never receives the
+  // real value back, so "nothing typed" must not overwrite it); null =
+  // explicitly clear it; a string = set/replace it.
+  mollieApiKey?: string | null;
 }
 
 export async function updatePlatformSettings(input: PlatformSettingsInput, updatedByUserId: string) {
+  const { mollieApiKey, ...rest } = input;
+  const mollieField = mollieApiKey === undefined ? {} : { mollieApiKey };
   return prisma.platformSettings.upsert({
     where: { id: SETTINGS_ID },
-    create: { id: SETTINGS_ID, ...input, updatedByUserId },
-    update: { ...input, updatedByUserId },
+    create: { id: SETTINGS_ID, ...rest, ...mollieField, updatedByUserId },
+    update: { ...rest, ...mollieField, updatedByUserId },
   });
+}
+
+// lib/mollie.ts's single read point for the API key — DB value (set via the
+// superuser billing settings page) wins, MOLLIE_API_KEY env var is the
+// fallback so existing self-hosted deployments keep working unchanged.
+export async function getMollieApiKey(): Promise<string | null> {
+  const settings = await getPlatformSettings();
+  return settings.mollieApiKey?.trim() || process.env.MOLLIE_API_KEY || null;
+}
+
+export async function isSponsoringEnabled(): Promise<boolean> {
+  const settings = await getPlatformSettings();
+  return settings.sponsoringEnabled;
 }

@@ -4,9 +4,13 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getActiveSponsorship, canManageSponsorship, startSponsorship, cancelSponsorship } from "@/lib/sponsorship";
 import { SPONSORSHIP_TIERS } from "@/lib/constants";
+import { isSponsoringEnabled } from "@/lib/platform-settings";
 import { logAudit } from "@/lib/audit";
 import { notifyModerators, notifyUser } from "@/lib/notify";
 import { moderationAlertTemplate, sponsorshipCanceledOwnerTemplate } from "@/lib/email/templates";
+
+const NON_COMMERCIAL_MESSAGE =
+  "Sponsoring ist derzeit deaktiviert — FairFind ist aktuell ein nicht-kommerzielles Projekt.";
 
 const startSchema = z.object({
   tier: z.enum(["basic", "plus", "top"]),
@@ -31,7 +35,11 @@ export async function GET(
   }
 
   const sponsorship = await getActiveSponsorship(store.id);
-  return NextResponse.json({ sponsorship, tiers: SPONSORSHIP_TIERS });
+  return NextResponse.json({
+    sponsorship,
+    tiers: SPONSORSHIP_TIERS,
+    sponsoringEnabled: await isSponsoringEnabled(),
+  });
 }
 
 export async function POST(
@@ -41,6 +49,12 @@ export async function POST(
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
+  }
+
+  // Server-side kill switch — checked before anything else so this can't be
+  // bypassed even if a stale client UI still shows the plan picker.
+  if (!(await isSponsoringEnabled())) {
+    return NextResponse.json({ error: NON_COMMERCIAL_MESSAGE }, { status: 403 });
   }
 
   const { slug } = await params;

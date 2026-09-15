@@ -20,6 +20,8 @@ export interface BillingSettingsValue {
   invoiceIssuerIban: string | null;
   invoiceIssuerBankName: string | null;
   invoiceFooterNote: string | null;
+  sponsoringEnabled: boolean;
+  mollieApiKeyIsSet: boolean;
 }
 
 function Field({
@@ -50,6 +52,7 @@ function Field({
 
 export function BillingSettingsForm({ initial }: { initial: BillingSettingsValue }) {
   const [values, setValues] = useState<BillingSettingsValue>(initial);
+  const [mollieApiKeyInput, setMollieApiKeyInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,17 +62,28 @@ export function BillingSettingsForm({ initial }: { initial: BillingSettingsValue
     setSaved(false);
   }
 
-  async function save() {
+  async function save(options?: { clearMollieApiKey?: boolean }) {
     setSaving(true);
     setError(null);
     try {
       const res = await fetch("/api/admin/settings/billing", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          // Omitted entirely when nothing was typed, so the API leaves the
+          // stored key untouched instead of overwriting it with blank.
+          ...(options?.clearMollieApiKey
+            ? { mollieApiKey: "" }
+            : mollieApiKeyInput.trim()
+              ? { mollieApiKey: mollieApiKeyInput.trim() }
+              : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Speichern fehlgeschlagen.");
+      setValues((v) => ({ ...v, mollieApiKeyIsSet: data.settings.mollieApiKeyIsSet }));
+      setMollieApiKeyInput("");
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unbekannter Fehler.");
@@ -175,8 +189,64 @@ export function BillingSettingsForm({ initial }: { initial: BillingSettingsValue
         </CardContent>
       </Card>
 
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <h2 className="text-sm font-semibold text-earth">Sponsoring</h2>
+
+          <label className="flex cursor-pointer items-start justify-between gap-4 py-1 text-sm">
+            <span>
+              <span className="block text-earth">Sponsoring aktiviert</span>
+              <span className="mt-0.5 block text-xs text-earth/60">
+                Wenn deaktiviert, können Ladenbesitzer:innen kein neues Sponsoring mehr
+                abschließen — statt der Plan-Auswahl sehen sie den Hinweis, dass FairFind
+                aktuell ein nicht-kommerzielles Projekt ist. Bereits laufende Sponsorings sind
+                davon nicht betroffen.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={values.sponsoringEnabled}
+              onChange={(e) => set("sponsoringEnabled", e.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 accent-sage-600"
+            />
+          </label>
+
+          <div className="border-t border-sage/10 pt-4">
+            <span className="mb-1 block text-sm font-medium text-earth">Mollie API-Token</span>
+            <p className="mb-2 text-xs text-earth/60">
+              {values.mollieApiKeyIsSet
+                ? "Es ist bereits ein Token hinterlegt. Zum Ersetzen ein neues eintragen und speichern — leer lassen, um das bestehende zu behalten."
+                : "Noch kein Token hinterlegt — es wird ersatzweise die Umgebungsvariable MOLLIE_API_KEY verwendet, falls gesetzt."}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                type="password"
+                value={mollieApiKeyInput}
+                onChange={(e) => {
+                  setMollieApiKeyInput(e.target.value);
+                  setSaved(false);
+                }}
+                placeholder={values.mollieApiKeyIsSet ? "•••••••••••••••• (unverändert lassen)" : "live_... oder test_..."}
+                autoComplete="off"
+                className="min-w-0 flex-1"
+              />
+              {values.mollieApiKeyIsSet && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => save({ clearMollieApiKey: true })}
+                  disabled={saving}
+                >
+                  Entfernen
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex items-center gap-3">
-        <Button type="button" onClick={save} disabled={saving}>
+        <Button type="button" onClick={() => save()} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Speichern"}
         </Button>
         {saved && !saving && (

@@ -46,6 +46,8 @@ export default async function BillingSettingsPage() {
             invoiceIssuerIban: settings.invoiceIssuerIban,
             invoiceIssuerBankName: settings.invoiceIssuerBankName,
             invoiceFooterNote: settings.invoiceFooterNote,
+            sponsoringEnabled: settings.sponsoringEnabled,
+            mollieApiKeyIsSet: Boolean(settings.mollieApiKey),
           }}
         />
       </div>

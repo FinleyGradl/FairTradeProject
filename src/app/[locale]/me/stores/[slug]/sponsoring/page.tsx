@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, HeartHandshake } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getActiveSponsorship, canManageSponsorship } from "@/lib/sponsorship";
+import { isSponsoringEnabled } from "@/lib/platform-settings";
 import { SponsoringPlans } from "@/components/sponsoring/SponsoringPlans";
 import { listInvoicesForStore, formatInvoiceNumber, formatCents } from "@/lib/invoices";
 import { getLocale } from "next-intl/server";
@@ -32,8 +33,15 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
     return redirect({ href: `/stores/${slug}`, locale });
   }
 
-  const sponsorship = await getActiveSponsorship(store.id);
-  const invoices = await listInvoicesForStore(store.id);
+  const [sponsorship, invoices, sponsoringEnabled] = await Promise.all([
+    getActiveSponsorship(store.id),
+    listInvoicesForStore(store.id),
+    isSponsoringEnabled(),
+  ]);
+  // Same "still worth showing the management UI" condition SponsoringPlans
+  // itself uses — a store that was sponsored before sponsoring got switched
+  // off should still be able to see and cancel that, just not start a new one.
+  const hasActiveLikeSponsorship = sponsorship && sponsorship.status !== "canceled";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -41,28 +49,48 @@ export default async function StoreSponsoringPage({ params }: PageProps) {
         <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu {store.name}
       </Link>
       <h1 className="text-2xl font-bold text-earth">Sponsoring für {store.name}</h1>
-      <p className="mt-1 text-sm text-earth/70">
-        Jeder Plan gibt dir Zugriff auf die Insights-Übersicht (Aufrufe, Herkunft,
-        Suchanfragen). Ab Plan &bdquo;Plus&ldquo; kommen zusätzlich das &bdquo;Gesponsert&ldquo;-Badge
-        und eine bessere Platzierung in Suche, Kategorien und auf der Startseite dazu. Gesponserte
-        Läden werden für alle Besucher:innen transparent gekennzeichnet. Die Zahlung läuft
-        monatlich über Mollie und ist jederzeit kündbar.
-      </p>
 
-      <div className="mt-8">
-        <SponsoringPlans
-          storeSlug={slug}
-          initialSponsorship={
-            sponsorship
-              ? {
-                  tier: sponsorship.tier as "basic" | "plus" | "top",
-                  status: sponsorship.status as "incomplete" | "active" | "past_due" | "canceled",
-                  currentPeriodEnd: sponsorship.currentPeriodEnd?.toISOString() ?? null,
-                }
-              : null
-          }
-        />
-      </div>
+      {!sponsoringEnabled && (
+        <div className="mt-4 flex gap-3 rounded-xl border border-sage/20 bg-sage-50 p-4 dark:bg-sage-950/30">
+          <HeartHandshake className="h-5 w-5 shrink-0 text-sage dark:text-sage-300" />
+          <div className="text-sm text-earth">
+            <p className="font-medium">FairFind ist aktuell ein nicht-kommerzielles Projekt.</p>
+            <p className="mt-1 text-earth/70">
+              Sponsoring ist deshalb derzeit deaktiviert
+              {hasActiveLikeSponsorship
+                ? " — dein bestehendes Sponsoring läuft normal weiter, es können nur keine neuen abgeschlossen werden."
+                : ", es lassen sich also gerade keine neuen Pläne abschließen."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {(sponsoringEnabled || hasActiveLikeSponsorship) && (
+        <>
+          <p className="mt-4 text-sm text-earth/70">
+            Jeder Plan gibt dir Zugriff auf die Insights-Übersicht (Aufrufe, Herkunft,
+            Suchanfragen). Ab Plan &bdquo;Plus&ldquo; kommen zusätzlich das &bdquo;Gesponsert&ldquo;-Badge
+            und eine bessere Platzierung in Suche, Kategorien und auf der Startseite dazu. Gesponserte
+            Läden werden für alle Besucher:innen transparent gekennzeichnet. Die Zahlung läuft
+            monatlich über Mollie und ist jederzeit kündbar.
+          </p>
+
+          <div className="mt-8">
+            <SponsoringPlans
+              storeSlug={slug}
+              initialSponsorship={
+                sponsorship
+                  ? {
+                      tier: sponsorship.tier as "basic" | "plus" | "top",
+                      status: sponsorship.status as "incomplete" | "active" | "past_due" | "canceled",
+                      currentPeriodEnd: sponsorship.currentPeriodEnd?.toISOString() ?? null,
+                    }
+                  : null
+              }
+            />
+          </div>
+        </>
+      )}
 
       {invoices.length > 0 && (
         <div className="mt-10">

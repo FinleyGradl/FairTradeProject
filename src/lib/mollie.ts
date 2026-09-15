@@ -3,18 +3,25 @@
 // Deliberately fetch-based instead of pulling in the official SDK, to avoid
 // an extra dependency for what is a handful of simple JSON calls.
 //
-// Required env vars:
+// The API key is read from PlatformSettings (superuser billing settings,
+// see lib/platform-settings.ts) with the MOLLIE_API_KEY env var as a
+// fallback for existing self-hosted deployments that only ever set it via
+// the environment.
+//
+// Required env var (only if not set via the superuser settings UI):
 //   MOLLIE_API_KEY   – secret key from the Mollie dashboard (test_... / live_...)
+// Always required:
 //   APP_URL          – public base URL of this app, e.g. https://fairfind.example
 //                       (used for redirect/webhook URLs)
+import { getMollieApiKey } from "@/lib/platform-settings";
 
 const MOLLIE_API_BASE = "https://api.mollie.com/v2";
 
-function apiKey(): string {
-  const key = process.env.MOLLIE_API_KEY;
+async function apiKey(): Promise<string> {
+  const key = await getMollieApiKey();
   if (!key) {
     throw new Error(
-      "MOLLIE_API_KEY ist nicht gesetzt. Sponsoring-Zahlungen können nicht verarbeitet werden."
+      "Kein Mollie API-Key hinterlegt (weder in den Rechnungs-Einstellungen noch als MOLLIE_API_KEY). Sponsoring-Zahlungen können nicht verarbeitet werden."
     );
   }
   return key;
@@ -32,10 +39,11 @@ async function mollieFetch<T>(
   path: string,
   init?: Omit<RequestInit, "body"> & { body?: unknown }
 ): Promise<T> {
+  const key = await apiKey();
   const res = await fetch(`${MOLLIE_API_BASE}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${apiKey()}`,
+      Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },

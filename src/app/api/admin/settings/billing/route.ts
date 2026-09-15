@@ -22,6 +22,11 @@ const patchSchema = z.object({
   invoiceIssuerIban: z.string().trim().max(50).nullable().optional(),
   invoiceIssuerBankName: z.string().trim().max(100).nullable().optional(),
   invoiceFooterNote: z.string().trim().max(500).nullable().optional(),
+  sponsoringEnabled: z.boolean(),
+  // Omitted entirely -> leave the stored key untouched. "" -> clear it.
+  // Anything else -> replace it. The client never gets the real value back
+  // (see GET below), so "field left blank" must never be read as "clear".
+  mollieApiKey: z.string().trim().max(200).optional(),
 });
 
 export async function GET() {
@@ -30,7 +35,13 @@ export async function GET() {
     return NextResponse.json({ error: "Nicht berechtigt." }, { status: 403 });
   }
   const settings = await getPlatformSettings();
-  return NextResponse.json({ settings });
+  // Never send the actual secret back to the browser — just whether one is
+  // currently stored, so the form can show "•••• hinterlegt" instead of a
+  // blank field.
+  const { mollieApiKey, ...safeSettings } = settings;
+  return NextResponse.json({
+    settings: { ...safeSettings, mollieApiKeyIsSet: Boolean(mollieApiKey) },
+  });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -56,9 +67,18 @@ export async function PATCH(request: NextRequest) {
       invoiceIssuerIban: parsed.data.invoiceIssuerIban || null,
       invoiceIssuerBankName: parsed.data.invoiceIssuerBankName || null,
       invoiceFooterNote: parsed.data.invoiceFooterNote || null,
+      // undefined (field not sent) -> untouched; "" (explicit clear) -> null;
+      // anything else -> that value.
+      mollieApiKey:
+        parsed.data.mollieApiKey === undefined
+          ? undefined
+          : parsed.data.mollieApiKey || null,
     },
     session.user.id
   );
 
-  return NextResponse.json({ settings });
+  const { mollieApiKey, ...safeSettings } = settings;
+  return NextResponse.json({
+    settings: { ...safeSettings, mollieApiKeyIsSet: Boolean(mollieApiKey) },
+  });
 }

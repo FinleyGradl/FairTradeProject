@@ -805,6 +805,13 @@ model PlatformSettings {
   invoiceIssuerBankName String?
   invoiceFooterNote     String?
 
+  // Sponsoring kill switch + Mollie credential, both superuser-managed here
+  // instead of only via env var — see lib/mollie.ts (DB value wins, env var
+  // is the fallback for existing self-hosted deployments) and
+  // lib/sponsorship.ts (checkout blocked entirely while this is false).
+  sponsoringEnabled Boolean @default(true)
+  mollieApiKey      String?
+
   updatedAt       DateTime @updatedAt
   updatedByUserId String?
 }
